@@ -53,6 +53,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
+import edu.wpi.first.wpilibj2.command.ConditionalCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -217,12 +218,16 @@ public class RobotContainer {
         new InstantCommand(() -> feeder.setWantedFeederState(FeederWantedState.IDLE))));
     // passing
     operator.rightBumper()
-      .onTrue(new SequentialCommandGroup(
-          new InstantCommand(() -> shooter.setWantedShooterState(ShooterWantedState.PASS_SHOOT)),
-          new InstantCommand(() -> turret.setWantedTurretState(TurretWantedState.AIM_PASS)),
-          // waitToShoot(),
-          new InstantCommand(() -> feeder.setWantedFeederState(FeederWantedState.SHOOT))
-      ))
+    .onTrue(new SequentialCommandGroup(
+        new InstantCommand(() -> shooter.setWantedShooterState(ShooterWantedState.PASS_SHOOT)),
+        new InstantCommand(() -> turret.setWantedTurretState(TurretWantedState.AIM_PASS)),
+         // waitToShoot(),
+        new ConditionalCommand(
+            new InstantCommand(() -> feeder.setWantedFeederState(FeederWantedState.IDLE)),
+            new InstantCommand(() -> feeder.setWantedFeederState(FeederWantedState.SHOOT)),
+            () -> drivetrain.getPose().getY() > 3.47 && drivetrain.getPose().getY() < 4.53
+        )
+    ))
       .onFalse(new ParallelCommandGroup(
         new InstantCommand(() -> shooter.setWantedShooterState(ShooterWantedState.IDLE)),
         new InstantCommand(() -> turret.setWantedTurretState(TurretWantedState.IDLE)),
