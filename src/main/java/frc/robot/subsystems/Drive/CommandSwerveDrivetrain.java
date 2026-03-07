@@ -412,68 +412,68 @@ Translation2d rotationalCorrection =
     /**
      * Update the pose estimation and std devs with new vision data
      */
-    public void updateVisionMeasurements() {
-        var visionEst = vision.getEstimatedGlobalPose1();
-        var visionEst2 = vision.getEstimatedGlobalPose2();
-        var visionEst3 = vision.getEstimatedGlobalPose3();
+    // public void updateVisionMeasurements() {
+    //     var visionEst = vision.getEstimatedGlobalPose1();
+    //     var visionEst2 = vision.getEstimatedGlobalPose2();
+    //     var visionEst3 = vision.getEstimatedGlobalPose3();
 
-        if (visionEst.isPresent() && visionEst2.isPresent() && visionEst3.isPresent()) {
-            var estPose = vision.getPoseFromCams();
-            var estStdDevs = vision.getEstimationStdDevs(estPose);
-            super.addVisionMeasurement(
-                    estPose,
-                    Utils.fpgaToCurrentTime(visionEst.get().timestampSeconds),
-                    estStdDevs);
-        } else if (visionEst.isPresent() && visionEst2.isPresent()) {
-            var estPose = vision.getPoseFromCams12();
-            var estStdDevs = vision.getEstimationStdDevs(estPose);
-            super.addVisionMeasurement(
-                    estPose,
-                    Utils.fpgaToCurrentTime(visionEst.get().timestampSeconds),
-                    estStdDevs);
-        }else if (visionEst2.isPresent() && visionEst3.isPresent()) {
-            var estPose = vision.getPoseFromCams23();
-            var estStdDevs = vision.getEstimationStdDevs(estPose);
-            super.addVisionMeasurement(
-                    estPose,
-                    Utils.fpgaToCurrentTime(visionEst2.get().timestampSeconds),
-                    estStdDevs);
-        } else if (visionEst.isPresent() && visionEst3.isPresent()) {
-            var estPose = vision.getPoseFromCams13();
-            var estStdDevs = vision.getEstimationStdDevs(estPose);
-            super.addVisionMeasurement(
-                    estPose,
-                    Utils.fpgaToCurrentTime(visionEst.get().timestampSeconds),
-                    estStdDevs);
-        }else if (visionEst.isPresent()) {
-            visionEst.ifPresent(est -> {
-                var estPose = est.estimatedPose.toPose2d();
-                var estStdDevs = vision.getEstimationStdDevs(estPose);
-                super.addVisionMeasurement(
-                        estPose,
-                        Utils.fpgaToCurrentTime(est.timestampSeconds),
-                        estStdDevs);
-            });
-        } else if (visionEst2.isPresent()) {
-            visionEst2.ifPresent(est -> {
-                var estPose = est.estimatedPose.toPose2d();
-                var estStdDevs = vision.getEstimationStdDevs(estPose);
-                super.addVisionMeasurement(
-                        estPose,
-                        Utils.fpgaToCurrentTime(est.timestampSeconds),
-                        estStdDevs);
-            });
-        } else if (visionEst3.isPresent()) {
-            visionEst3.ifPresent(est -> {
-                var estPose = est.estimatedPose.toPose2d();
-                var estStdDevs = vision.getEstimationStdDevs(estPose);
-                super.addVisionMeasurement(
-                        estPose,
-                        Utils.fpgaToCurrentTime(est.timestampSeconds),
-                        estStdDevs);
-            });
-        }
-    }
+    //     if (visionEst.isPresent() && visionEst2.isPresent() && visionEst3.isPresent()) {
+    //         var estPose = vision.getPoseFromCams();
+    //         var estStdDevs = vision.getEstimationStdDevs(estPose);
+    //         super.addVisionMeasurement(
+    //                 estPose,
+    //                 Utils.fpgaToCurrentTime(visionEst.get().timestampSeconds),
+    //                 estStdDevs);
+    //     } else if (visionEst.isPresent() && visionEst2.isPresent()) {
+    //         var estPose = vision.getPoseFromCams12();
+    //         var estStdDevs = vision.getEstimationStdDevs(estPose);
+    //         super.addVisionMeasurement(
+    //                 estPose,
+    //                 Utils.fpgaToCurrentTime(visionEst.get().timestampSeconds),
+    //                 estStdDevs);
+    //     }else if (visionEst2.isPresent() && visionEst3.isPresent()) {
+    //         var estPose = vision.getPoseFromCams23();
+    //         var estStdDevs = vision.getEstimationStdDevs(estPose);
+    //         super.addVisionMeasurement(
+    //                 estPose,
+    //                 Utils.fpgaToCurrentTime(visionEst2.get().timestampSeconds),
+    //                 estStdDevs);
+    //     } else if (visionEst.isPresent() && visionEst3.isPresent()) {
+    //         var estPose = vision.getPoseFromCams13();
+    //         var estStdDevs = vision.getEstimationStdDevs(estPose);
+    //         super.addVisionMeasurement(
+    //                 estPose,
+    //                 Utils.fpgaToCurrentTime(visionEst.get().timestampSeconds),
+    //                 estStdDevs);
+    //     }else if (visionEst.isPresent()) {
+    //         visionEst.ifPresent(est -> {
+    //             var estPose = est.estimatedPose.toPose2d();
+    //             var estStdDevs = vision.getEstimationStdDevs(estPose);
+    //             super.addVisionMeasurement(
+    //                     estPose,
+    //                     Utils.fpgaToCurrentTime(est.timestampSeconds),
+    //                     estStdDevs);
+    //         });
+    //     } else if (visionEst2.isPresent()) {
+    //         visionEst2.ifPresent(est -> {
+    //             var estPose = est.estimatedPose.toPose2d();
+    //             var estStdDevs = vision.getEstimationStdDevs(estPose);
+    //             super.addVisionMeasurement(
+    //                     estPose,
+    //                     Utils.fpgaToCurrentTime(est.timestampSeconds),
+    //                     estStdDevs);
+    //         });
+    //     } else if (visionEst3.isPresent()) {
+    //         visionEst3.ifPresent(est -> {
+    //             var estPose = est.estimatedPose.toPose2d();
+    //             var estStdDevs = vision.getEstimationStdDevs(estPose);
+    //             super.addVisionMeasurement(
+    //                     estPose,
+    //                     Utils.fpgaToCurrentTime(est.timestampSeconds),
+    //                     estStdDevs);
+    //         });
+    //     }
+    // }
 
 /* Pathplanner and CTRE Swerve config */
     private void configureAutoBuilder() {
@@ -683,27 +683,29 @@ Translation2d rotationalCorrection =
         return m_sysIdRoutineToApply.dynamic(direction);
     }
 
+
     @Override
-    public void periodic() {
-        TheField.getObject("robot").setPose(getPose());
-        /*
-         * Periodically try to apply the operator perspective.
-         * If we haven't applied the operator perspective before, then we should apply it regardless of DS state.
-         * This allows us to correct the perspective in case the robot code restarts mid-match.
-         * Otherwise, only check and apply the operator perspective if the DS is disabled.
-         * This ensures driving behavior doesn't change until an explicit disable event occurs during testing.
-         */
-        if (!m_hasAppliedOperatorPerspective || DriverStation.isDisabled()) {
-            DriverStation.getAlliance().ifPresent(allianceColor -> {
-                setOperatorPerspectiveForward(
-                    allianceColor == Alliance.Red
-                        ? kRedAlliancePerspectiveRotation
-                        : kBlueAlliancePerspectiveRotation
-                );
-                m_hasAppliedOperatorPerspective = true;
-            });
-        }
+public void periodic() {
+    TheField.getObject("robot").setPose(getPose());
+
+    // --- VISION UPDATE ---
+    // This will process all cameras and add valid measurements
+    vision.updateVision(this);  // 'this' is your drivetrain, which has addVisionMeasurement()
+    
+    /*
+     * Periodically try to apply the operator perspective.
+     */
+    if (!m_hasAppliedOperatorPerspective || DriverStation.isDisabled()) {
+        DriverStation.getAlliance().ifPresent(allianceColor -> {
+            setOperatorPerspectiveForward(
+                allianceColor == Alliance.Red
+                    ? kRedAlliancePerspectiveRotation
+                    : kBlueAlliancePerspectiveRotation
+            );
+            m_hasAppliedOperatorPerspective = true;
+        });
     }
+}
 
     private void startSimThread() {
         m_lastSimTime = Utils.getCurrentTimeSeconds();
