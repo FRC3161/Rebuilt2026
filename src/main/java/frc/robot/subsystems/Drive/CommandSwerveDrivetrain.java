@@ -120,21 +120,20 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         return futurePose;
     }
 
-
-      public Translation2d getSOTFTurretAngle(String whereToAim) {
+    public Translation2d getSOTFTurretAngle(String whereToAim) {
 
         // Current turret pose
         Pose2d turretPose = getCurrentTurretPose();
 
         // Hub position
         Translation2d aimingTarget;
-        if (whereToAim.equals("hub")) {
+        if (whereToAim == "hub") {
             if(DriverStation.getAlliance().get() == Alliance.Red) {
                 aimingTarget = VisionConstants.RED_HUB_POSE;
             } else {
                 aimingTarget = VisionConstants.BLUE_HUB_POSE;
             }
-        } else if (whereToAim.equals("pass")) {
+        } else if (whereToAim == "pass") {
             if(DriverStation.getAlliance().get() == Alliance.Red) {
                 if(getPose().getY() > 4.03) {
                     aimingTarget = VisionConstants.RED_PASS_SPOT_1;
@@ -170,7 +169,6 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 getState().Speeds,
                 getPose().getRotation()
             );
-         
 
         // Robot translational velocity
         Translation2d robotVelocity =
@@ -188,20 +186,18 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
         double omega = fieldSpeeds.omegaRadiansPerSecond;
 
-       Translation2d turretOffset =
-    VisionConstants.turretToCenter
-        .getTranslation()
-        .rotateBy(getPose().getRotation());
+        Translation2d turretOffset =
+            VisionConstants.turretToCenter.getTranslation();
 
-Translation2d rotationalVelocity =
-    new Translation2d(
-        -omega * turretOffset.getY(),
-         omega * turretOffset.getX()
-    );
+        // velocity induced by robot rotation
+        Translation2d rotationalVelocity =
+            new Translation2d(
+                +omega * turretOffset.getX(),
+                -omega * turretOffset.getY()
+            );
 
-Translation2d rotationalCorrection =
-    rotationalVelocity.times(timeOfFlight);
-  
+        Translation2d rotationalCorrection =
+            rotationalVelocity;
 
         // --- COMBINED CORRECTION ---
 
