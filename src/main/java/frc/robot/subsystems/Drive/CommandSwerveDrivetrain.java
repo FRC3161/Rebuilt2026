@@ -41,6 +41,7 @@ import frc.robot.Robot;
 import frc.robot.Constants.FieldConstants.ScoringZone;
 import frc.robot.subsystems.Drive.TunerConstants.TunerSwerveDrivetrain;
 import frc.robot.subsystems.Scoring.ShotCalc;
+import frc.util.Interpolation.LoggedTunableNumber;
 import edu.wpi.first.wpilibj.Timer;
 import java.util.ArrayList;
 import java.util.List;
@@ -134,15 +135,15 @@ private void updateBallTrajectory() {
     double distance = getDistanceFromHub();
     double tof = ShooterConstants.timeOfFlightInterpolation.getPrediction(distance);
 
-    double hoodAngleDeg = ShooterConstants.HOOD_MAP.get(distance)
+        double hoodAngleDeg = (ShooterConstants.HOOD_MAP.get(distance) + ShotCalc.hoodOffset)
         * ShooterConstants.hoodConversionRotToDeg;
-    double hoodHomeAngle = 18.0;
-    double launchAngleRad = Math.toRadians(90.0 - (hoodHomeAngle + hoodAngleDeg));
+        double hoodHomeAngle = 18.0;
+        double launchAngleRad = Math.toRadians(90.0 - (hoodHomeAngle + hoodAngleDeg));
 
-    double flywheelSurfaceSpeed = currentShotCommand.RPS() * Math.PI * (4 * 0.0254);
-    double exitSpeed = flywheelSurfaceSpeed * 0.45;
-    double horizontalSpeed = exitSpeed * Math.cos(launchAngleRad);
-    double verticalSpeed = exitSpeed * Math.sin(launchAngleRad);
+        double flywheelSurfaceSpeed = (currentShotCommand.RPS() + ShotCalc.rpsOffset) * Math.PI * (4 * 0.0254);
+        double exitSpeed = flywheelSurfaceSpeed * 0.45;
+        double horizontalSpeed = exitSpeed * Math.cos(launchAngleRad);
+        double verticalSpeed = exitSpeed * Math.sin(launchAngleRad);
 
     ChassisSpeeds fieldSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(
         getState().Speeds, getPose().getRotation());
@@ -180,15 +181,16 @@ for (int i = 0; i < steps; i++) {
     count++;
 }
 
-    // Build Pose3d array and publish
-    Pose3d[] poseArray = new Pose3d[count];
-    for (int i = 0; i < count; i++) {
-        poseArray[i] = new Pose3d(
-            arr[i * 3],
-            arr[i * 3 + 1],
-            arr[i * 3 + 2],
-            new Rotation3d()
-        );
+        // Build Pose3d array and publish
+        Pose3d[] poseArray = new Pose3d[count];
+        for (int i = 0; i < count; i++) {
+            poseArray[i] = new Pose3d(
+                    arr[i * 3],
+                    arr[i * 3 + 1],
+                    arr[i * 3 + 2],
+                    new Rotation3d());
+        }
+         trajectoryPublisher.set(poseArray); 
     }
 
     // option 1
@@ -674,6 +676,7 @@ if (Robot.isSimulation()) {
         });
         m_simNotifier.startPeriodic(kSimLoopPeriod);
     }
+
 
     @Override
     public void addVisionMeasurement(Pose2d visionRobotPoseMeters, double timestampSeconds) {

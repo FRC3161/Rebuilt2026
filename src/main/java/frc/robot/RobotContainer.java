@@ -11,6 +11,7 @@ import frc.robot.Constants.IntakeConstants.IntakeWantedState;
 import frc.robot.Constants.ShooterConstants.ShooterWantedState;
 import frc.robot.Constants.TurretConstants.TurretWantedState;
 import frc.robot.subsystems.Scoring.Shooter;
+import frc.robot.subsystems.Scoring.ShotCalc;
 import frc.robot.subsystems.Scoring.Turret;
 import frc.robot.subsystems.Drive.CommandSwerveDrivetrain;
 import frc.robot.subsystems.Drive.TunerConstants;
@@ -148,16 +149,20 @@ public class RobotContainer {
                 double rightX = driver.getRightX();
                 double slowFactor = operator.rightTrigger().getAsBoolean() ? .3 : 1.0;
 
-                // Simulation only - driver2 overrides if active
-                if (Robot.isSimulation() && driver2 != null) {
-                    if (Math.abs(driver2.getLeftY()) > 0.1) leftY = driver2.getLeftY();
-                    if (Math.abs(driver2.getLeftX()) > 0.1) leftX = driver2.getLeftX();
-                    if (Math.abs(driver2.getRightX()) > 0.1) rightX = driver2.getRightX();
-                    if (driver2.rightTrigger().getAsBoolean()) slowFactor = 0.5;
-                }
+                    // Simulation only - driver2 overrides if active
+                    if (Robot.isSimulation() && driver2 != null) {
+                        if (Math.abs(driver2.getLeftY()) > 0.1)
+                            leftY = driver2.getLeftY();
+                        if (Math.abs(driver2.getLeftX()) > 0.1)
+                            leftX = driver2.getLeftX();
+                        if (Math.abs(driver2.getRightX()) > 0.1)
+                            rightX = driver2.getRightX();
+                        if (driver2.rightTrigger().getAsBoolean())
+                            slowFactor = 0.3;
+                    }
 
-                double simTranslationFactor = Robot.isSimulation() ? 0.3 : 1.0;
-               double rawRotation = rightX;
+                    double simTranslationFactor = Robot.isSimulation() ? 0.5 : 1.0;
+                    double rawRotation = rightX;
 
                 return drive
                     .withVelocityX(-leftY * MaxSpeed * slowFactor * simTranslationFactor)
@@ -306,16 +311,36 @@ public class RobotContainer {
         /******* CONDITIONAL CONTROLS ***********/
 
         // Simulation only - driver2 right trigger triggers shooting like operator
-if (Robot.isSimulation() && driver2 != null) {
-    driver2.rightTrigger()
-        .onTrue(new SequentialCommandGroup(
-                new InstantCommand(() -> shooter.setWantedShooterState(ShooterWantedState.HUB_SHOOT)),
-                new InstantCommand(() -> turret.setWantedTurretState(TurretWantedState.AIM_HUB)),
-                new InstantCommand(() -> feeder.setWantedFeederState(FeederWantedState.SHOOT))))
-        .onFalse(new ParallelCommandGroup(
-                new InstantCommand(() -> shooter.setWantedShooterState(ShooterWantedState.WAIT)),
-                new InstantCommand(() -> turret.setWantedTurretState(TurretWantedState.IDLE)),
-                new InstantCommand(() -> feeder.setWantedFeederState(FeederWantedState.IDLE))));
+        if (Robot.isSimulation() && driver2 != null) {
+            driver2.rightTrigger()
+                    .onTrue(new SequentialCommandGroup(
+                            new InstantCommand(() -> shooter.setWantedShooterState(ShooterWantedState.HUB_SHOOT)),
+                            new InstantCommand(() -> turret.setWantedTurretState(TurretWantedState.AIM_HUB)),
+                            new InstantCommand(() -> feeder.setWantedFeederState(FeederWantedState.SHOOT))))
+                    .onFalse(new ParallelCommandGroup(
+                            new InstantCommand(() -> shooter.setWantedShooterState(ShooterWantedState.WAIT)),
+                            new InstantCommand(() -> turret.setWantedTurretState(TurretWantedState.IDLE)),
+                            new InstantCommand(() -> feeder.setWantedFeederState(FeederWantedState.IDLE))));
+        }
+
+        if (Robot.isSimulation() && driver2 != null) {
+    // Hood adjustment - bumpers
+    driver2.rightBumper().onTrue(new InstantCommand(() -> 
+        ShotCalc.hoodOffset += 0.1));
+    driver2.leftBumper().onTrue(new InstantCommand(() -> 
+        ShotCalc.hoodOffset -= 0.1));
+    
+    // RPS adjustment - Y and A buttons  
+    driver2.y().onTrue(new InstantCommand(() -> 
+        ShotCalc.rpsOffset += 1.0));
+    driver2.a().onTrue(new InstantCommand(() -> 
+        ShotCalc.rpsOffset -= 1.0));
+    
+    // Reset offsets - start button
+    driver2.start().onTrue(new InstantCommand(() -> {
+        ShotCalc.rpsOffset = 0.0;
+        ShotCalc.hoodOffset = 0.0;
+    }));
 }
 
         /* TESTING BUTTONS */

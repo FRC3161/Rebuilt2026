@@ -108,5 +108,7 @@ SmartDashboard.putNumber("Total Vel Y", totalVelocity.getY());
 
         
     }
+    public static double rpsOffset = 0.0;
+public static double hoodOffset = 0.0;
 
 }

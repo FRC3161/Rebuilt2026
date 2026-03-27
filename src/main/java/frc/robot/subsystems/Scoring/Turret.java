@@ -297,6 +297,13 @@ public class Turret extends SubsystemBase {
         SmartDashboard.putNumber("Turret Field X", drivetrain.getCurrentTurretPose().getX());
         SmartDashboard.putNumber("Turret Field Y", drivetrain.getCurrentTurretPose().getY());
 
+        if (Robot.isSimulation()) {
+        SmartDashboard.putNumber("Sim RPS Offset", ShotCalc.rpsOffset);
+        SmartDashboard.putNumber("Sim Hood Offset", ShotCalc.hoodOffset);
+        SmartDashboard.putNumber("Effective RPS", drivetrain.currentShotCommand.RPS() + ShotCalc.rpsOffset);
+        SmartDashboard.putNumber("Effective Hood", drivetrain.currentShotCommand.hoodAngle() + ShotCalc.hoodOffset);
+    }
+
         if (!Robot.isSimulation()) {
             SmartDashboard.putNumber("Turret Absolute Position", encoder.getAbsolutePosition().getValueAsDouble());
             SmartDashboard.putNumber("Turret Motor Position", turretMotor.getPosition().getValueAsDouble());

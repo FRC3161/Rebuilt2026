@@ -208,45 +208,11 @@ public class Shooter extends SubsystemBase {
                 position = 5.5;
                 break;
             case HUB_SHOOTING:
-                // Translation2d correctedVector = drivetrain.getSOTFTurretAngle();
-                // option 1
-                // Translation2d correctedVector = drivetrain.SOTF_CALC();
-                // double correctedDistance = correctedVector.getNorm();
-
-                // motorspeed = ShooterConstants.shooterSpeedInterpolation
-                // .getPrediction(correctedDistance);
-
-                // position = MathUtil.clamp(
-                // ShooterConstants.hoodAngleInterpolation.getPrediction(correctedDistance),
-                // -0.5,
-                // 8);
-                // option 2
-                // position = drivetrain.SOTFcalc()[1] /
-                // ShooterConstants.hoodConversionRotToDeg;
-                // motorspeed = drivetrain.SOTFcalc()[2];
-
-                // option 3
-                ChassisSpeeds rawFieldSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(
-                        drivetrain.getState().Speeds,
-                        drivetrain.getPose().getRotation());
-                position = ShotCalc.calculateSOTF(
-                        drivetrain.getPose().getTranslation(),
-                        rawFieldSpeeds,
-                        drivetrain.getScoringLocation(),
-                        ShooterConstants.latencyCompensation).hoodAngle();
-                motorspeed = ShotCalc.calculateSOTF(
-                        drivetrain.getPose().getTranslation(),
-                        rawFieldSpeeds,
-                        drivetrain.getScoringLocation(),
-                        ShooterConstants.latencyCompensation).RPS();
-                // option 4
-                // frc.robot.subsystems.Scoring.ShotCalc2.ShooterCommand values =
-                // ShotCalc2.calculateSOTF(drivetrain);
-                // position = values.hoodAngle();
-                // motorspeed = values.RPS();
-                motorspeed = drivetrain.currentShotCommand.RPS();
-                position = MathUtil.clamp(drivetrain.currentShotCommand.hoodAngle(), -0.5, 8);
-                break;
+    motorspeed = drivetrain.currentShotCommand.RPS() + ShotCalc.rpsOffset;
+    position = MathUtil.clamp(
+        drivetrain.currentShotCommand.hoodAngle() + ShotCalc.hoodOffset, 
+        -0.5, 8);
+    break;
             case PASS_SHOOTING:
                 motorspeed = drivetrain.currentShotCommand.RPS();
                 position = MathUtil.clamp(drivetrain.currentShotCommand.hoodAngle(), -0.5, 8);
