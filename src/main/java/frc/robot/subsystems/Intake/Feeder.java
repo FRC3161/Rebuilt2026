@@ -104,15 +104,19 @@ public class Feeder extends SubsystemBase {
                 spindexerMotorSpeed = FeederConstants.feederShootSpeed;
                 towerMotorSpeed = FeederConstants.feederShootSpeed;
                 break;
-            case PASSING:
-                if (drivetrain.getPose().getY() > 3.53 && drivetrain.getPose().getY() < 4.53) {
-                    spindexerMotorSpeed = 0;
-                    towerMotorSpeed = 0;
-                } else {
-                    spindexerMotorSpeed = FeederConstants.feederShootSpeed;
-                    towerMotorSpeed = FeederConstants.feederShootSpeed;
-                }
-                break; // fix: was missing break, was falling through to FEEDTESTING
+        case PASSING:
+    if (drivetrain.getPose().getY() > 3.53 && drivetrain.getPose().getY() < 4.53) {
+        spindexerMotorSpeed = 0;
+        towerMotorSpeed = 0;
+    } else if ((drivetrain.getPose().getX() > 3.75 && drivetrain.getPose().getX() < 5.0)
+            || (drivetrain.getPose().getX() > 11.2 && drivetrain.getPose().getX() < 12.55)) {
+        spindexerMotorSpeed = 0;
+        towerMotorSpeed = 0;
+    } else {
+        spindexerMotorSpeed = FeederConstants.feederShootSpeed;
+        towerMotorSpeed = FeederConstants.feederShootSpeed;
+    }
+    break;
             case FEEDTESTING:
                 spindexerMotorSpeed = -0.7;
                 towerMotorSpeed = -0.7;

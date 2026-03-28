@@ -18,6 +18,7 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Robot;
+import frc.robot.Constants.FeederConstants;
 import frc.robot.Constants.ShooterConstants;
 import frc.robot.Constants.ShooterConstants.ShooterWantedState;
 import frc.robot.Constants.ShooterConstants.SystemState;
@@ -214,9 +215,25 @@ public class Shooter extends SubsystemBase {
         -0.5, 8);
     break;
             case PASS_SHOOTING:
-                motorspeed = drivetrain.currentShotCommand.RPS();
-                position = MathUtil.clamp(drivetrain.currentShotCommand.hoodAngle(), -0.5, 8);
-                break;
+    boolean restrictHood = false;
+
+    if (drivetrain.getPose().getY() > 6.6) {
+       
+        restrictHood = (drivetrain.getPose().getX() > 3.75 && drivetrain.getPose().getX() < 5.0)
+                    || (drivetrain.getPose().getX() > 11.2 && drivetrain.getPose().getX() < 12.55);
+    } else if (drivetrain.getPose().getY() < 1.25){
+    
+        restrictHood = (drivetrain.getPose().getX() > 3.75 && drivetrain.getPose().getX() < 5.0)
+                    || (drivetrain.getPose().getX() > 11.2 && drivetrain.getPose().getX() < 12.55);
+    }
+    if (restrictHood) {
+        motorspeed = drivetrain.currentShotCommand.RPS();
+        position = 0.0;
+    } else {
+        motorspeed = drivetrain.currentShotCommand.RPS();
+        position = MathUtil.clamp(drivetrain.currentShotCommand.hoodAngle(), -0.5, 8);
+    }
+    break;
             case HOMING:
                 position = -0.1;
                 if (getHoodCurrent() >= ShooterConstants.homingThreshold) {
@@ -234,7 +251,7 @@ public class Shooter extends SubsystemBase {
                 break;
             case RETRACTING_AUTO:
                 position = 0;
-                break; // fix: was falling through to TURNING_ON_AUTO
+                break; 
             case TURNING_ON_AUTO:
                 motorspeed = 50;
                 break;
