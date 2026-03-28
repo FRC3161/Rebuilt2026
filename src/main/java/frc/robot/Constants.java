@@ -114,83 +114,89 @@ public final class Constants {
         static {
             TOF_MAP.put(2.0, 0.2);
             //TOF_MAP.put(2.5, 0d);
-            TOF_MAP.put(3.0, 0.25);
+            TOF_MAP.put(3.0, 0.2);
             //TOF_MAP.put(3.5, 0d);
-            TOF_MAP.put(4.0, 0.3);
+            TOF_MAP.put(4.0, 0.2);
            // TOF_MAP.put(4.5, 0d);
-            TOF_MAP.put(5.0, 0.35);
+            TOF_MAP.put(5.0, 0.2);
            // TOF_MAP.put(5.5, 0d);
-            TOF_MAP.put(6.0, 0.4);
-            TOF_MAP.put(10.0, 0.7);
+            TOF_MAP.put(6.0, 0.1);
+            TOF_MAP.put(10.0, 0.1);
         };
 
         public static final InterpolatingDoubleTreeMap PASSING_TOF_MAP = new InterpolatingDoubleTreeMap();
         static {
-            PASSING_TOF_MAP.put(2.0, 0d);
-            PASSING_TOF_MAP.put(2.5, 0d);
-            PASSING_TOF_MAP.put(3.0, 0d);
-            PASSING_TOF_MAP.put(3.5, 0d);
-            PASSING_TOF_MAP.put(4.0, 0d);
-            PASSING_TOF_MAP.put(4.5, 0d);
-            PASSING_TOF_MAP.put(5.0, 0d);
-            PASSING_TOF_MAP.put(5.5, 0d);
-            PASSING_TOF_MAP.put(6.0, 0d);
+            PASSING_TOF_MAP.put(2.0, 0.2d);
+            PASSING_TOF_MAP.put(2.5, 0.2d);
+            PASSING_TOF_MAP.put(3.0, 0.2d);
+            PASSING_TOF_MAP.put(3.5, 0.2d);
+            PASSING_TOF_MAP.put(4.0, 0.2d);
+            PASSING_TOF_MAP.put(4.5, 0.2d);
+            PASSING_TOF_MAP.put(5.0, 0.2d);
+            PASSING_TOF_MAP.put(5.5, 0.2d);
+            PASSING_TOF_MAP.put(6.0, 0.2d);
         };
 
         public static final InterpolatingDoubleTreeMap PASSING_HOOD_MAP = new InterpolatingDoubleTreeMap();
         static {
-            PASSING_HOOD_MAP.put(2.0, 0d);
-            PASSING_HOOD_MAP.put(2.5, 0d);
-            PASSING_HOOD_MAP.put(3.0, 0d);
-            PASSING_HOOD_MAP.put(3.5, 0d);
-            PASSING_HOOD_MAP.put(4.0, 0d);
-            PASSING_HOOD_MAP.put(4.5, 0d);
-            PASSING_HOOD_MAP.put(5.0, 0d);
-            PASSING_HOOD_MAP.put(5.5, 0d);
-            PASSING_HOOD_MAP.put(6.0, 0d);
+            PASSING_HOOD_MAP.put(2.0, 8d);
+            PASSING_HOOD_MAP.put(2.5, 8d);
+            PASSING_HOOD_MAP.put(3.0, 8d);
+            PASSING_HOOD_MAP.put(3.5, 8d);
+            PASSING_HOOD_MAP.put(4.0, 8d);
+            PASSING_HOOD_MAP.put(4.5, 8d);
+            PASSING_HOOD_MAP.put(5.0, 8d);
+            PASSING_HOOD_MAP.put(5.5, 8d);
+            PASSING_HOOD_MAP.put(6.0, 8d);
+            PASSING_HOOD_MAP.put(13.0, 8d);
         };
 
         public static final InterpolatingDoubleTreeMap PASSING_RPS_MAP = new InterpolatingDoubleTreeMap();
         static {
-            PASSING_RPS_MAP.put(2.0, 0d);
-            PASSING_RPS_MAP.put(2.5, 0d);
-            PASSING_RPS_MAP.put(3.0, 0d);
-            PASSING_RPS_MAP.put(3.5, 0d);
-            PASSING_RPS_MAP.put(4.0, 0d);
-            PASSING_RPS_MAP.put(4.5, 0d);
-            PASSING_RPS_MAP.put(5.0, 0d);
-            PASSING_RPS_MAP.put(5.5, 0d);
-            PASSING_RPS_MAP.put(6.0, 0d);
+            PASSING_RPS_MAP.put(2.0, 33d);
+            PASSING_RPS_MAP.put(2.5, 35d);
+            PASSING_RPS_MAP.put(3.0, 37d);
+            PASSING_RPS_MAP.put(3.5, 40d);
+            PASSING_RPS_MAP.put(4.0, 42d);
+            PASSING_RPS_MAP.put(5.0, 46d);
+            PASSING_RPS_MAP.put(6.0, 51d);
+            PASSING_RPS_MAP.put(7.0, 57d);
+            PASSING_RPS_MAP.put(8.0, 63d);
+            PASSING_RPS_MAP.put(9.0, 67d);
+            PASSING_RPS_MAP.put(10.0, 70d);
+            PASSING_RPS_MAP.put(11.0, 71d);
+            PASSING_RPS_MAP.put(12.0, 73d);
+            PASSING_RPS_MAP.put(13.0, 76d);
         };
 
         public static double activeWaitingSpeed = 30;
         public static double inactiveWaitingSpeed;
-        public static PolynomialRegression hoodAngleInterpolation = new PolynomialRegression(
-                Arrays.asList(
-                        new Point(2, 0),
-                        new Point(3, 2.5),
-                        new Point(4, 5),
-                        new Point(5, 5.5), // 6.3
-                        new Point(6, 6.5), // 7.5
-                        new Point(10, 8)),
-                2);
+        // public static PolynomialRegression hoodAngleInterpolation = new PolynomialRegression(
+        //         Arrays.asList(
+        //                 new Point(2, 0),
+        //                 new Point(3, 2.5),
+        //                 new Point(4, 5),
+        //                 new Point(5, 5.5), // 6.3
+        //                 new Point(6, 6.5), // 7.5
+        //                 new Point(10, 8)),
+        //         2);
 
-        public static PolynomialRegression shooterSpeedInterpolation = new PolynomialRegression(
-                Arrays.asList(
-                        new Point(2, 47),
-                        new Point(3, 50),
-                        new Point(4, 50),
-                        new Point(5, 55),
-                        new Point(6, 62),
-                        new Point(10, 85)),
-                2);
+        // public static PolynomialRegression shooterSpeedInterpolation = new PolynomialRegression(
+        //         Arrays.asList(
+        //                 new Point(2, 47),
+        //                 new Point(3, 50),
+        //                 new Point(4, 50),
+        //                 new Point(5, 55),
+        //                 new Point(6, 62),
+        //                 new Point(10, 85)),
+        //         2);
         public static PolynomialRegression timeOfFlightInterpolation = new PolynomialRegression(
                 Arrays.asList(
-                        new Point(2, 0.25),
-                        new Point(3, 0.30),
-                        new Point(4, 0.35),
-                        new Point(5, 0.40),
-                        new Point(6, 0.45)),
+                        new Point(2, 0.2),
+                        new Point(3, 0.2),
+                        new Point(4, 0.2),
+                        new Point(5, 0.2),
+                        new Point(6, 0.1)),
                 2);
         public static double distanceToHub;
         public static double passDistance;
@@ -537,12 +543,12 @@ public final class Constants {
         }
 
         public static Translation2d BLUE_HUB_POSE = new Translation2d(4.62, 4.03); // was 4.03
-        public static Translation2d RED_HUB_POSE = new Translation2d(12, 4.03); // was 11.92, 4.03
+        public static Translation2d RED_HUB_POSE = new Translation2d(11.92, 4.03); // was 11.92, 4.03
 
-        public static Translation2d BLUE_PASS_SPOT_1 = new Translation2d(1, 5); // 1
-        public static Translation2d BLUE_PASS_SPOT_2 = new Translation2d(1, 3); // 7
-        public static Translation2d RED_PASS_SPOT_1 = new Translation2d(14.5, 5); // 15.5, 7
-        public static Translation2d RED_PASS_SPOT_2 = new Translation2d(14.5, 3); // 15.5, 1
+        public static Translation2d BLUE_PASS_SPOT_1 = new Translation2d(3, 2); // 1
+        public static Translation2d BLUE_PASS_SPOT_2 = new Translation2d(3, 6); // 7
+        public static Translation2d RED_PASS_SPOT_1 = new Translation2d(12.5, 2); // 15.5, 7
+        public static Translation2d RED_PASS_SPOT_2 = new Translation2d(12.5, 6); // 15.5, 1
 
         public static Map<ScoringZone, Pose2d> scoringZoneLUT = Map.ofEntries(
                 Map.entry(ScoringZone.RED_PASSING_1, new Pose2d(RED_PASS_SPOT_1, new Rotation2d())),

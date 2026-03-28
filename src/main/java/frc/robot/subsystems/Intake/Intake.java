@@ -70,26 +70,28 @@ public class Intake extends SubsystemBase {
         intakeExtensionMotorConfig.MotionMagic.MotionMagicExpo_kA = IntakeConstants.intakeMotionMagicExpoK_A;
         intakeExtensionMotorConfig.MotionMagic.MotionMagicExpo_kV = IntakeConstants.intakeMotionMagicExpoK_V;
 
-        if (!Robot.isSimulation()) {
+            if (!Robot.isSimulation()) {
             StatusCode status = StatusCode.StatusCodeNotInitialized;
+ 
             for (int i = 0; i < 5; ++i) {
                 status = intakeMotor.getConfigurator().apply(intakeMotorConfig);
                 if (status.isOK())
                     break;
             }
             if (!status.isOK()) {
-                System.out.println("Could not apply intake configs, error code: " + status.toString());
+                System.out.println("Could not apply intake motor configs, error code: " + status.toString());
+            }
+ 
+            for (int i = 0; i < 5; ++i) {
+                status = intakeExtensionMotor.getConfigurator().apply(intakeExtensionMotorConfig);
+                if (status.isOK())
+                    break;
+            }
+            if (!status.isOK()) {
+                System.out.println("Could not apply extension motor configs, error code: " + status.toString());
             }
         }
-        for (int i = 0; i < 5; ++i) {
-            status = intakeExtensionMotor.getConfigurator().apply(intakeExtensionMotorConfig);
-            if (status.isOK())
-                break;
-        }
-        if (!status.isOK()) {
-            System.out.println("Could not apply configs, error code: " + status.toString());
     }
-
     // Sim safe helpers
     private double getExtensionPosition() {
         if (Robot.isSimulation()) {
@@ -142,7 +144,7 @@ public class Intake extends SubsystemBase {
                 // yield SystemState.IDLING;
                 // } else {
                 yield SystemState.INTAKING;
-            // }
+             }
             case RETRACT -> {
                 if (systemState == SystemState.SCORING && !Robot.isSimulation()) {
                     intakeMotorConfig.Voltage.PeakReverseVoltage = IntakeConstants.intakeMotionMagicExpoK_A;

@@ -9,17 +9,11 @@ import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Robot;
 import frc.robot.Constants.TurretConstants;
 import frc.robot.Constants.TurretConstants.TurretWantedState;
-import frc.robot.Constants.FieldConstants;
-import frc.robot.Constants.ShooterConstants;
 import frc.robot.subsystems.Drive.CommandSwerveDrivetrain;
 import frc.util.Interpolation.LoggedTunableNumber;
 import frc.robot.Constants.TurretConstants.SystemState;
@@ -37,7 +31,7 @@ public class Turret extends SubsystemBase {
 
     // for position control
     private double position = 0.0;
-    private double simTurretPosition = 0.0; // tracks simulated turret position
+    private double simTurretPosition = 0.0;
     private double CCWlimit = 0.85;
     private double CWLimit = -0.85;
     private double gearRatio = 38.8888888889;
@@ -174,32 +168,6 @@ public class Turret extends SubsystemBase {
                 double target2 = 0;
                 double currentTurretToRobotAngle2 = getTurretPosition();
                 Rotation2d currentRobotAngle2 = drivetrain.getPose().getRotation();
-                // Rotation2d angleToHub2 = drivetrain.getSOTFTurretAngle().getAngle();
-
-                /* OPTION 1 */
-                // Rotation2d angleToHub2 = drivetrain.SOTF_CALC().getAngle();
-
-                /* OPTION 2 */
-                // Rotation2d angleToHub2 = Rotation2d.fromDegrees(drivetrain.SOTFcalc()[0]);
-
-                /* OPTION 3 */
-                ChassisSpeeds rawFieldSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(
-                        drivetrain.getState().Speeds,
-                        drivetrain.getPose().getRotation());
-                Rotation2d angleToHub2 = (ShotCalc.calculateSOTF(
-                        drivetrain.getTurretPose().getTranslation(),
-                        rawFieldSpeeds, drivetrain.getScoringLocation(),
-                        ShooterConstants.latencyCompensation).turretAngle());
-
-                /* OPTION 4 */
-                // Rotation2d angleToHub2 = ShotCalc2.calculateSOTF(drivetrain).turretAngle();
-
-                // calculate desired angle of turret relative to hub
-                // double angleToHub2 = (Math.atan2(drivetrain.getYfromHub(),
-                // drivetrain.getXfromHub()));
-
-                // calculate desired angle of turret relative to robot
-                Rotation2d desiredTurretAngle2 = (angleToHub2)
 
                 double dt2 = Timer.getFPGATimestamp() - drivetrain.shotCommandTimestamp;
                 double omegaRad2 = drivetrain.getState().Speeds.omegaRadiansPerSecond;
@@ -242,7 +210,17 @@ public class Turret extends SubsystemBase {
     }
 
     public boolean turretIsReady() {
-        return Math.abs(getTurretPosition() - position) < TurretConstants.tolerance;
+        double dynamicTolerance = TurretConstants.tolerance;
+        if (Robot.isSimulation()) return true;
+
+        double omega = Math.abs(drivetrain.getState().Speeds.omegaRadiansPerSecond);
+        if (omega > 0.5) {
+            dynamicTolerance = TurretConstants.tolerance * 3;
+        } else if (omega > 0.2) {
+            dynamicTolerance = TurretConstants.tolerance * 2;
+        }
+
+        return Math.abs(getTurretPosition() - position) < dynamicTolerance;
     }
 
     public void enableEcoModeTurret() {
@@ -291,18 +269,18 @@ public class Turret extends SubsystemBase {
         SmartDashboard.putNumber("Shot Command RPS", drivetrain.currentShotCommand.RPS());
         SmartDashboard.putNumber("Shot Command Hood", drivetrain.currentShotCommand.hoodAngle());
         SmartDashboard.putNumber("Rotation Correction Deg", Math.toDegrees(
-                    drivetrain.getState().Speeds.omegaRadiansPerSecond *
-                    (Timer.getFPGATimestamp() - drivetrain.shotCommandTimestamp)));
+                drivetrain.getState().Speeds.omegaRadiansPerSecond *
+                (Timer.getFPGATimestamp() - drivetrain.shotCommandTimestamp)));
         SmartDashboard.putNumber("Robot Angle Deg", drivetrain.getPose().getRotation().getDegrees());
         SmartDashboard.putNumber("Turret Field X", drivetrain.getCurrentTurretPose().getX());
         SmartDashboard.putNumber("Turret Field Y", drivetrain.getCurrentTurretPose().getY());
 
         if (Robot.isSimulation()) {
-        SmartDashboard.putNumber("Sim RPS Offset", ShotCalc.rpsOffset);
-        SmartDashboard.putNumber("Sim Hood Offset", ShotCalc.hoodOffset);
-        SmartDashboard.putNumber("Effective RPS", drivetrain.currentShotCommand.RPS() + ShotCalc.rpsOffset);
-        SmartDashboard.putNumber("Effective Hood", drivetrain.currentShotCommand.hoodAngle() + ShotCalc.hoodOffset);
-    }
+            SmartDashboard.putNumber("Sim RPS Offset", ShotCalc.rpsOffset);
+            SmartDashboard.putNumber("Sim Hood Offset", ShotCalc.hoodOffset);
+            SmartDashboard.putNumber("Effective RPS", drivetrain.currentShotCommand.RPS() + ShotCalc.rpsOffset);
+            SmartDashboard.putNumber("Effective Hood", drivetrain.currentShotCommand.hoodAngle() + ShotCalc.hoodOffset);
+        }
 
         if (!Robot.isSimulation()) {
             SmartDashboard.putNumber("Turret Absolute Position", encoder.getAbsolutePosition().getValueAsDouble());
@@ -318,10 +296,9 @@ public class Turret extends SubsystemBase {
         applyState();
 
         if (Robot.isSimulation()) {
-            // In simulation, turret instantly reaches setpoint
             simTurretPosition = position;
         } else {
-            turretMotor.setControl(mmE_request.withPosition(position).withFeedForward(-drivetrain.getState().Speeds.omegaRadiansPerSecond));
+            turretMotor.setControl(mmE_request.withPosition(position));
         }
     }
 }

@@ -85,7 +85,7 @@ public class RobotContainer {
     private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
     // private final SwerveRequest.PointWheelsAt point = new
     // SwerveRequest.PointWheelsAt();
-    private double MaxAngularRate = RotationsPerSecond.of(0.75).in(RadiansPerSecond);
+   // private double MaxAngularRate = RotationsPerSecond.of(0.75).in(RadiansPerSecond);
 
     // Replace with CommandPS4Controller or CommandJoystick if needed
     private final CommandXboxController driver = new CommandXboxController(OperatorConstants.kDriverControllerPort);

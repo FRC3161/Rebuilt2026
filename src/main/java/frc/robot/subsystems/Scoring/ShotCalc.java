@@ -50,6 +50,8 @@ SmartDashboard.putNumber("Translational Vel Y", filteredSpeeds.vyMetersPerSecond
 SmartDashboard.putNumber("Total Vel X", totalVelocity.getX());
 SmartDashboard.putNumber("Total Vel Y", totalVelocity.getY());
 
+
+
         // 4. NULL SAFETY — too close to target
         Translation2d toGoal = goalPosition.minus(turretPosition);
         double distance = toGoal.getNorm();{
@@ -91,6 +93,7 @@ SmartDashboard.putNumber("Total Vel Y", totalVelocity.getY());
         // 9. TURRET ANGLE
         Rotation2d turretAngle = shotVelocity.getAngle();
 
+        
         // 10. SCALE RPS PROPORTIONALLY (from this class's original approach)
         // Avoids unit conversion — stays in RPS space entirely
         double requiredVelocity = shotVelocity.getNorm();
@@ -99,6 +102,13 @@ SmartDashboard.putNumber("Total Vel Y", totalVelocity.getY());
                 baselineRPS * velocityRatio,
                 ShooterConstants.MIN_RPS,
                 ShooterConstants.MAX_RPS);
+
+                SmartDashboard.putNumber("Baseline Velocity", baselineVelocity);
+SmartDashboard.putNumber("Target Velocity Norm", targetVelocity.getNorm());
+SmartDashboard.putNumber("Shot Velocity Norm", shotVelocity.getNorm());
+SmartDashboard.putNumber("Shot Angle", turretAngle.getDegrees());
+SmartDashboard.putNumber("Velocity Ratio", velocityRatio);
+SmartDashboard.putNumber("Adjusted RPS", adjustedRPS);
 
         // 11. HOOD ANGLE — baseline from table, can refine if needed
         double adjustedHood = baselineHoodAngle;
