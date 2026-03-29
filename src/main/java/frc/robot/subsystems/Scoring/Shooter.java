@@ -219,12 +219,12 @@ public class Shooter extends SubsystemBase {
 
     if (drivetrain.getPose().getY() > 6.6) {
        
-        restrictHood = (drivetrain.getPose().getX() > 3.75 && drivetrain.getPose().getX() < 5.0)
-                    || (drivetrain.getPose().getX() > 11.2 && drivetrain.getPose().getX() < 12.55);
+        restrictHood = (drivetrain.getPose().getX() > 3.6 && drivetrain.getPose().getX() < 5.45)
+                    || (drivetrain.getPose().getX() > 11.05 && drivetrain.getPose().getX() < 12.9);
     } else if (drivetrain.getPose().getY() < 1.25){
     
-        restrictHood = (drivetrain.getPose().getX() > 3.75 && drivetrain.getPose().getX() < 5.0)
-                    || (drivetrain.getPose().getX() > 11.2 && drivetrain.getPose().getX() < 12.55);
+        restrictHood = (drivetrain.getPose().getX() > 3.6 && drivetrain.getPose().getX() < 5.45)
+                    || (drivetrain.getPose().getX() > 11.05 && drivetrain.getPose().getX() < 12.9);
     }
     if (restrictHood) {
         motorspeed = drivetrain.currentShotCommand.RPS();

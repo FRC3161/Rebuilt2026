@@ -108,8 +108,8 @@ public class Feeder extends SubsystemBase {
     if (drivetrain.getPose().getY() > 3.53 && drivetrain.getPose().getY() < 4.53) {
         spindexerMotorSpeed = 0;
         towerMotorSpeed = 0;
-    } else if ((drivetrain.getPose().getX() > 3.75 && drivetrain.getPose().getX() < 5.0)
-            || (drivetrain.getPose().getX() > 11.2 && drivetrain.getPose().getX() < 12.55)) {
+    } else if ((drivetrain.getPose().getX() > 3.6 && drivetrain.getPose().getX() < 5.35)
+            || (drivetrain.getPose().getX() > 11.05 && drivetrain.getPose().getX() < 12.9)) {
         spindexerMotorSpeed = 0;
         towerMotorSpeed = 0;
     } else {

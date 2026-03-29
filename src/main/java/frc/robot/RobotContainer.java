@@ -302,7 +302,7 @@ public class RobotContainer {
                 .onTrue(new SequentialCommandGroup(
                         new InstantCommand(() -> shooter.setWantedShooterState(ShooterWantedState.PASS_SHOOT)),
                         new InstantCommand(() -> turret.setWantedTurretState(TurretWantedState.AIM_PASS)),
-                        new InstantCommand(() -> feeder.setWantedFeederState(FeederWantedState.SHOOT))))
+                        new InstantCommand(() -> feeder.setWantedFeederState(FeederWantedState.PASS))))
                 .onFalse(new ParallelCommandGroup(
                         new InstantCommand(() -> shooter.setWantedShooterState(ShooterWantedState.WAIT)),
                         new InstantCommand(() -> turret.setWantedTurretState(TurretWantedState.IDLE)),
@@ -329,6 +329,15 @@ public class RobotContainer {
         ShotCalc.hoodOffset += 0.1));
     driver2.leftBumper().onTrue(new InstantCommand(() -> 
         ShotCalc.hoodOffset -= 0.1));
+        driver2.rightBumper()
+        .onTrue(new SequentialCommandGroup(
+                        new InstantCommand(() -> shooter.setWantedShooterState(ShooterWantedState.PASS_SHOOT)),
+                        new InstantCommand(() -> turret.setWantedTurretState(TurretWantedState.AIM_PASS)),
+                        new InstantCommand(() -> feeder.setWantedFeederState(FeederWantedState.PASS))))
+                .onFalse(new ParallelCommandGroup(
+                        new InstantCommand(() -> shooter.setWantedShooterState(ShooterWantedState.WAIT)),
+                        new InstantCommand(() -> turret.setWantedTurretState(TurretWantedState.IDLE)),
+                        new InstantCommand(() -> feeder.setWantedFeederState(FeederWantedState.IDLE))));
     
     // RPS adjustment - Y and A buttons  
     driver2.y().onTrue(new InstantCommand(() -> 
