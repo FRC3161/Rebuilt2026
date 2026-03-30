@@ -8,6 +8,7 @@ import frc.robot.Constants.LightsConstants;
 import frc.robot.Constants.OperatorConstants;
 import frc.robot.Constants.FeederConstants.FeederWantedState;
 import frc.robot.Constants.IntakeConstants.IntakeWantedState;
+import frc.robot.Constants.IntakeConstants.SystemState;
 import frc.robot.Constants.ShooterConstants.ShooterWantedState;
 import frc.robot.Constants.TurretConstants.TurretWantedState;
 import frc.robot.subsystems.Scoring.Shooter;
@@ -44,6 +45,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.ConditionalCommand;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
@@ -51,7 +53,6 @@ import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Robot;
-
 /**
  * This class is where the bulk of the robot should be declared. Since
  * Command-based is a
@@ -199,8 +200,11 @@ public class RobotContainer {
                         .withTargetDirection(Rotation2d.k180deg)));
 
         // intake
-        driver.rightBumper()
-                .onTrue(new InstantCommand(() -> intake.setWantedIntakeState(IntakeWantedState.INTAKE)));
+         driver.rightBumper()
+                .onTrue(new ConditionalCommand(
+                        new InstantCommand(() -> intake.setWantedIntakeState(IntakeWantedState.IDLE)),
+                        new InstantCommand(() -> intake.setWantedIntakeState(IntakeWantedState.INTAKE)),
+                        () -> intake.getState() == SystemState.INTAKING));
         // .onFalse(new InstantCommand(() ->
         // intake.setWantedIntakeState(IntakeWantedState.IDLE)));
 
@@ -247,7 +251,7 @@ public class RobotContainer {
                         new InstantCommand(() -> turret.setWantedTurretState(TurretWantedState.AIM_PASS)),
                         new InstantCommand(() -> feeder.setWantedFeederState(FeederWantedState.SHOOT))))
                 .onFalse(new ParallelCommandGroup(
-                        new InstantCommand(() -> shooter.setWantedShooterState(ShooterWantedState.WAIT)),
+                        new InstantCommand(() -> shooter.setWantedShooterState(ShooterWantedState.IDLE)),
                         new InstantCommand(() -> turret.setWantedTurretState(TurretWantedState.IDLE)),
                         new InstantCommand(() -> feeder.setWantedFeederState(FeederWantedState.IDLE))));
 
@@ -258,7 +262,7 @@ public class RobotContainer {
                         new InstantCommand(() -> turret.setWantedTurretState(TurretWantedState.TRENCH_PRESETR)),
                         new InstantCommand(() -> feeder.setWantedFeederState(FeederWantedState.SHOOT))))
                 .onFalse(new ParallelCommandGroup(
-                        new InstantCommand(() -> shooter.setWantedShooterState(ShooterWantedState.WAIT)),
+                        new InstantCommand(() -> shooter.setWantedShooterState(ShooterWantedState.IDLE)),
                         new InstantCommand(() -> turret.setWantedTurretState(TurretWantedState.IDLE)),
                         new InstantCommand(() -> feeder.setWantedFeederState(FeederWantedState.IDLE))));
 
@@ -269,7 +273,7 @@ public class RobotContainer {
                         new InstantCommand(() -> turret.setWantedTurretState(TurretWantedState.TRENCH_PRESETL)),
                         new InstantCommand(() -> feeder.setWantedFeederState(FeederWantedState.SHOOT))))
                 .onFalse(new ParallelCommandGroup(
-                        new InstantCommand(() -> shooter.setWantedShooterState(ShooterWantedState.WAIT)),
+                        new InstantCommand(() -> shooter.setWantedShooterState(ShooterWantedState.IDLE)),
                         new InstantCommand(() -> turret.setWantedTurretState(TurretWantedState.IDLE)),
                         new InstantCommand(() -> feeder.setWantedFeederState(FeederWantedState.IDLE))));
 
@@ -287,7 +291,7 @@ public class RobotContainer {
                         new InstantCommand(() -> turret.setWantedTurretState(TurretWantedState.AIM_HUB)),
                         new InstantCommand(() -> feeder.setWantedFeederState(FeederWantedState.SHOOT))))
                 .onFalse(new ParallelCommandGroup(
-                        new InstantCommand(() -> shooter.setWantedShooterState(ShooterWantedState.WAIT)),
+                        new InstantCommand(() -> shooter.setWantedShooterState(ShooterWantedState.IDLE)),
                         new InstantCommand(() -> turret.setWantedTurretState(TurretWantedState.IDLE)),
                         new InstantCommand(() -> feeder.setWantedFeederState(FeederWantedState.IDLE))));
 
@@ -304,7 +308,7 @@ public class RobotContainer {
                         new InstantCommand(() -> turret.setWantedTurretState(TurretWantedState.AIM_PASS)),
                         new InstantCommand(() -> feeder.setWantedFeederState(FeederWantedState.PASS))))
                 .onFalse(new ParallelCommandGroup(
-                        new InstantCommand(() -> shooter.setWantedShooterState(ShooterWantedState.WAIT)),
+                        new InstantCommand(() -> shooter.setWantedShooterState(ShooterWantedState.IDLE)),
                         new InstantCommand(() -> turret.setWantedTurretState(TurretWantedState.IDLE)),
                         new InstantCommand(() -> feeder.setWantedFeederState(FeederWantedState.IDLE))));
 
@@ -318,7 +322,7 @@ public class RobotContainer {
                             new InstantCommand(() -> turret.setWantedTurretState(TurretWantedState.AIM_HUB)),
                             new InstantCommand(() -> feeder.setWantedFeederState(FeederWantedState.SHOOT))))
                     .onFalse(new ParallelCommandGroup(
-                            new InstantCommand(() -> shooter.setWantedShooterState(ShooterWantedState.WAIT)),
+                            new InstantCommand(() -> shooter.setWantedShooterState(ShooterWantedState.IDLE)),
                             new InstantCommand(() -> turret.setWantedTurretState(TurretWantedState.IDLE)),
                             new InstantCommand(() -> feeder.setWantedFeederState(FeederWantedState.IDLE))));
         }
@@ -335,7 +339,7 @@ public class RobotContainer {
                         new InstantCommand(() -> turret.setWantedTurretState(TurretWantedState.AIM_PASS)),
                         new InstantCommand(() -> feeder.setWantedFeederState(FeederWantedState.PASS))))
                 .onFalse(new ParallelCommandGroup(
-                        new InstantCommand(() -> shooter.setWantedShooterState(ShooterWantedState.WAIT)),
+                        new InstantCommand(() -> shooter.setWantedShooterState(ShooterWantedState.IDLE)),
                         new InstantCommand(() -> turret.setWantedTurretState(TurretWantedState.IDLE)),
                         new InstantCommand(() -> feeder.setWantedFeederState(FeederWantedState.IDLE))));
     

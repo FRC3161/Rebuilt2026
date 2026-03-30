@@ -112,13 +112,13 @@ public final class Constants {
 
         public static final InterpolatingDoubleTreeMap TOF_MAP = new InterpolatingDoubleTreeMap();
         static {
-            TOF_MAP.put(2.0, 0.2);
+            TOF_MAP.put(2.0, 0.1);
             //TOF_MAP.put(2.5, 0d);
-            TOF_MAP.put(3.0, 0.2);
+            TOF_MAP.put(3.0, 0.1);
             //TOF_MAP.put(3.5, 0d);
-            TOF_MAP.put(4.0, 0.2);
+            TOF_MAP.put(4.0, 0.1);
            // TOF_MAP.put(4.5, 0d);
-            TOF_MAP.put(5.0, 0.2);
+            TOF_MAP.put(5.0, 0.1);
            // TOF_MAP.put(5.5, 0d);
             TOF_MAP.put(6.0, 0.1);
             TOF_MAP.put(10.0, 0.1);
@@ -126,15 +126,15 @@ public final class Constants {
 
         public static final InterpolatingDoubleTreeMap PASSING_TOF_MAP = new InterpolatingDoubleTreeMap();
         static {
-            PASSING_TOF_MAP.put(2.0, 0.2d);
-            PASSING_TOF_MAP.put(2.5, 0.2d);
-            PASSING_TOF_MAP.put(3.0, 0.2d);
-            PASSING_TOF_MAP.put(3.5, 0.2d);
-            PASSING_TOF_MAP.put(4.0, 0.2d);
-            PASSING_TOF_MAP.put(4.5, 0.2d);
-            PASSING_TOF_MAP.put(5.0, 0.2d);
-            PASSING_TOF_MAP.put(5.5, 0.2d);
-            PASSING_TOF_MAP.put(6.0, 0.2d);
+            PASSING_TOF_MAP.put(2.0, 0.1d);
+            PASSING_TOF_MAP.put(2.5, 0.1d);
+            PASSING_TOF_MAP.put(3.0, 0.1d);
+            PASSING_TOF_MAP.put(3.5, 0.1d);
+            PASSING_TOF_MAP.put(4.0, 0.1d);
+            PASSING_TOF_MAP.put(4.5, 0.1d);
+            PASSING_TOF_MAP.put(5.0, 0.1d);
+            PASSING_TOF_MAP.put(5.5, 0.1d);
+            PASSING_TOF_MAP.put(6.0, 0.1d);
         };
 
         public static final InterpolatingDoubleTreeMap PASSING_HOOD_MAP = new InterpolatingDoubleTreeMap();
@@ -545,10 +545,10 @@ public final class Constants {
         public static Translation2d BLUE_HUB_POSE = new Translation2d(4.62, 4.03); // was 4.03
         public static Translation2d RED_HUB_POSE = new Translation2d(11.92, 4.03); // was 11.92, 4.03
 
-        public static Translation2d BLUE_PASS_SPOT_1 = new Translation2d(3, 2); // 1
-        public static Translation2d BLUE_PASS_SPOT_2 = new Translation2d(3, 6); // 7
-        public static Translation2d RED_PASS_SPOT_1 = new Translation2d(12.5, 2); // 15.5, 7
-        public static Translation2d RED_PASS_SPOT_2 = new Translation2d(12.5, 6); // 15.5, 1
+        public static Translation2d BLUE_PASS_SPOT_1 = new Translation2d(3, 1.5); // 1
+        public static Translation2d BLUE_PASS_SPOT_2 = new Translation2d(3, 6.5); // 7
+        public static Translation2d RED_PASS_SPOT_1 = new Translation2d(12.5, 1.5); // 15.5, 7
+        public static Translation2d RED_PASS_SPOT_2 = new Translation2d(12.5, 6.5); // 15.5, 1
 
         public static Map<ScoringZone, Pose2d> scoringZoneLUT = Map.ofEntries(
                 Map.entry(ScoringZone.RED_PASSING_1, new Pose2d(RED_PASS_SPOT_1, new Rotation2d())),
