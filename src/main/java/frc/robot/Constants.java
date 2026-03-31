@@ -112,29 +112,29 @@ public final class Constants {
 
         public static final InterpolatingDoubleTreeMap TOF_MAP = new InterpolatingDoubleTreeMap();
         static {
-            TOF_MAP.put(2.0, 0.1);
+            TOF_MAP.put(2.0, 0.5);
             //TOF_MAP.put(2.5, 0d);
-            TOF_MAP.put(3.0, 0.1);
+            TOF_MAP.put(3.0, 0.5);
             //TOF_MAP.put(3.5, 0d);
-            TOF_MAP.put(4.0, 0.1);
+            TOF_MAP.put(4.0, 0.5);
            // TOF_MAP.put(4.5, 0d);
-            TOF_MAP.put(5.0, 0.1);
+            TOF_MAP.put(5.0, 0.5);
            // TOF_MAP.put(5.5, 0d);
-            TOF_MAP.put(6.0, 0.1);
-            TOF_MAP.put(10.0, 0.1);
+            TOF_MAP.put(6.0, 0.5);
+            TOF_MAP.put(10.0, 0.5);
         };
 
         public static final InterpolatingDoubleTreeMap PASSING_TOF_MAP = new InterpolatingDoubleTreeMap();
         static {
-            PASSING_TOF_MAP.put(2.0, 0.1d);
-            PASSING_TOF_MAP.put(2.5, 0.1d);
-            PASSING_TOF_MAP.put(3.0, 0.1d);
-            PASSING_TOF_MAP.put(3.5, 0.1d);
-            PASSING_TOF_MAP.put(4.0, 0.1d);
-            PASSING_TOF_MAP.put(4.5, 0.1d);
-            PASSING_TOF_MAP.put(5.0, 0.1d);
-            PASSING_TOF_MAP.put(5.5, 0.1d);
-            PASSING_TOF_MAP.put(6.0, 0.1d);
+            PASSING_TOF_MAP.put(2.0, 0.5d);
+            PASSING_TOF_MAP.put(2.5, 0.5d);
+            PASSING_TOF_MAP.put(3.0, 0.5d);
+            PASSING_TOF_MAP.put(3.5, 0.5d);
+            PASSING_TOF_MAP.put(4.0, 0.5d);
+            PASSING_TOF_MAP.put(4.5, 0.5d);
+            PASSING_TOF_MAP.put(5.0, 0.5d);
+            PASSING_TOF_MAP.put(5.5, 0.5d);
+            PASSING_TOF_MAP.put(6.0, 0.5d);
         };
 
         public static final InterpolatingDoubleTreeMap PASSING_HOOD_MAP = new InterpolatingDoubleTreeMap();

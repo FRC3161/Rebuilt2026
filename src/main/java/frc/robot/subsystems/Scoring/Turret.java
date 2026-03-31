@@ -296,9 +296,11 @@ public class Turret extends SubsystemBase {
         applyState();
 
         if (Robot.isSimulation()) {
+            // In simulation, turret instantly reaches setpoint
             simTurretPosition = position;
         } else {
-            turretMotor.setControl(mmE_request.withPosition(position));
+            turretMotor.setControl(mmE_request.withPosition(position)
+                    .withFeedForward(-drivetrain.getState().Speeds.omegaRadiansPerSecond));
         }
     }
 }
