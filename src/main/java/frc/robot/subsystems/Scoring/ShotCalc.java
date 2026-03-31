@@ -70,15 +70,14 @@ public final class ShotCalc {
         Translation2d virtualTarget = goalPosition;
 
         // 6. ITERATIVE SOLVE (20 passes)
-        for (int i = 0; i < 20; i++) {
-            Translation2d predictedTurretPos = turretPosition.plus(totalVelocity.times(timeOfFlight));
-            virtualTarget = goalPosition.minus(totalVelocity.times(timeOfFlight));
-            toGoal = virtualTarget.minus(predictedTurretPos);
-            distance = toGoal.getNorm();
-            timeOfFlight = isPassing
-                    ? ShooterConstants.PASSING_TOF_MAP.get(distance)
-                    : ShooterConstants.TOF_MAP.get(distance);
-        }
+       for (int i = 0; i < 20; i++) {
+    virtualTarget = goalPosition.minus(totalVelocity.times(timeOfFlight));
+    toGoal = virtualTarget.minus(turretPosition);
+    distance = toGoal.getNorm();
+    timeOfFlight = isPassing
+            ? ShooterConstants.PASSING_TOF_MAP.get(distance)
+            : ShooterConstants.TOF_MAP.get(distance);
+}
 
         // 7. FINAL TABLE LOOKUPS at corrected distance
         double baselineRPS = isPassing

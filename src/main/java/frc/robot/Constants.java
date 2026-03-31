@@ -64,7 +64,8 @@ public final class Constants {
     }
 
     public static class ShooterConstants {
-        public static double hoodConversionRotToDeg = 360 / 129.6;
+        public static double hoodZeroPhysicalAngle = 18.798;
+        public static double hoodConversionRotToDeg = 360.0 / 129.6;
         public static double latencyCompensation = .20;
         public static double MIN_RPS = 0;
         public static double MAX_RPS = 100;
@@ -121,7 +122,7 @@ public final class Constants {
             TOF_MAP.put(5.0, 0.5);
            // TOF_MAP.put(5.5, 0d);
             TOF_MAP.put(6.0, 0.5);
-            TOF_MAP.put(10.0, 0.5);
+           // TOF_MAP.put(10.0, 0.5);
         };
 
         public static final InterpolatingDoubleTreeMap PASSING_TOF_MAP = new InterpolatingDoubleTreeMap();
@@ -139,16 +140,16 @@ public final class Constants {
 
         public static final InterpolatingDoubleTreeMap PASSING_HOOD_MAP = new InterpolatingDoubleTreeMap();
         static {
-            PASSING_HOOD_MAP.put(2.0, 8d);
-            PASSING_HOOD_MAP.put(2.5, 8d);
-            PASSING_HOOD_MAP.put(3.0, 8d);
-            PASSING_HOOD_MAP.put(3.5, 8d);
-            PASSING_HOOD_MAP.put(4.0, 8d);
-            PASSING_HOOD_MAP.put(4.5, 8d);
-            PASSING_HOOD_MAP.put(5.0, 8d);
-            PASSING_HOOD_MAP.put(5.5, 8d);
-            PASSING_HOOD_MAP.put(6.0, 8d);
-            PASSING_HOOD_MAP.put(13.0, 8d);
+            PASSING_HOOD_MAP.put(2.0, 7.5d);
+            PASSING_HOOD_MAP.put(2.5, 7.5d);
+            PASSING_HOOD_MAP.put(3.0, 7.5d);
+            PASSING_HOOD_MAP.put(3.5, 7.5d);
+            PASSING_HOOD_MAP.put(4.0, 7.5d);
+            PASSING_HOOD_MAP.put(4.5, 7.5d);
+            PASSING_HOOD_MAP.put(5.0, 7.5d);
+            PASSING_HOOD_MAP.put(5.5, 7.5d);
+            PASSING_HOOD_MAP.put(6.0, 7.5d);
+            PASSING_HOOD_MAP.put(13.0, 7.5d);
         };
 
         public static final InterpolatingDoubleTreeMap PASSING_RPS_MAP = new InterpolatingDoubleTreeMap();
@@ -164,9 +165,9 @@ public final class Constants {
             PASSING_RPS_MAP.put(8.0, 63d);
             PASSING_RPS_MAP.put(9.0, 67d);
             PASSING_RPS_MAP.put(10.0, 70d);
-            PASSING_RPS_MAP.put(11.0, 71d);
-            PASSING_RPS_MAP.put(12.0, 73d);
-            PASSING_RPS_MAP.put(13.0, 76d);
+            PASSING_RPS_MAP.put(11.0, 73d);
+            PASSING_RPS_MAP.put(12.0, 76d);
+            PASSING_RPS_MAP.put(13.0, 80d);
         };
 
         public static double activeWaitingSpeed = 30;
@@ -190,14 +191,14 @@ public final class Constants {
         //                 new Point(6, 62),
         //                 new Point(10, 85)),
         //         2);
-        public static PolynomialRegression timeOfFlightInterpolation = new PolynomialRegression(
-                Arrays.asList(
-                        new Point(2, 0.2),
-                        new Point(3, 0.2),
-                        new Point(4, 0.2),
-                        new Point(5, 0.2),
-                        new Point(6, 0.1)),
-                2);
+        // public static PolynomialRegression timeOfFlightInterpolation = new PolynomialRegression(
+        //         Arrays.asList(
+        //                 new Point(2, 0.2),
+        //                 new Point(3, 0.2),
+        //                 new Point(4, 0.2),
+        //                 new Point(5, 0.2),
+        //                 new Point(6, 0.1)),
+        //         2);
         public static double distanceToHub;
         public static double passDistance;
 
