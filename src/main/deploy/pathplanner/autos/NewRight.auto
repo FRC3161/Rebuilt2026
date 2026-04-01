@@ -7,13 +7,13 @@
         {
           "type": "path",
           "data": {
-            "pathName": "RTrenchMid1_OLD"
+            "pathName": "RTrenchMid1_NEW"
           }
         },
         {
           "type": "named",
           "data": {
-            "name": "Auto Trench Shoot Right"
+            "name": "Aim Shoot"
           }
         },
         {
@@ -29,9 +29,21 @@
           }
         },
         {
+          "type": "named",
+          "data": {
+            "name": "Aim Shoot"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "FeederIdle"
+          }
+        },
+        {
           "type": "path",
           "data": {
-            "pathName": "RTrenchOutpost"
+            "pathName": "RTrenchMid2_NEW"
           }
         }
       ]

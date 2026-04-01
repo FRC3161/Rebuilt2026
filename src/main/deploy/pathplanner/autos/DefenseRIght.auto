@@ -7,13 +7,25 @@
         {
           "type": "path",
           "data": {
-            "pathName": "RTrenchMid1_OLD"
+            "pathName": "RTrenchMid1_OLD.0"
           }
         },
         {
           "type": "named",
           "data": {
-            "name": "Auto Trench Shoot Right"
+            "name": "Rswipe pathFind"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "RTrenchMid1_OLD.2"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Aim Shoot"
           }
         },
         {
@@ -29,9 +41,9 @@
           }
         },
         {
-          "type": "path",
+          "type": "named",
           "data": {
-            "pathName": "RTrenchOutpost"
+            "name": "Aim Shoot"
           }
         }
       ]

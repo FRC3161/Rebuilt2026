@@ -7,7 +7,19 @@
         {
           "type": "path",
           "data": {
-            "pathName": "LTrenchMid1"
+            "pathName": "LTrenchMid1.0"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Lswipe pathFind"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "LTrenchMid1.2"
           }
         },
         {
