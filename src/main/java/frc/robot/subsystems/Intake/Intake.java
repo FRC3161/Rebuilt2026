@@ -216,7 +216,9 @@ public class Intake extends SubsystemBase {
         if (!Robot.isSimulation()) {
             intakeMotorConfig.CurrentLimits.StatorCurrentLimit = 50;
             intakeMotorConfig.CurrentLimits.SupplyCurrentLimit = 50;
-            intakeExtensionMotor.getConfigurator().apply(intakeMotorConfig);
+            intakeExtensionMotorConfig.CurrentLimits.StatorCurrentLimit = 30;
+            intakeExtensionMotorConfig.CurrentLimits.SupplyCurrentLimit = 30;
+            intakeExtensionMotor.getConfigurator().apply(intakeExtensionMotorConfig);
             intakeMotor.getConfigurator().apply(intakeMotorConfig);
         }
     }
@@ -225,7 +227,9 @@ public class Intake extends SubsystemBase {
         if (!Robot.isSimulation()) {
             intakeMotorConfig.CurrentLimits.StatorCurrentLimit = IntakeConstants.StatorCurrentLimit;
             intakeMotorConfig.CurrentLimits.SupplyCurrentLimit = IntakeConstants.SupplyCurrentLimit;
-            intakeExtensionMotor.getConfigurator().apply(intakeMotorConfig);
+            intakeExtensionMotorConfig.CurrentLimits.StatorCurrentLimit = IntakeConstants.ExtensionStatorCurrentLimit;
+            intakeExtensionMotorConfig.CurrentLimits.SupplyCurrentLimit = IntakeConstants.ExtensionSupplyCurrentLimit;
+            intakeExtensionMotor.getConfigurator().apply(intakeExtensionMotorConfig);
             intakeMotor.getConfigurator().apply(intakeMotorConfig);
         }
     }

@@ -12,7 +12,6 @@ import frc.robot.Constants.IntakeConstants.SystemState;
 import frc.robot.Constants.ShooterConstants.ShooterWantedState;
 import frc.robot.Constants.TurretConstants.TurretWantedState;
 import frc.robot.subsystems.Scoring.Shooter;
-import frc.robot.subsystems.Scoring.ShotCalc;
 import frc.robot.subsystems.Scoring.Turret;
 import frc.robot.subsystems.Drive.CommandSwerveDrivetrain;
 import frc.robot.subsystems.Drive.TunerConstants;
@@ -53,6 +52,7 @@ import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Robot;
+
 /**
  * This class is where the bulk of the robot should be declared. Since
  * Command-based is a
@@ -86,15 +86,13 @@ public class RobotContainer {
     private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
     // private final SwerveRequest.PointWheelsAt point = new
     // SwerveRequest.PointWheelsAt();
-   // private double MaxAngularRate = RotationsPerSecond.of(0.75).in(RadiansPerSecond);
 
     // Replace with CommandPS4Controller or CommandJoystick if needed
     private final CommandXboxController driver = new CommandXboxController(OperatorConstants.kDriverControllerPort);
     private final CommandXboxController operator = new CommandXboxController(OperatorConstants.kOperatorControllerPort);
 
     // Simulation only - second driver controller for testing SOTF
-    private final CommandXboxController driver2 = Robot.isSimulation() ?
-        new CommandXboxController(2) : null;
+    private final CommandXboxController driver2 = Robot.isSimulation() ? new CommandXboxController(2) : null;
 
     // drive stuff
     private double MaxSpeed = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
@@ -144,11 +142,11 @@ public class RobotContainer {
 
         /*********** DRIVER ************/
         drivetrain.setDefaultCommand(
-            drivetrain.applyRequest(() -> {
-                double leftY = driver.getLeftY();
-                double leftX = driver.getLeftX();
-                double rightX = driver.getRightX();
-                double slowFactor = operator.rightTrigger().getAsBoolean() ? .3 : 1.0;
+                drivetrain.applyRequest(() -> {
+                    double leftY = driver.getLeftY();
+                    double leftX = driver.getLeftX();
+                    double rightX = driver.getRightX();
+                    double slowFactor = operator.rightTrigger().getAsBoolean() ? .3 : 1.0;
 
                     // Simulation only - driver2 overrides if active
                     if (Robot.isSimulation() && driver2 != null) {
@@ -159,17 +157,17 @@ public class RobotContainer {
                         if (Math.abs(driver2.getRightX()) > 0.1)
                             rightX = driver2.getRightX();
                         if (driver2.rightTrigger().getAsBoolean())
-                            slowFactor = 0.3;
+                            slowFactor = 0.5;
                     }
 
-                    double simTranslationFactor = Robot.isSimulation() ? 0.5 : 1.0;
+                    double simTranslationFactor = Robot.isSimulation() ? 0.3 : 1.0;
                     double rawRotation = rightX;
 
-                return drive
-                    .withVelocityX(-leftY * MaxSpeed * slowFactor * simTranslationFactor)
-                    .withVelocityY(-leftX * MaxSpeed * slowFactor * simTranslationFactor)
-                    .withRotationalRate(-rawRotation * MaxAngularRate * slowFactor);
-            }));
+                    return drive
+                            .withVelocityX(-leftY * MaxSpeed * slowFactor * simTranslationFactor)
+                            .withVelocityY(-leftX * MaxSpeed * slowFactor * simTranslationFactor)
+                            .withRotationalRate(-rawRotation * MaxAngularRate * slowFactor);
+                }));
 
         // gyro reset
         driver.start().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
@@ -200,7 +198,7 @@ public class RobotContainer {
                         .withTargetDirection(Rotation2d.k180deg)));
 
         // intake
-         driver.rightBumper()
+        driver.rightBumper()
                 .onTrue(new ConditionalCommand(
                         new InstantCommand(() -> intake.setWantedIntakeState(IntakeWantedState.IDLE)),
                         new InstantCommand(() -> intake.setWantedIntakeState(IntakeWantedState.INTAKE)),
@@ -210,7 +208,8 @@ public class RobotContainer {
 
         // retract
         driver.leftBumper()
-                .onTrue(new InstantCommand(() -> intake.setWantedIntakeState(IntakeWantedState.RETRACT)))
+                .onTrue(new InstantCommand(() -> intake.setWantedIntakeState(IntakeWantedState.RETRACT))) // make this
+                                                                                                          // RESET
                 .onFalse(new InstantCommand(() -> intake.setWantedIntakeState(IntakeWantedState.IDLE)));
 
         // outtake
@@ -218,6 +217,7 @@ public class RobotContainer {
                 .onTrue(new InstantCommand(() -> intake.setWantedIntakeState(IntakeWantedState.OUTTAKE)))
                 .onFalse(new InstantCommand(() -> intake.setWantedIntakeState(IntakeWantedState.IDLE)));
 
+        // eco mode
         driver.povUp()
                 .onTrue(
                         new ParallelCommandGroup(
@@ -230,6 +230,20 @@ public class RobotContainer {
                                 new InstantCommand(() -> intake.disableEcoModeIntake()),
                                 new InstantCommand(() -> turret.disableEcoModeTurret()),
                                 new InstantCommand(() -> feeder.disableEcoModeFeeder())));
+        // manual intake safety
+        // run one way
+        // driver.povLeft()
+        //         .onTrue(new InstantCommand(() -> intake.setWantedIntakeState(IntakeWantedState.MANUAL_CONTROL_POS)))
+        //         .onFalse(new InstantCommand(() -> intake.setWantedIntakeState(IntakeWantedState.MANUAL_IDLE)));
+
+        // // run other way
+        // driver.povRight()
+        //         .onTrue(new InstantCommand(() -> intake.setWantedIntakeState(IntakeWantedState.MANUAL_CONTROL_NEG)))
+        //         .onFalse(new InstantCommand(() -> intake.setWantedIntakeState(IntakeWantedState.MANUAL_IDLE)));
+
+        // manually set intake to 0
+        driver.back().onTrue(new InstantCommand(() -> intake.setZero()));
+
         // brake
         driver.rightTrigger().whileTrue(drivetrain.applyRequest(() -> brake));
         // driver.b().whileTrue(drivetrain.applyRequest(() ->
@@ -251,7 +265,7 @@ public class RobotContainer {
                         new InstantCommand(() -> turret.setWantedTurretState(TurretWantedState.AIM_PASS)),
                         new InstantCommand(() -> feeder.setWantedFeederState(FeederWantedState.SHOOT))))
                 .onFalse(new ParallelCommandGroup(
-                        new InstantCommand(() -> shooter.setWantedShooterState(ShooterWantedState.IDLE)),
+                        new InstantCommand(() -> shooter.setWantedShooterState(ShooterWantedState.WAIT)),
                         new InstantCommand(() -> turret.setWantedTurretState(TurretWantedState.IDLE)),
                         new InstantCommand(() -> feeder.setWantedFeederState(FeederWantedState.IDLE))));
 
@@ -262,7 +276,7 @@ public class RobotContainer {
                         new InstantCommand(() -> turret.setWantedTurretState(TurretWantedState.TRENCH_PRESETR)),
                         new InstantCommand(() -> feeder.setWantedFeederState(FeederWantedState.SHOOT))))
                 .onFalse(new ParallelCommandGroup(
-                        new InstantCommand(() -> shooter.setWantedShooterState(ShooterWantedState.IDLE)),
+                        new InstantCommand(() -> shooter.setWantedShooterState(ShooterWantedState.WAIT)),
                         new InstantCommand(() -> turret.setWantedTurretState(TurretWantedState.IDLE)),
                         new InstantCommand(() -> feeder.setWantedFeederState(FeederWantedState.IDLE))));
 
@@ -273,7 +287,7 @@ public class RobotContainer {
                         new InstantCommand(() -> turret.setWantedTurretState(TurretWantedState.TRENCH_PRESETL)),
                         new InstantCommand(() -> feeder.setWantedFeederState(FeederWantedState.SHOOT))))
                 .onFalse(new ParallelCommandGroup(
-                        new InstantCommand(() -> shooter.setWantedShooterState(ShooterWantedState.IDLE)),
+                        new InstantCommand(() -> shooter.setWantedShooterState(ShooterWantedState.WAIT)),
                         new InstantCommand(() -> turret.setWantedTurretState(TurretWantedState.IDLE)),
                         new InstantCommand(() -> feeder.setWantedFeederState(FeederWantedState.IDLE))));
 
@@ -281,6 +295,12 @@ public class RobotContainer {
         operator.leftTrigger()
                 .onTrue((new ParallelCommandGroup(
                         new InstantCommand(() -> intake.setWantedIntakeState(IntakeWantedState.RETRACT)))))
+                .onFalse((new ParallelCommandGroup(
+                        new InstantCommand(() -> intake.setWantedIntakeState(IntakeWantedState.INTAKE)))));
+        // slow squeeze
+        operator.leftBumper()
+                .onTrue((new ParallelCommandGroup(
+                        new InstantCommand(() -> intake.setWantedIntakeState(IntakeWantedState.SCORE)))))
                 .onFalse((new ParallelCommandGroup(
                         new InstantCommand(() -> intake.setWantedIntakeState(IntakeWantedState.INTAKE)))));
 
@@ -291,7 +311,7 @@ public class RobotContainer {
                         new InstantCommand(() -> turret.setWantedTurretState(TurretWantedState.AIM_HUB)),
                         new InstantCommand(() -> feeder.setWantedFeederState(FeederWantedState.SHOOT))))
                 .onFalse(new ParallelCommandGroup(
-                        new InstantCommand(() -> shooter.setWantedShooterState(ShooterWantedState.IDLE)),
+                        new InstantCommand(() -> shooter.setWantedShooterState(ShooterWantedState.WAIT)),
                         new InstantCommand(() -> turret.setWantedTurretState(TurretWantedState.IDLE)),
                         new InstantCommand(() -> feeder.setWantedFeederState(FeederWantedState.IDLE))));
 
@@ -306,9 +326,9 @@ public class RobotContainer {
                 .onTrue(new SequentialCommandGroup(
                         new InstantCommand(() -> shooter.setWantedShooterState(ShooterWantedState.PASS_SHOOT)),
                         new InstantCommand(() -> turret.setWantedTurretState(TurretWantedState.AIM_PASS)),
-                        new InstantCommand(() -> feeder.setWantedFeederState(FeederWantedState.PASS))))
+                        new InstantCommand(() -> feeder.setWantedFeederState(FeederWantedState.SHOOT))))
                 .onFalse(new ParallelCommandGroup(
-                        new InstantCommand(() -> shooter.setWantedShooterState(ShooterWantedState.IDLE)),
+                        new InstantCommand(() -> shooter.setWantedShooterState(ShooterWantedState.WAIT)),
                         new InstantCommand(() -> turret.setWantedTurretState(TurretWantedState.IDLE)),
                         new InstantCommand(() -> feeder.setWantedFeederState(FeederWantedState.IDLE))));
 
@@ -322,44 +342,14 @@ public class RobotContainer {
                             new InstantCommand(() -> turret.setWantedTurretState(TurretWantedState.AIM_HUB)),
                             new InstantCommand(() -> feeder.setWantedFeederState(FeederWantedState.SHOOT))))
                     .onFalse(new ParallelCommandGroup(
-                            new InstantCommand(() -> shooter.setWantedShooterState(ShooterWantedState.IDLE)),
+                            new InstantCommand(() -> shooter.setWantedShooterState(ShooterWantedState.WAIT)),
                             new InstantCommand(() -> turret.setWantedTurretState(TurretWantedState.IDLE)),
                             new InstantCommand(() -> feeder.setWantedFeederState(FeederWantedState.IDLE))));
         }
 
-        if (Robot.isSimulation() && driver2 != null) {
-    // Hood adjustment - bumpers
-    driver2.rightBumper().onTrue(new InstantCommand(() -> 
-        ShotCalc.hoodOffset += 0.1));
-    driver2.leftBumper().onTrue(new InstantCommand(() -> 
-        ShotCalc.hoodOffset -= 0.1));
-        driver2.rightBumper()
-        .onTrue(new SequentialCommandGroup(
-                        new InstantCommand(() -> shooter.setWantedShooterState(ShooterWantedState.PASS_SHOOT)),
-                        new InstantCommand(() -> turret.setWantedTurretState(TurretWantedState.AIM_PASS)),
-                        new InstantCommand(() -> feeder.setWantedFeederState(FeederWantedState.PASS))))
-                .onFalse(new ParallelCommandGroup(
-                        new InstantCommand(() -> shooter.setWantedShooterState(ShooterWantedState.IDLE)),
-                        new InstantCommand(() -> turret.setWantedTurretState(TurretWantedState.IDLE)),
-                        new InstantCommand(() -> feeder.setWantedFeederState(FeederWantedState.IDLE))));
-    
-    // RPS adjustment - Y and A buttons  
-    driver2.y().onTrue(new InstantCommand(() -> 
-        ShotCalc.rpsOffset += 1.0));
-    driver2.a().onTrue(new InstantCommand(() -> 
-        ShotCalc.rpsOffset -= 1.0));
-    
-    // Reset offsets - start button
-    driver2.start().onTrue(new InstantCommand(() -> {
-        ShotCalc.rpsOffset = 0.0;
-        ShotCalc.hoodOffset = 0.0;
-    }));
-}
-
         /* TESTING BUTTONS */
     }
 
-    
     public void disabledActions() {
         feeder.setWantedFeederState(FeederWantedState.IDLE);
         shooter.setWantedShooterState(ShooterWantedState.IDLE);
@@ -450,9 +440,10 @@ public class RobotContainer {
                         new InstantCommand(() -> shooter.setWantedShooterState(ShooterWantedState.HUB_SHOOT)),
                         new InstantCommand(() -> turret.setWantedTurretState(TurretWantedState.AIM_HUB)),
                         waitToShoot(),
-                        new InstantCommand(() -> feeder.setWantedFeederState(FeederWantedState.SHOOT))));
-                       // wait(1.5),
-                       // new InstantCommand(() -> intake.setWantedIntakeState(IntakeWantedState.RETRACT))));
+                        new InstantCommand(() -> feeder.setWantedFeederState(FeederWantedState.SHOOT)),
+                        wait(1.5),
+                        new InstantCommand(() -> intake.setWantedIntakeState(IntakeWantedState.RETRACT)))
+                        .alongWith(wait(3.0)));
 
         NamedCommands.registerCommand("Intake",
                 new InstantCommand(() -> intake.setWantedIntakeState(IntakeWantedState.INTAKE)));
