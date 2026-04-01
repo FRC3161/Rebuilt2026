@@ -179,5 +179,5 @@
  },
  "events":[
    {"name":"Marker", "from":{"target":1, "targetTimestamp":1.07301, "offset":{"exp":"-0.5 s", "val":-0.5}}, "event":{"type":"named", "data":{"name":"Intake"}}},
-   {"name":"Marker", "from":{"target":0, "targetTimestamp":null, "offset":{"exp":"0 s", "val":0.0}}, "event":{"type":"named", "data":{"name":"Retract Hood"}}}]
+   {"name":"Marker", "from":{"target":0, "targetTimestamp":0.0, "offset":{"exp":"0 s", "val":0.0}}, "event":{"type":"named", "data":{"name":"Retract Hood"}}}]
 }
