@@ -80,7 +80,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     public Translation2d getScoringLocation() {
         Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Blue);
         if (alliance.equals(Alliance.Blue)) {
-            if (0 < getPose().getX() && getPose().getX() < 4.6) {
+            if (getPose().getX() < 4.6) {
                 return FieldConstants.BLUE_HUB_POSE;
             } else {
                 if (4.03 < getPose().getY()) {
@@ -90,7 +90,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 }
             }
         } else {
-            if (11.9 < getPose().getX() && getPose().getX() < 16.6) {
+            if (11.9 < getPose().getX()) {
                 return FieldConstants.RED_HUB_POSE;
             } else {
                 if (4.03 < getPose().getY()) {
