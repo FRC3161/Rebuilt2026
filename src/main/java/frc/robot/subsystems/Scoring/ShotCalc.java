@@ -69,8 +69,8 @@ public final class ShotCalc {
                 : ShooterConstants.TOF_MAP.get(distance);
         Translation2d virtualTarget = goalPosition;
 
-        // 6. ITERATIVE SOLVE (20 passes)
-       for (int i = 0; i < 20; i++) {
+        // 6. ITERATIVE SOLVE (10 passes)
+       for (int i = 0; i < 10; i++) {
     virtualTarget = goalPosition.minus(totalVelocity.times(timeOfFlight));
     toGoal = virtualTarget.minus(turretPosition);
     distance = toGoal.getNorm();

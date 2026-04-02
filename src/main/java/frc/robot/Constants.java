@@ -80,7 +80,7 @@ public final class Constants {
              RPS_MAP.put(4.5, 54.5d);
             RPS_MAP.put(5.0, 56d);  //55
              RPS_MAP.put(5.5, 58.5d);
-            RPS_MAP.put(6.0, 61d); //62
+            RPS_MAP.put(6.0, 62d); //62
             //RPS_MAP.put(10.0, 85d);
         };
 
@@ -107,7 +107,7 @@ public final class Constants {
              HOOD_MAP.put(4.5, 4d);
             HOOD_MAP.put(5.0, 4.3d);  //5.5
              HOOD_MAP.put(5.5, 4.6d);
-            HOOD_MAP.put(6.0, 5d);  //6.5
+            HOOD_MAP.put(6.0, 5.5d);  //6.5
             //HOOD_MAP.put(10.0, 8d);
         };
 
@@ -164,10 +164,10 @@ public final class Constants {
             PASSING_RPS_MAP.put(7.0, 57d);
             PASSING_RPS_MAP.put(8.0, 63d);
             PASSING_RPS_MAP.put(9.0, 67d);
-            PASSING_RPS_MAP.put(10.0, 70d);
-            PASSING_RPS_MAP.put(11.0, 73d);
-            PASSING_RPS_MAP.put(12.0, 76d);
-            PASSING_RPS_MAP.put(13.0, 80d);
+            PASSING_RPS_MAP.put(10.0, 80d);
+            PASSING_RPS_MAP.put(11.0, 83d);
+            PASSING_RPS_MAP.put(12.0, 86d);
+            PASSING_RPS_MAP.put(13.0, 90d);
         };
 
         public static double activeWaitingSpeed = 30;
@@ -546,10 +546,10 @@ public final class Constants {
         public static Translation2d BLUE_HUB_POSE = new Translation2d(4.62, 4.03); // was 4.03
         public static Translation2d RED_HUB_POSE = new Translation2d(11.92, 4.03); // was 11.92, 4.03
 
-        public static Translation2d BLUE_PASS_SPOT_1 = new Translation2d(3, 1.5); // 1
-        public static Translation2d BLUE_PASS_SPOT_2 = new Translation2d(3, 6.5); // 7
-        public static Translation2d RED_PASS_SPOT_1 = new Translation2d(12.5, 1.5); // 15.5, 7
-        public static Translation2d RED_PASS_SPOT_2 = new Translation2d(12.5, 6.5); // 15.5, 1
+        public static Translation2d BLUE_PASS_SPOT_1 = new Translation2d(2, 1.5); // 1
+        public static Translation2d BLUE_PASS_SPOT_2 = new Translation2d(2, 6.5); // 7
+        public static Translation2d RED_PASS_SPOT_1 = new Translation2d(13.5, 1.5); // 15.5, 7
+        public static Translation2d RED_PASS_SPOT_2 = new Translation2d(13.5, 6.5); // 15.5, 1
 
         public static Map<ScoringZone, Pose2d> scoringZoneLUT = Map.ofEntries(
                 Map.entry(ScoringZone.RED_PASSING_1, new Pose2d(RED_PASS_SPOT_1, new Rotation2d())),

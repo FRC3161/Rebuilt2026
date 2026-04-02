@@ -219,7 +219,7 @@ public class Shooter extends SubsystemBase {
      
 
     // Predict future pose
-    double lookAheadSeconds = 0.1;
+    double lookAheadSeconds = 0.2;
 
     ChassisSpeeds fieldRelativeSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(
                     drivetrain.getState().Speeds,
