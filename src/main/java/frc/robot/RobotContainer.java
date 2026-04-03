@@ -435,6 +435,15 @@ public class RobotContainer {
                        wait(1.5),
                        new InstantCommand(() -> intake.setWantedIntakeState(IntakeWantedState.RETRACT))));
 
+                       NamedCommands.registerCommand("SOTF Pure",
+                new SequentialCommandGroup(
+                        new InstantCommand(() -> shooter.setWantedShooterState(ShooterWantedState.HUB_SHOOT)),
+                        new InstantCommand(() -> turret.setWantedTurretState(TurretWantedState.AIM_HUB)),
+                        waitToShoot(),
+                        new InstantCommand(() -> feeder.setWantedFeederState(FeederWantedState.SHOOT))));
+                      // wait(1.5),
+                       //new InstantCommand(() -> intake.setWantedIntakeState(IntakeWantedState.RETRACT))));
+
         NamedCommands.registerCommand("Aim Shoot",
                 new SequentialCommandGroup(
                         new InstantCommand(() -> shooter.setWantedShooterState(ShooterWantedState.HUB_SHOOT)),
