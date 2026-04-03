@@ -17,6 +17,12 @@
           }
         },
         {
+          "type": "named",
+          "data": {
+            "name": "Retract Hood"
+          }
+        },
+        {
           "type": "path",
           "data": {
             "pathName": "RCircle2"
@@ -29,9 +35,15 @@
           }
         },
         {
+          "type": "named",
+          "data": {
+            "name": "Retract Hood"
+          }
+        },
+        {
           "type": "path",
           "data": {
-            "pathName": "RTrenchMid1_OLD"
+            "pathName": "RTrenchMid2_NEW"
           }
         },
         {

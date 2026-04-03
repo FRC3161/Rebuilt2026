@@ -70,9 +70,9 @@ public class Intake extends SubsystemBase {
         intakeExtensionMotorConfig.MotionMagic.MotionMagicExpo_kA = IntakeConstants.intakeMotionMagicExpoK_A;
         intakeExtensionMotorConfig.MotionMagic.MotionMagicExpo_kV = IntakeConstants.intakeMotionMagicExpoK_V;
 
-            if (!Robot.isSimulation()) {
+        if (!Robot.isSimulation()) {
             StatusCode status = StatusCode.StatusCodeNotInitialized;
- 
+
             for (int i = 0; i < 5; ++i) {
                 status = intakeMotor.getConfigurator().apply(intakeMotorConfig);
                 if (status.isOK())
@@ -81,7 +81,7 @@ public class Intake extends SubsystemBase {
             if (!status.isOK()) {
                 System.out.println("Could not apply intake motor configs, error code: " + status.toString());
             }
- 
+
             for (int i = 0; i < 5; ++i) {
                 status = intakeExtensionMotor.getConfigurator().apply(intakeExtensionMotorConfig);
                 if (status.isOK())
@@ -92,6 +92,7 @@ public class Intake extends SubsystemBase {
             }
         }
     }
+
     // Sim safe helpers
     private double getExtensionPosition() {
         if (Robot.isSimulation()) {
@@ -144,7 +145,7 @@ public class Intake extends SubsystemBase {
                 // yield SystemState.IDLING;
                 // } else {
                 yield SystemState.INTAKING;
-             }
+            }
             case RETRACT -> {
                 if (systemState == SystemState.SCORING && !Robot.isSimulation()) {
                     intakeMotorConfig.Voltage.PeakReverseVoltage = IntakeConstants.intakeMotionMagicExpoK_A;
@@ -166,6 +167,21 @@ public class Intake extends SubsystemBase {
                     intakeExtensionMotor.getConfigurator().apply(intakeMotorConfig);
                 }
                 yield SystemState.OUTTAKING;
+            }
+            case MANUAL_CONTROL_POS -> {
+                yield SystemState.IN_MANUAL_CONTROL_POS;
+            }
+
+            case MANUAL_CONTROL_NEG -> {
+                yield SystemState.IN_MANUAL_CONTROL_NEG;
+            }
+
+            case MANUAL_IDLE -> {
+                yield SystemState.IN_MANUAL_IDLE;
+            }
+
+            case MANUAL_RESET -> {
+                yield SystemState.IN_MANUAL_RESET;
             }
         };
     }
@@ -209,6 +225,22 @@ public class Intake extends SubsystemBase {
             case OUTTAKING:
                 motorspeed = -IntakeConstants.intakingSpeed;
                 break;
+            case IN_MANUAL_CONTROL_POS:
+                position = intakeExtensionMotor.getPosition().getValueAsDouble();
+                intakeExtensionMotor.set(0.01);
+                break;
+            case IN_MANUAL_CONTROL_NEG:
+                position = intakeExtensionMotor.getPosition().getValueAsDouble();
+                intakeExtensionMotor.set(-0.01);
+                break;
+            case IN_MANUAL_IDLE:
+                position = intakeExtensionMotor.getPosition().getValueAsDouble();
+                intakeExtensionMotor.set(0);
+                break;
+            case IN_MANUAL_RESET:
+                setZero();
+                break;
+
         }
     }
 
