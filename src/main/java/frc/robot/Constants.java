@@ -569,8 +569,8 @@ public final class Constants {
 
         public static Translation2d BLUE_PASS_SPOT_1 = new Translation2d(2, 1.5); // 1
         public static Translation2d BLUE_PASS_SPOT_2 = new Translation2d(2, 6.5); // 7
-        public static Translation2d RED_PASS_SPOT_1 = new Translation2d(13.5, 1.5); // 15.5, 7
-        public static Translation2d RED_PASS_SPOT_2 = new Translation2d(13.5, 6.5); // 15.5, 1
+        public static Translation2d RED_PASS_SPOT_1 = new Translation2d(14.5, 1.5); // 15.5, 7
+        public static Translation2d RED_PASS_SPOT_2 = new Translation2d(14.5, 6.5); // 15.5, 1
 
         public static Map<ScoringZone, Pose2d> scoringZoneLUT = Map.ofEntries(
                 Map.entry(ScoringZone.RED_PASSING_1, new Pose2d(RED_PASS_SPOT_1, new Rotation2d())),
