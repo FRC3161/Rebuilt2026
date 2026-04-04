@@ -321,6 +321,12 @@ public class RobotContainer {
         operator.povLeft()
                 .onTrue(new InstantCommand(() -> turret.applyRightOffset()));
 
+        // RPS offset
+        operator.povUp()
+                .onTrue(new InstantCommand(() -> shooter.RPS_UP()));
+        operator.povDown()
+                .onTrue(new InstantCommand(() -> shooter.RPS_DOWN()));
+
         // passing
         operator.rightBumper()
                 .onTrue(new SequentialCommandGroup(

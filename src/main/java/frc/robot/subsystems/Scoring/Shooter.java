@@ -42,6 +42,7 @@ public class Shooter extends SubsystemBase {
     final DutyCycleOut t_request = new DutyCycleOut(0);
     private double motorspeed = 0.0;
     final MotionMagicVelocityVoltage mm_request = new MotionMagicVelocityVoltage(0);
+    private double offset = 0.00;
     // for position control
     private double position = 0.0;
     final PositionVoltage mmE_request = new PositionVoltage(0);
@@ -151,6 +152,14 @@ public class Shooter extends SubsystemBase {
         }
     }
 
+     public void RPS_UP() {
+        offset += 1.0;
+    }
+
+    public void RPS_DOWN() {
+        offset -= 1.0;
+    }
+
     // Sim safe helpers
     private double getShooterVelocity() {
         if (Robot.isSimulation()) {
@@ -210,13 +219,12 @@ public class Shooter extends SubsystemBase {
                 position = 5.5;
                 break;
             case HUB_SHOOTING:
-    motorspeed = drivetrain.currentShotCommand.RPS() + ShotCalc.rpsOffset;
+    motorspeed = drivetrain.currentShotCommand.RPS() + ShotCalc.rpsOffset + offset;
     position = MathUtil.clamp(
         drivetrain.currentShotCommand.hoodAngle() + ShotCalc.hoodOffset, 
         -0.5, 8);
     break;
-    case PASS_SHOOTING:
-     
+            case PASS_SHOOTING:
 
     // Predict future pose
     double lookAheadSeconds = 0.2;
@@ -237,25 +245,11 @@ public class Shooter extends SubsystemBase {
           boolean inZonePredicted = (predictedY > 6.6 || predictedY < 1.25)
         && ((predictedX > 3.6 && predictedX < 5.45) 
          || (predictedX > 11.05 && predictedX < 12.9));
-    // if (predictedY > 6.6) {
-    //     restrictHood = (predictedX > 3.6 && predictedX < 5.45)
-    //                 || (predictedX > 11.05 && predictedX < 12.9);
-    // } else if (predictedY < 1.25) {
-    //     restrictHood = (predictedX > 3.6 && predictedX < 5.45)
-    //                 || (predictedX > 11.05 && predictedX < 12.9);
-    // }
+
 boolean restrictHood = inZonePredicted || inZoneCurrent;
 
-motorspeed = drivetrain.currentShotCommand.RPS();
+motorspeed = drivetrain.currentShotCommand.RPS() + offset;
     position = restrictHood ? 0.0 : MathUtil.clamp(drivetrain.currentShotCommand.hoodAngle(), -0.5, 8);
-
-    // if (restrictHood) {
-    //     motorspeed = drivetrain.currentShotCommand.RPS();
-    //     position = 0.0;
-    // } else {
-    //     motorspeed = drivetrain.currentShotCommand.RPS();
-    //     position = MathUtil.clamp(drivetrain.currentShotCommand.hoodAngle(), -0.5, 8);
-    // }
     break;
             case HOMING:
                 position = -0.1;
