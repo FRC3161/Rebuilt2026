@@ -26,7 +26,6 @@ import frc.robot.subsystems.Drive.CommandSwerveDrivetrain;
 import frc.robot.subsystems.Scoring.ShotCalc.ShooterCommand;
 import frc.util.Interpolation.LoggedTunableNumber;
 
-
 public class Shooter extends SubsystemBase {
     private CommandSwerveDrivetrain drivetrain;
 
@@ -152,7 +151,7 @@ public class Shooter extends SubsystemBase {
         }
     }
 
-     public void RPS_UP() {
+    public void RPS_UP() {
         offset += 1.0;
     }
 
@@ -219,38 +218,53 @@ public class Shooter extends SubsystemBase {
                 position = 5.5;
                 break;
             case HUB_SHOOTING:
-    motorspeed = drivetrain.currentShotCommand.RPS() + ShotCalc.rpsOffset + offset;
-    position = MathUtil.clamp(
-        drivetrain.currentShotCommand.hoodAngle() + ShotCalc.hoodOffset, 
-        -0.5, 8);
-    break;
+                motorspeed = drivetrain.currentShotCommand.RPS() + ShotCalc.rpsOffset;
+                position = MathUtil.clamp(
+                        drivetrain.currentShotCommand.hoodAngle() + ShotCalc.hoodOffset,
+                        -0.5, 8);
+                break;
             case PASS_SHOOTING:
 
-    // Predict future pose
-    double lookAheadSeconds = 0.2;
+                // Predict future pose
+                double lookAheadSeconds = 0.2;
 
-    ChassisSpeeds fieldRelativeSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(
-                    drivetrain.getState().Speeds,
-                    drivetrain.getPose().getRotation());
-    Pose2d currentPose = drivetrain.getPose();
+                ChassisSpeeds fieldRelativeSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(
+                        drivetrain.getState().Speeds,
+                        drivetrain.getPose().getRotation());
+                Pose2d currentPose = drivetrain.getPose();
 
-    double predictedX = currentPose.getX() + fieldRelativeSpeeds.vxMetersPerSecond * lookAheadSeconds;
-    double predictedY = currentPose.getY() + fieldRelativeSpeeds.vyMetersPerSecond * lookAheadSeconds;
+                double predictedX = currentPose.getX() + fieldRelativeSpeeds.vxMetersPerSecond * lookAheadSeconds;
+                double predictedY = currentPose.getY() + fieldRelativeSpeeds.vyMetersPerSecond * lookAheadSeconds;
 
-    // Location Gate
-    boolean inZoneCurrent = (currentPose.getY() > 6.6 || currentPose.getY() < 1.25)
-        && ((currentPose.getX() > 3.6 && currentPose.getX() < 5.45) 
-         || (currentPose.getX() > 11.05 && currentPose.getX() < 12.9));
+                // Location Gate
+                boolean inZoneCurrent = (currentPose.getY() > 6.6 || currentPose.getY() < 1.25)
+                        && ((currentPose.getX() > 3.6 && currentPose.getX() < 5.45)
+                                || (currentPose.getX() > 11.05 && currentPose.getX() < 12.9));
 
-          boolean inZonePredicted = (predictedY > 6.6 || predictedY < 1.25)
-        && ((predictedX > 3.6 && predictedX < 5.45) 
-         || (predictedX > 11.05 && predictedX < 12.9));
+                boolean inZonePredicted = (predictedY > 6.6 || predictedY < 1.25)
+                        && ((predictedX > 3.6 && predictedX < 5.45)
+                                || (predictedX > 11.05 && predictedX < 12.9));
+                // if (predictedY > 6.6) {
+                // restrictHood = (predictedX > 3.6 && predictedX < 5.45)
+                // || (predictedX > 11.05 && predictedX < 12.9);
+                // } else if (predictedY < 1.25) {
+                // restrictHood = (predictedX > 3.6 && predictedX < 5.45)
+                // || (predictedX > 11.05 && predictedX < 12.9);
+                // }
+                boolean restrictHood = inZonePredicted || inZoneCurrent;
 
-boolean restrictHood = inZonePredicted || inZoneCurrent;
+                motorspeed = drivetrain.currentShotCommand.RPS();
+                position = restrictHood ? 0.0 : MathUtil.clamp(drivetrain.currentShotCommand.hoodAngle(), -0.5, 8);
 
-motorspeed = drivetrain.currentShotCommand.RPS() + offset;
-    position = restrictHood ? 0.0 : MathUtil.clamp(drivetrain.currentShotCommand.hoodAngle(), -0.5, 8);
-    break;
+                // if (restrictHood) {
+                // motorspeed = drivetrain.currentShotCommand.RPS();
+                // position = 0.0;
+                // } else {
+                // motorspeed = drivetrain.currentShotCommand.RPS();
+                // position = MathUtil.clamp(drivetrain.currentShotCommand.hoodAngle(), -0.5,
+                // 8);
+                // }
+                break;
             case HOMING:
                 position = -0.1;
                 if (getHoodCurrent() >= ShooterConstants.homingThreshold) {
@@ -268,7 +282,7 @@ motorspeed = drivetrain.currentShotCommand.RPS() + offset;
                 break;
             case RETRACTING_AUTO:
                 position = 0;
-                break; 
+                break;
             case TURNING_ON_AUTO:
                 motorspeed = 50;
                 break;
@@ -326,13 +340,13 @@ motorspeed = drivetrain.currentShotCommand.RPS() + offset;
     }
 
     private void logValues() {
-        SmartDashboard.putNumber("Shooter Actual Speed", getShooterVelocity());
-        SmartDashboard.putNumber("Hood Actual Position", getHoodPosition());
-        SmartDashboard.putNumber("Shooter Wanted Speed", motorspeed);
-        SmartDashboard.putNumber("Hood Wanted Position", position);
-        SmartDashboard.putBoolean("Shooter Is Ready", shooterIsReady());
-        SmartDashboard.putString("SHOOTER WANTED STATE", wantedState.toString());
-        SmartDashboard.putString("SHOOTER SYSTEM STATE", systemState.toString());
+        SmartDashboard.putNumber("SHOOTER/Shooter Actual Speed", getShooterVelocity());
+        SmartDashboard.putNumber("SHOOTER/Hood Actual Position", getHoodPosition());
+        SmartDashboard.putNumber("SHOOTER/Shooter Wanted Speed", motorspeed);
+        SmartDashboard.putNumber("SHOOTER/Hood Wanted Position", position);
+        SmartDashboard.putBoolean("SHOOTER/Shooter Is Ready", shooterIsReady());
+        SmartDashboard.putString("STATES/SHOOTER WANTED STATE", wantedState.toString());
+        SmartDashboard.putString("STATES/SHOOTER SYSTEM STATE", systemState.toString());
 
         if (!Robot.isSimulation()) {
             SmartDashboard.putNumber("Hood Motor Current", getHoodCurrent());

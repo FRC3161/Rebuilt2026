@@ -211,7 +211,8 @@ public class Turret extends SubsystemBase {
 
     public boolean turretIsReady() {
         double dynamicTolerance = TurretConstants.tolerance;
-        if (Robot.isSimulation()) return true;
+        if (Robot.isSimulation())
+            return true;
 
         double omega = Math.abs(drivetrain.getState().Speeds.omegaRadiansPerSecond);
         if (omega > 0.5) {
@@ -263,30 +264,40 @@ public class Turret extends SubsystemBase {
         SmartDashboard.putNumber("Turret Wanted Position", position);
         SmartDashboard.putNumber("Turret Offset", offset);
         SmartDashboard.putBoolean("Turret Is Ready", turretIsReady());
-        SmartDashboard.putString("TURRET WANTED STATE", wantedState.toString());
-        SmartDashboard.putString("TURRET SYSTEM STATE", systemState.toString());
-        SmartDashboard.putNumber("Shot Command Angle", drivetrain.currentShotCommand.turretAngle().getDegrees());
-        SmartDashboard.putNumber("Shot Command RPS", drivetrain.currentShotCommand.RPS());
-        SmartDashboard.putNumber("Shot Command Hood", drivetrain.currentShotCommand.hoodAngle());
-        SmartDashboard.putNumber("Rotation Correction Deg", Math.toDegrees(
-                drivetrain.getState().Speeds.omegaRadiansPerSecond *
-                (Timer.getFPGATimestamp() - drivetrain.shotCommandTimestamp)));
-        SmartDashboard.putNumber("Robot Angle Deg", drivetrain.getPose().getRotation().getDegrees());
-        SmartDashboard.putNumber("Turret Field X", drivetrain.getCurrentTurretPose().getX());
-        SmartDashboard.putNumber("Turret Field Y", drivetrain.getCurrentTurretPose().getY());
+        SmartDashboard.putString("STATES/TURRET WANTED STATE", wantedState.toString());
+        SmartDashboard.putString("STATES/TURRET SYSTEM STATE", systemState.toString());
+        // SmartDashboard.putNumber("Shot Command Angle",
+        // drivetrain.currentShotCommand.turretAngle().getDegrees());
+        // SmartDashboard.putNumber("Shot Command RPS",
+        // drivetrain.currentShotCommand.RPS());
+        // SmartDashboard.putNumber("Shot Command Hood",
+        // drivetrain.currentShotCommand.hoodAngle());
+        // SmartDashboard.putNumber("Rotation Correction Deg", Math.toDegrees(
+        // drivetrain.getState().Speeds.omegaRadiansPerSecond *
+        // (Timer.getFPGATimestamp() - drivetrain.shotCommandTimestamp)));
+        // SmartDashboard.putNumber("Robot Angle Deg",
+        // drivetrain.getPose().getRotation().getDegrees());
+        // SmartDashboard.putNumber("Turret Field X",
+        // drivetrain.getCurrentTurretPose().getX());
+        // SmartDashboard.putNumber("Turret Field Y",
+        // drivetrain.getCurrentTurretPose().getY());
 
-        if (Robot.isSimulation()) {
-            SmartDashboard.putNumber("Sim RPS Offset", ShotCalc.rpsOffset);
-            SmartDashboard.putNumber("Sim Hood Offset", ShotCalc.hoodOffset);
-            SmartDashboard.putNumber("Effective RPS", drivetrain.currentShotCommand.RPS() + ShotCalc.rpsOffset);
-            SmartDashboard.putNumber("Effective Hood", drivetrain.currentShotCommand.hoodAngle() + ShotCalc.hoodOffset);
-        }
+        // if (Robot.isSimulation()) {
+        // SmartDashboard.putNumber("Sim RPS Offset", ShotCalc.rpsOffset);
+        // SmartDashboard.putNumber("Sim Hood Offset", ShotCalc.hoodOffset);
+        // SmartDashboard.putNumber("Effective RPS", drivetrain.currentShotCommand.RPS()
+        // + ShotCalc.rpsOffset);
+        // SmartDashboard.putNumber("Effective Hood",
+        // drivetrain.currentShotCommand.hoodAngle() + ShotCalc.hoodOffset);
+        // }
 
-        if (!Robot.isSimulation()) {
-            SmartDashboard.putNumber("Turret Absolute Position", encoder.getAbsolutePosition().getValueAsDouble());
-            SmartDashboard.putNumber("Turret Motor Position", turretMotor.getPosition().getValueAsDouble());
-            SmartDashboard.putNumber("Turret Encoder Position", encoder.getPosition().getValueAsDouble());
-        }
+        // if (!Robot.isSimulation()) {
+        SmartDashboard.putNumber("Turret Absolute Position", encoder.getAbsolutePosition().getValueAsDouble());
+        // SmartDashboard.putNumber("Turret Motor Position",
+        // turretMotor.getPosition().getValueAsDouble());
+        // SmartDashboard.putNumber("Turret Encoder Position",
+        // encoder.getPosition().getValueAsDouble());
+        // }
     }
 
     @Override

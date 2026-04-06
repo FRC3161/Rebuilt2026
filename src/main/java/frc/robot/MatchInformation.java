@@ -71,7 +71,7 @@ public class MatchInformation extends SubsystemBase {
     public double teleopStartTimestamp;
     public double autoStartTimestamp;
 
-    public MatchInformation(/*LEDSubsystem_WPIlib m_normalLights,*/ Timer m_matchTime) {
+    public MatchInformation(/* LEDSubsystem_WPIlib m_normalLights, */ Timer m_matchTime) {
         matchTimer = m_matchTime;
         // normalLights = m_normalLights;
         revertDefaultState();
@@ -124,7 +124,7 @@ public class MatchInformation extends SubsystemBase {
         alliance = DriverStation.getAlliance();
         matchType = DriverStation.getMatchType();
         matchNumber = DriverStation.getMatchNumber();
-        matchTime = 140 - matchTimer.get();
+        matchTime = 140 - 0;
         gameData = DriverStation.getGameSpecificMessage();
     }
 
@@ -305,11 +305,11 @@ public class MatchInformation extends SubsystemBase {
             if (currentWarningStage != WarningStage.ENDGAME) {
                 currentWarningStage = WarningStage.ENDGAME;
                 // new SetBlinkingPattern(
-                //         normalLights,
-                //         LEDSubsystem_WPIlib.LEDTarget.SIDES,
-                //         LEDPattern.solid(LightsConstants.RBGColors.get("yellow")),
-                //         0.25,
-                //         0.25).schedule();
+                // normalLights,
+                // LEDSubsystem_WPIlib.LEDTarget.SIDES,
+                // LEDPattern.solid(LightsConstants.RBGColors.get("yellow")),
+                // 0.25,
+                // 0.25).schedule();
             }
             return;
         }
@@ -321,13 +321,13 @@ public class MatchInformation extends SubsystemBase {
             if (currentWarningStage != WarningStage.NONE) {
                 currentWarningStage = WarningStage.NONE;
 
-            //     new ResetLED(
-            //             normalLights,
-            //             LEDSubsystem_WPIlib.LEDTarget.SIDES).schedule();
-            // }
-            return;
+                // new ResetLED(
+                // normalLights,
+                // LEDSubsystem_WPIlib.LEDTarget.SIDES).schedule();
+                // }
+                return;
+            }
         }
-    }
 
         double t = shiftTimeRemaining;
         Color nextColor = hubActive
@@ -341,11 +341,11 @@ public class MatchInformation extends SubsystemBase {
             if (currentWarningStage != WarningStage.SHIFT) {
                 currentWarningStage = WarningStage.SHIFT;
                 // new SetBlinkingPattern(
-                //         normalLights,
-                //         LEDSubsystem_WPIlib.LEDTarget.SIDES,
-                //         LEDPattern.solid(LightsConstants.RBGColors.get("magenta")),
-                //         0.25,
-                //         0.25).schedule();
+                // normalLights,
+                // LEDSubsystem_WPIlib.LEDTarget.SIDES,
+                // LEDPattern.solid(LightsConstants.RBGColors.get("magenta")),
+                // 0.25,
+                // 0.25).schedule();
             }
             return;
         }
@@ -357,11 +357,11 @@ public class MatchInformation extends SubsystemBase {
             if (currentWarningStage != WarningStage.SLOW) {
                 currentWarningStage = WarningStage.SLOW;
                 // new SetBlinkingPattern(
-                //         normalLights,
-                //         LEDSubsystem_WPIlib.LEDTarget.SIDES,
-                //         LEDPattern.solid(nextColor),
-                //         0.5,
-                //         0.5).schedule();
+                // normalLights,
+                // LEDSubsystem_WPIlib.LEDTarget.SIDES,
+                // LEDPattern.solid(nextColor),
+                // 0.5,
+                // 0.5).schedule();
             }
             return;
         }
@@ -373,11 +373,11 @@ public class MatchInformation extends SubsystemBase {
             if (currentWarningStage != WarningStage.FAST) {
                 currentWarningStage = WarningStage.FAST;
                 // new SetBlinkingPattern(
-                //         normalLights,
-                //         LEDSubsystem_WPIlib.LEDTarget.SIDES,
-                //         LEDPattern.solid(nextColor),
-                //         0.25,
-                //         0.25).schedule();
+                // normalLights,
+                // LEDSubsystem_WPIlib.LEDTarget.SIDES,
+                // LEDPattern.solid(nextColor),
+                // 0.25,
+                // 0.25).schedule();
             }
             return;
         }
@@ -388,8 +388,8 @@ public class MatchInformation extends SubsystemBase {
         if (currentWarningStage != WarningStage.NONE) {
             currentWarningStage = WarningStage.NONE;
             // new ResetLED(
-            //         normalLights,
-            //         LEDSubsystem_WPIlib.LEDTarget.SIDES).schedule();
+            // normalLights,
+            // LEDSubsystem_WPIlib.LEDTarget.SIDES).schedule();
         } else {
             return;
         }

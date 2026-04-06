@@ -104,19 +104,19 @@ public class Feeder extends SubsystemBase {
                 spindexerMotorSpeed = FeederConstants.feederShootSpeed;
                 towerMotorSpeed = FeederConstants.feederShootSpeed;
                 break;
-        case PASSING:
-    if (drivetrain.getPose().getY() > 3.53 && drivetrain.getPose().getY() < 4.53) {
-        spindexerMotorSpeed = 0;
-        towerMotorSpeed = 0;
-    } else if ((drivetrain.getPose().getX() > 3.6 && drivetrain.getPose().getX() < 5.35)
-            || (drivetrain.getPose().getX() > 11.05 && drivetrain.getPose().getX() < 12.9)) {
-        spindexerMotorSpeed = 0;
-        towerMotorSpeed = 0;
-    } else {
-        spindexerMotorSpeed = FeederConstants.feederShootSpeed;
-        towerMotorSpeed = FeederConstants.feederShootSpeed;
-    }
-    break;
+            case PASSING:
+                if (drivetrain.getPose().getY() > 3.53 && drivetrain.getPose().getY() < 4.53) {
+                    spindexerMotorSpeed = 0;
+                    towerMotorSpeed = 0;
+                } else if ((drivetrain.getPose().getX() > 3.6 && drivetrain.getPose().getX() < 5.35)
+                        || (drivetrain.getPose().getX() > 11.05 && drivetrain.getPose().getX() < 12.9)) {
+                    spindexerMotorSpeed = 0;
+                    towerMotorSpeed = 0;
+                } else {
+                    spindexerMotorSpeed = FeederConstants.feederShootSpeed;
+                    towerMotorSpeed = FeederConstants.feederShootSpeed;
+                }
+                break;
             case FEEDTESTING:
                 spindexerMotorSpeed = -0.7;
                 towerMotorSpeed = -0.7;
@@ -148,12 +148,12 @@ public class Feeder extends SubsystemBase {
 
     @Override
     public void periodic() {
-        SmartDashboard.putString("FEEDER WANTED STATE", wantedState.toString());
-        SmartDashboard.putString("FEEDER SYSTEM STATE", systemState.toString());
-        SmartDashboard.putNumber("Spindexer Speed", spindexerMotorSpeed);
-        SmartDashboard.putNumber("Tower Speed", towerMotorSpeed);
-        SmartDashboard.putBoolean("Feeder Shooting", 
-            spindexerMotorSpeed == FeederConstants.feederShootSpeed);
+        SmartDashboard.putString("STATES/FEEDER WANTED STATE", wantedState.toString());
+        SmartDashboard.putString("STATES/FEEDER SYSTEM STATE", systemState.toString());
+        SmartDashboard.putNumber("FEEDER/Spindexer Speed", spindexerMotorSpeed);
+        SmartDashboard.putNumber("FEEDER/Tower Speed", towerMotorSpeed);
+        SmartDashboard.putBoolean("FEEDER/Feeder Shooting",
+                spindexerMotorSpeed == FeederConstants.feederShootSpeed);
 
         systemState = changeCurrentSystemState();
         applyState();

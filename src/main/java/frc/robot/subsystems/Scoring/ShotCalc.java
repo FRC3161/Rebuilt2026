@@ -43,12 +43,14 @@ public final class ShotCalc {
                 filteredSpeeds.vxMetersPerSecond,
                 filteredSpeeds.vyMetersPerSecond).plus(rotationalVelocity);
 
-        SmartDashboard.putNumber("Rotational Vel X", rotationalVelocity.getX());
-        SmartDashboard.putNumber("Rotational Vel Y", rotationalVelocity.getY());
-        SmartDashboard.putNumber("Translational Vel X", filteredSpeeds.vxMetersPerSecond);
-        SmartDashboard.putNumber("Translational Vel Y", filteredSpeeds.vyMetersPerSecond);
-        SmartDashboard.putNumber("Total Vel X", totalVelocity.getX());
-        SmartDashboard.putNumber("Total Vel Y", totalVelocity.getY());
+        // SmartDashboard.putNumber("Rotational Vel X", rotationalVelocity.getX());
+        // SmartDashboard.putNumber("Rotational Vel Y", rotationalVelocity.getY());
+        // SmartDashboard.putNumber("Translational Vel X",
+        // filteredSpeeds.vxMetersPerSecond);
+        // SmartDashboard.putNumber("Translational Vel Y",
+        // filteredSpeeds.vyMetersPerSecond);
+        // SmartDashboard.putNumber("Total Vel X", totalVelocity.getX());
+        // SmartDashboard.putNumber("Total Vel Y", totalVelocity.getY());
 
         // 4. NULL SAFETY — too close to target
         Translation2d toGoal = goalPosition.minus(turretPosition);
@@ -57,11 +59,11 @@ public final class ShotCalc {
             return new ShooterCommand(0, new Rotation2d(), 0);
 
         boolean isPassing = goalPosition.equals(FieldConstants.BLUE_PASS_SPOT_1)
-                         || goalPosition.equals(FieldConstants.BLUE_PASS_SPOT_2)
-                         || goalPosition.equals(FieldConstants.RED_PASS_SPOT_1)
-                         || goalPosition.equals(FieldConstants.RED_PASS_SPOT_2);
+                || goalPosition.equals(FieldConstants.BLUE_PASS_SPOT_2)
+                || goalPosition.equals(FieldConstants.RED_PASS_SPOT_1)
+                || goalPosition.equals(FieldConstants.RED_PASS_SPOT_2);
 
-        SmartDashboard.putBoolean("Is Passing Shot", isPassing);
+        // SmartDashboard.putBoolean("Is Passing Shot", isPassing);
 
         // 5. INITIAL TABLE LOOKUPS at real distance
         double timeOfFlight = isPassing
@@ -70,14 +72,14 @@ public final class ShotCalc {
         Translation2d virtualTarget = goalPosition;
 
         // 6. ITERATIVE SOLVE (10 passes)
-       for (int i = 0; i < 10; i++) {
-    virtualTarget = goalPosition.minus(totalVelocity.times(timeOfFlight));
-    toGoal = virtualTarget.minus(turretPosition);
-    distance = toGoal.getNorm();
-    timeOfFlight = isPassing
-            ? ShooterConstants.PASSING_TOF_MAP.get(distance)
-            : ShooterConstants.TOF_MAP.get(distance);
-}
+        for (int i = 0; i < 10; i++) {
+            virtualTarget = goalPosition.minus(totalVelocity.times(timeOfFlight));
+            toGoal = virtualTarget.minus(turretPosition);
+            distance = toGoal.getNorm();
+            timeOfFlight = isPassing
+                    ? ShooterConstants.PASSING_TOF_MAP.get(distance)
+                    : ShooterConstants.TOF_MAP.get(distance);
+        }
 
         // 7. FINAL TABLE LOOKUPS at corrected distance
         double baselineRPS = isPassing
@@ -105,12 +107,12 @@ public final class ShotCalc {
                 ShooterConstants.MIN_RPS,
                 ShooterConstants.MAX_RPS);
 
-        SmartDashboard.putNumber("Baseline Velocity", baselineVelocity);
-        SmartDashboard.putNumber("Target Velocity Norm", targetVelocity.getNorm());
-        SmartDashboard.putNumber("Shot Velocity Norm", shotVelocity.getNorm());
-        SmartDashboard.putNumber("Shot Angle", turretAngle.getDegrees());
-        SmartDashboard.putNumber("Velocity Ratio", velocityRatio);
-        SmartDashboard.putNumber("Adjusted RPS", adjustedRPS);
+        // SmartDashboard.putNumber("Baseline Velocity", baselineVelocity);
+        // SmartDashboard.putNumber("Target Velocity Norm", targetVelocity.getNorm());
+        // SmartDashboard.putNumber("Shot Velocity Norm", shotVelocity.getNorm());
+        // SmartDashboard.putNumber("Shot Angle", turretAngle.getDegrees());
+        // SmartDashboard.putNumber("Velocity Ratio", velocityRatio);
+        // SmartDashboard.putNumber("Adjusted RPS", adjustedRPS);
 
         // 11. HOOD ANGLE
         double adjustedHood = baselineHoodAngle;

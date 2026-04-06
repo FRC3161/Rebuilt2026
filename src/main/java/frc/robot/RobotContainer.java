@@ -232,14 +232,14 @@ public class RobotContainer {
                                 new InstantCommand(() -> feeder.disableEcoModeFeeder())));
         // manual intake safety
         // run one way
-        // driver.povLeft()
-        //         .onTrue(new InstantCommand(() -> intake.setWantedIntakeState(IntakeWantedState.MANUAL_CONTROL_POS)))
-        //         .onFalse(new InstantCommand(() -> intake.setWantedIntakeState(IntakeWantedState.MANUAL_IDLE)));
+        driver.povLeft()
+                .onTrue(new InstantCommand(() -> intake.setWantedIntakeState(IntakeWantedState.MANUAL_CONTROL_POS)))
+                .onFalse(new InstantCommand(() -> intake.setWantedIntakeState(IntakeWantedState.MANUAL_IDLE)));
 
-        // // run other way
-        // driver.povRight()
-        //         .onTrue(new InstantCommand(() -> intake.setWantedIntakeState(IntakeWantedState.MANUAL_CONTROL_NEG)))
-        //         .onFalse(new InstantCommand(() -> intake.setWantedIntakeState(IntakeWantedState.MANUAL_IDLE)));
+        // run other way
+        driver.povRight()
+                .onTrue(new InstantCommand(() -> intake.setWantedIntakeState(IntakeWantedState.MANUAL_CONTROL_NEG)))
+                .onFalse(new InstantCommand(() -> intake.setWantedIntakeState(IntakeWantedState.MANUAL_IDLE)));
 
         // manually set intake to 0
         driver.back().onTrue(new InstantCommand(() -> intake.setZero()));
@@ -438,17 +438,18 @@ public class RobotContainer {
                         new InstantCommand(() -> turret.setWantedTurretState(TurretWantedState.AIM_HUB)),
                         waitToShoot(),
                         new InstantCommand(() -> feeder.setWantedFeederState(FeederWantedState.SHOOT)),
-                       wait(1.5),
-                       new InstantCommand(() -> intake.setWantedIntakeState(IntakeWantedState.RETRACT))));
+                        wait(1.5),
+                        new InstantCommand(() -> intake.setWantedIntakeState(IntakeWantedState.RETRACT))));
 
-                       NamedCommands.registerCommand("SOTF Pure",
+        NamedCommands.registerCommand("SOTF Pure",
                 new SequentialCommandGroup(
                         new InstantCommand(() -> shooter.setWantedShooterState(ShooterWantedState.HUB_SHOOT)),
                         new InstantCommand(() -> turret.setWantedTurretState(TurretWantedState.AIM_HUB)),
                         waitToShoot(),
                         new InstantCommand(() -> feeder.setWantedFeederState(FeederWantedState.SHOOT))));
-                      // wait(1.5),
-                       //new InstantCommand(() -> intake.setWantedIntakeState(IntakeWantedState.RETRACT))));
+        // wait(1.5),
+        // new InstantCommand(() ->
+        // intake.setWantedIntakeState(IntakeWantedState.RETRACT))));
 
         NamedCommands.registerCommand("Aim Shoot",
                 new SequentialCommandGroup(

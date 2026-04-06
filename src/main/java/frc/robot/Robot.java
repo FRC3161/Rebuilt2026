@@ -69,7 +69,7 @@ public class Robot extends TimedRobot {
         // robot's periodic
         // block in order for anything in the Command-based framework to work.
         CommandScheduler.getInstance().run();
-        m_robotContainer.drivetrain.vision.updateVision(m_robotContainer.drivetrain);
+        // m_robotContainer.drivetrain.vision.updateVision(m_robotContainer.drivetrain);
         // m_robotContainer.drivetrain.updateVisionMeasurements();
     }
 
@@ -108,7 +108,7 @@ public class Robot extends TimedRobot {
         // teleop starts running. If you want the autonomous to
         // continue until interrupted by another command, remove
         // this line or comment it out.
-        m_robotContainer.matchTimer.start();
+        // m_robotContainer.matchTimer.start();
 
         if (m_autonomousCommand != null) {
             m_autonomousCommand.cancel();

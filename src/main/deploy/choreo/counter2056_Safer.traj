@@ -618,6 +618,6 @@
    {"name":"Marker", "from":{"target":2, "targetTimestamp":1.4233, "offset":{"exp":"0 s", "val":0.0}}, "event":{"type":"named", "data":{"name":"SOTF Pure"}}},
    {"name":"Marker", "from":{"target":4, "targetTimestamp":5.01019, "offset":{"exp":"1.5 s", "val":1.5}}, "event":{"type":"named", "data":{"name":"FeederIdle"}}},
    {"name":"Marker", "from":{"target":11, "targetTimestamp":18.96026, "offset":{"exp":"-0.1 s", "val":-0.1}}, "event":{"type":"named", "data":{"name":"FeederIdle"}}},
-   {"name":"Marker", "from":{"target":11, "targetTimestamp":18.96026, "offset":{"exp":"-0.1 s", "val":-0.1}}, "event":{"type":"named", "data":{"name":"RetractHood"}}},
+   {"name":"Marker", "from":{"target":11, "targetTimestamp":18.96026, "offset":{"exp":"-0.1 s", "val":-0.1}}, "event":{"type":"named", "data":{"name":"Retract Hood"}}},
    {"name":"Marker", "from":{"target":9, "targetTimestamp":10.23811, "offset":{"exp":"-0.3 s", "val":-0.3}}, "event":{"type":"named", "data":{"name":"SOTF"}}}]
 }

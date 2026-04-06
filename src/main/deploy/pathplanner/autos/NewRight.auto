@@ -33,30 +33,6 @@
           "data": {
             "pathName": "RTrenchMid2_NEW"
           }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "Aim Shoot"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "FeederIdle"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "Retract Hood"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "RTrenchMid2_NEW"
-          }
         }
       ]
     }
