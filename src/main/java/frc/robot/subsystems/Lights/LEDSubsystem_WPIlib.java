@@ -42,7 +42,7 @@ public class LEDSubsystem_WPIlib extends SubsystemBase {
     private final AddressableLED m_led;
     private final AddressableLEDBuffer m_ledbuffer; // The entire LED strip
     private final AddressableLEDBufferView m_sidesBuffer; // The buffer for sides of the robot
-    private final AddressableLEDBufferView m_signalBuffer; // The buffer for the signal LEDs (last 10 LEDs)
+    private final AddressableLEDBufferView m_signalBuffer; // The buffer for the signal LEDs (last [signal_length] LEDs)
 
     // HANDLERS =============================================================
     private final Random random = new Random();
@@ -74,8 +74,8 @@ public class LEDSubsystem_WPIlib extends SubsystemBase {
         // LED AND BUFFERS ============================================================
         m_led = new AddressableLED(kPort);
         m_ledbuffer = new AddressableLEDBuffer(kLength);
-        m_sidesBuffer = m_ledbuffer.createView(0, kLength - 1 - signal_length); // Sides of the robot
-        m_signalBuffer = m_ledbuffer.createView(kLength - signal_length, kLength - 1); // Signal LEDs (last 10 LEDs)
+        m_sidesBuffer = m_ledbuffer.createView(0, kLength - signal_length - 1); // Sides of the robot
+        m_signalBuffer = m_ledbuffer.createView(kLength - signal_length, kLength - 1); // Signal LEDs (last [signal_length] LEDs)
 
         m_led.setLength(m_ledbuffer.getLength());
         m_led.setData(m_ledbuffer);
@@ -85,7 +85,11 @@ public class LEDSubsystem_WPIlib extends SubsystemBase {
 
         // LED_Breathing(LEDTarget.SIDES,
         // LEDPattern.solid(LightsConstants.RBGColors.get("red")), 2.5);
-        LED_Twinkle(LEDTarget.SIDES, LightsConstants.RBGColors.get("black"), LightsConstants.RBGColors.get("gold"),
+        LED_Twinkle(LEDTarget.SIDES, LightsConstants.RBGColors.get("black"),
+                LightsConstants.RBGColors.get("gold"),
+                2.5);
+        LED_Twinkle(LEDTarget.SIGNAL, LightsConstants.RBGColors.get("black"),
+                LightsConstants.RBGColors.get("green"),
                 2.5);
         // LED_ScrollPatternRelative(LEDPattern.rainbow(255, 120), 100);
     }
