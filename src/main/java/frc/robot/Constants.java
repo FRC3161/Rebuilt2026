@@ -288,7 +288,7 @@ public final class Constants {
         public static double intakingPosition = 10;
         public static double intakingSpeed = -0.9;
         public static double slowerIntakeKa = 1.0;
-        public static double intakeExtensionHomingThreshold;
+        public static double intakeExtensionHomingThreshold = 0.03;
         public static double shootingPosition;
         public static double retractingPos = 0;
         public static double[] intakePID = { 0.3, 0, 0 };

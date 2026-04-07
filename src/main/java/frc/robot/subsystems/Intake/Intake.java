@@ -290,7 +290,7 @@ public class Intake extends SubsystemBase {
 
     @Override
     public void periodic() {
-        // canRangeControlledRecalibration();
+        canRangeControlledRecalibration();
         LogValues();
         systemState = changeCurrentSystemState();
         applyState();
