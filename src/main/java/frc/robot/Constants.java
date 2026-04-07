@@ -72,16 +72,16 @@ public final class Constants {
 
         public static final InterpolatingDoubleTreeMap RPS_MAP = new InterpolatingDoubleTreeMap();
         static {
-            RPS_MAP.put(2.0, 45.5d); //47
-             RPS_MAP.put(2.5, 47.5d);
-            RPS_MAP.put(3.0, 48d);  //50
-             RPS_MAP.put(3.5, 50d);
+            RPS_MAP.put(2.0, 45.5d); // 47
+            RPS_MAP.put(2.5, 47.5d);
+            RPS_MAP.put(3.0, 48d); // 50
+            RPS_MAP.put(3.5, 50d);
             RPS_MAP.put(4.0, 52d); // 52
-             RPS_MAP.put(4.5, 54.5d);
-            RPS_MAP.put(5.0, 56d);  //55
-             RPS_MAP.put(5.5, 58.5d);
-            RPS_MAP.put(6.0, 62d); //62
-            //RPS_MAP.put(10.0, 85d);
+            RPS_MAP.put(4.5, 54.5d);
+            RPS_MAP.put(5.0, 56d); // 55
+            RPS_MAP.put(5.5, 58.5d);
+            RPS_MAP.put(6.0, 62d); // 62
+            // RPS_MAP.put(10.0, 85d);
         };
 
         public static final InterpolatingDoubleTreeMap REVERSE_RPM_MAP = new InterpolatingDoubleTreeMap();
@@ -99,30 +99,30 @@ public final class Constants {
 
         public static final InterpolatingDoubleTreeMap HOOD_MAP = new InterpolatingDoubleTreeMap();
         static {
-            HOOD_MAP.put(2.0, 0d); //0
-             HOOD_MAP.put(2.5, 1d);
-            HOOD_MAP.put(3.0, 2.2d); //2,5
-             HOOD_MAP.put(3.5, 3d);
-            HOOD_MAP.put(4.0, 3.8d);  // 5
-             HOOD_MAP.put(4.5, 4d);
-            HOOD_MAP.put(5.0, 4.3d);  //5.5
-             HOOD_MAP.put(5.5, 4.6d);
-            HOOD_MAP.put(6.0, 5.5d);  //6.5
-            //HOOD_MAP.put(10.0, 8d);
+            HOOD_MAP.put(2.0, 0d); // 0
+            HOOD_MAP.put(2.5, 1d);
+            HOOD_MAP.put(3.0, 2.2d); // 2,5
+            HOOD_MAP.put(3.5, 3d);
+            HOOD_MAP.put(4.0, 3.8d); // 5
+            HOOD_MAP.put(4.5, 4d);
+            HOOD_MAP.put(5.0, 4.3d); // 5.5
+            HOOD_MAP.put(5.5, 4.6d);
+            HOOD_MAP.put(6.0, 5.5d); // 6.5
+            // HOOD_MAP.put(10.0, 8d);
         };
 
         public static final InterpolatingDoubleTreeMap TOF_MAP = new InterpolatingDoubleTreeMap();
         static {
             TOF_MAP.put(2.0, 0.5);
-            //TOF_MAP.put(2.5, 0d);
+            // TOF_MAP.put(2.5, 0d);
             TOF_MAP.put(3.0, 0.5);
-            //TOF_MAP.put(3.5, 0d);
+            // TOF_MAP.put(3.5, 0d);
             TOF_MAP.put(4.0, 0.5);
-           // TOF_MAP.put(4.5, 0d);
+            // TOF_MAP.put(4.5, 0d);
             TOF_MAP.put(5.0, 0.5);
-           // TOF_MAP.put(5.5, 0d);
+            // TOF_MAP.put(5.5, 0d);
             TOF_MAP.put(6.0, 0.5);
-           // TOF_MAP.put(10.0, 0.5);
+            // TOF_MAP.put(10.0, 0.5);
         };
 
         public static final InterpolatingDoubleTreeMap PASSING_TOF_MAP = new InterpolatingDoubleTreeMap();
@@ -185,33 +185,36 @@ public final class Constants {
 
         public static double activeWaitingSpeed = 30;
         public static double inactiveWaitingSpeed;
-        // public static PolynomialRegression hoodAngleInterpolation = new PolynomialRegression(
-        //         Arrays.asList(
-        //                 new Point(2, 0),
-        //                 new Point(3, 2.5),
-        //                 new Point(4, 5),
-        //                 new Point(5, 5.5), // 6.3
-        //                 new Point(6, 6.5), // 7.5
-        //                 new Point(10, 8)),
-        //         2);
+        // public static PolynomialRegression hoodAngleInterpolation = new
+        // PolynomialRegression(
+        // Arrays.asList(
+        // new Point(2, 0),
+        // new Point(3, 2.5),
+        // new Point(4, 5),
+        // new Point(5, 5.5), // 6.3
+        // new Point(6, 6.5), // 7.5
+        // new Point(10, 8)),
+        // 2);
 
-        // public static PolynomialRegression shooterSpeedInterpolation = new PolynomialRegression(
-        //         Arrays.asList(
-        //                 new Point(2, 47),
-        //                 new Point(3, 50),
-        //                 new Point(4, 50),
-        //                 new Point(5, 55),
-        //                 new Point(6, 62),
-        //                 new Point(10, 85)),
-        //         2);
-        // public static PolynomialRegression timeOfFlightInterpolation = new PolynomialRegression(
-        //         Arrays.asList(
-        //                 new Point(2, 0.2),
-        //                 new Point(3, 0.2),
-        //                 new Point(4, 0.2),
-        //                 new Point(5, 0.2),
-        //                 new Point(6, 0.1)),
-        //         2);
+        // public static PolynomialRegression shooterSpeedInterpolation = new
+        // PolynomialRegression(
+        // Arrays.asList(
+        // new Point(2, 47),
+        // new Point(3, 50),
+        // new Point(4, 50),
+        // new Point(5, 55),
+        // new Point(6, 62),
+        // new Point(10, 85)),
+        // 2);
+        // public static PolynomialRegression timeOfFlightInterpolation = new
+        // PolynomialRegression(
+        // Arrays.asList(
+        // new Point(2, 0.2),
+        // new Point(3, 0.2),
+        // new Point(4, 0.2),
+        // new Point(5, 0.2),
+        // new Point(6, 0.1)),
+        // 2);
         public static double distanceToHub;
         public static double passDistance;
 
@@ -374,6 +377,7 @@ public final class Constants {
 
         public static int towerMotorID = 41;
         public static int spindexerMotorID = 40;
+        public static int rollerMotorID = 42;
 
         public static double feederIntakeSpeed = 0;
         public static double feederShootSpeed = 0.8;
