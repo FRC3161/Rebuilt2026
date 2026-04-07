@@ -85,7 +85,11 @@ public class LEDSubsystem_WPIlib extends SubsystemBase {
 
         // LED_Breathing(LEDTarget.SIDES,
         // LEDPattern.solid(LightsConstants.RBGColors.get("red")), 2.5);
-        LED_Twinkle(LEDTarget.SIDES, LightsConstants.RBGColors.get("black"), LightsConstants.RBGColors.get("gold"),
+        LED_Twinkle(LEDTarget.SIDES, LightsConstants.RBGColors.get("black"),
+                LightsConstants.RBGColors.get("gold"),
+                2.5);
+        LED_Twinkle(LEDTarget.SIGNAL, LightsConstants.RBGColors.get("black"),
+                LightsConstants.RBGColors.get("green"),
                 2.5);
         // LED_ScrollPatternRelative(LEDPattern.rainbow(255, 120), 100);
     }
