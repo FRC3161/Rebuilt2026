@@ -7,25 +7,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "LTrenchMid1.0"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "Lswipe pathFind"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "LTrenchMid1.2"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "Auto Trench Shoot Left"
+            "pathName": "RCircle1"
           }
         },
         {
@@ -37,13 +19,25 @@
         {
           "type": "path",
           "data": {
-            "pathName": "LTrenchMid2"
+            "pathName": "RCircle2"
           }
         },
         {
           "type": "named",
           "data": {
-            "name": "Aim Shoot"
+            "name": "FeederIdle"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "RTrenchMid1_OLD"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "FeederIdle"
           }
         }
       ]

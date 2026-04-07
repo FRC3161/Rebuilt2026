@@ -7,25 +7,13 @@
         {
           "type": "path",
           "data": {
-            "pathName": "LTrenchMid1.0"
+            "pathName": "RTrenchMid1_NEW"
           }
         },
         {
           "type": "named",
           "data": {
-            "name": "Lswipe pathFind"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "LTrenchMid1.2"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "Auto Trench Shoot Left"
+            "name": "Aim Shoot"
           }
         },
         {
@@ -37,13 +25,25 @@
         {
           "type": "path",
           "data": {
-            "pathName": "LTrenchMid2"
+            "pathName": "RTrenchMid2_NEW"
           }
         },
         {
           "type": "named",
           "data": {
             "name": "Aim Shoot"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "FeederIdle"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "RTrenchMid2_NEW"
           }
         }
       ]

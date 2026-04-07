@@ -1,7 +1,3 @@
-// Copyright (c) FIRST and other WPILib contributors.
-// Open Source Software; you can modify and/or share it under the terms of
-// the WPILib BSD license file in the root directory of this project.
-
 package frc.robot.subsystems.Scoring;
 
 import com.ctre.phoenix6.StatusCode;
@@ -14,22 +10,24 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Robot;
 import frc.robot.Constants.TurretConstants;
 import frc.robot.Constants.TurretConstants.TurretWantedState;
-import frc.robot.Constants.FieldConstants.ScoringZone;
+import frc.robot.Constants.FieldConstants;
+import frc.robot.Constants.ShooterConstants;
 import frc.robot.subsystems.Drive.CommandSwerveDrivetrain;
-import frc.robot.subsystems.Lights.LEDSubsystem_WPIlib;
-import frc.robot.subsystems.Lights.LEDSubsystem_WPIlib.LEDTarget;
+import frc.util.Interpolation.LoggedTunableNumber;
 import frc.robot.Constants.TurretConstants.SystemState;
-import frc.util.LoggedTunableNumber;
+import edu.wpi.first.wpilibj.Timer;
 
 public class Turret extends SubsystemBase {
     private final CommandSwerveDrivetrain drivetrain;
-    private final LEDSubsystem_WPIlib leds;
+
     /* MOTORS */
     private TalonFX turretMotor = new TalonFX(TurretConstants.turretMotorID, "rio");
     private TalonFXConfiguration turretMotorConfig = new TalonFXConfiguration();
@@ -39,9 +37,11 @@ public class Turret extends SubsystemBase {
 
     // for position control
     private double position = 0.0;
+    private double simTurretPosition = 0.0; // tracks simulated turret position
     private double CCWlimit = 0.85;
     private double CWLimit = -0.85;
     private double gearRatio = 38.8888888889;
+    private double offset = 0.00;
 
     final PositionVoltage mmE_request = new PositionVoltage(0);
 
@@ -59,27 +59,18 @@ public class Turret extends SubsystemBase {
     SystemState systemState = SystemState.IDLING;
 
     /** Creates a new Turret */
-    public Turret(CommandSwerveDrivetrain drivetrain, LEDSubsystem_WPIlib leds) {
+    public Turret(CommandSwerveDrivetrain drivetrain) {
         this.drivetrain = drivetrain;
-        this.leds = leds;
 
         /* SETUP CONFIG */
-
-        // CURRENT LIMITS
         turretMotorConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         turretMotorConfig.CurrentLimits.SupplyCurrentLimit = TurretConstants.SupplyCurrentLimit;
         turretMotorConfig.CurrentLimits.StatorCurrentLimit = TurretConstants.StatorCurrentLimit;
-
-        // turretMotorConfig.Feedback.FeedbackRemoteSensorID = 54;
         turretMotorConfig.Feedback.FeedbackRemoteSensorID = 50;
-
-        // turretMotorConfig.Feedback.FeedbackSensorSource =
-        // FeedbackSensorSourceValue.RemoteCANcoder;
         turretMotorConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
         turretMotorConfig.Feedback.SensorToMechanismRatio = gearRatio;
         turretMotorConfig.ClosedLoopGeneral.ContinuousWrap = false;
 
-        // PID CONSTANTS
         turretMotorConfig.Slot0.kS = k_S.get();
         turretMotorConfig.Slot0.kV = k_V.get();
         turretMotorConfig.Slot0.kA = k_A.get();
@@ -87,54 +78,55 @@ public class Turret extends SubsystemBase {
         turretMotorConfig.Slot0.kI = k_I.get();
         turretMotorConfig.Slot0.kD = k_D.get();
 
-        // use this for velocity motion magic
-        turretMotorConfig.MotionMagic.MotionMagicAcceleration = TurretConstants.turretMotionMagicAccel; // Target
-                                                                                                        // acceleration
-                                                                                                        // of 160 rps/s
-                                                                                                        // (0.5 seconds)
+        turretMotorConfig.MotionMagic.MotionMagicAcceleration = TurretConstants.turretMotionMagicAccel;
         turretMotorConfig.MotionMagic.MotionMagicJerk = TurretConstants.turretMotionMagicJerk;
-
-        // use this for motion magic expo (very good control of position)
         turretMotorConfig.MotionMagic.MotionMagicExpo_kV = TurretConstants.turretMotionMagicExpoK_V;
         turretMotorConfig.MotionMagic.MotionMagicExpo_kA = TurretConstants.turretMotionMagicExpoK_A;
 
-        // APPLY CONFIG TO MOTOR
-        StatusCode status = StatusCode.StatusCodeNotInitialized;
-        for (int i = 0; i < 5; ++i) {
-            status = turretMotor.getConfigurator().apply(turretMotorConfig);
-            if (status.isOK())
-                break;
+        if (!Robot.isSimulation()) {
+            StatusCode status = StatusCode.StatusCodeNotInitialized;
+            for (int i = 0; i < 5; ++i) {
+                status = turretMotor.getConfigurator().apply(turretMotorConfig);
+                if (status.isOK())
+                    break;
+            }
+            if (!status.isOK()) {
+                System.out.println("Could not apply configs, error code: " + status.toString());
+            }
+            turretMotor.setPosition(encoder.getAbsolutePosition().getValue());
         }
-        if (!status.isOK()) {
-            System.out.println("Could not apply configs, error code: " + status.toString());
-        }
-        turretMotor.setPosition(encoder.getAbsolutePosition().getValue());
+    }
 
+    // Returns current turret position, sim safe
+    private double getTurretPosition() {
+        if (Robot.isSimulation()) {
+            return simTurretPosition;
+        }
+        return turretMotor.getPosition().getValueAsDouble();
     }
 
     public void setWantedTurretState(TurretWantedState desiredState) {
         this.wantedState = desiredState;
     }
 
+    public void applyRightOffset() {
+        offset += 0.01;
+    }
+
+    public void applyLeftOffset() {
+        offset -= 0.01;
+    }
+
     private SystemState changeCurrentSystemState() {
         return switch (wantedState) {
-            case IDLE:
-                yield SystemState.IDLING;
-            case IDLE_AIM:
-                yield SystemState.IDLE_AIMING;
-            case AIM_HUB:
-                yield SystemState.HUB_AIMING;
-            case AIM_PASS:
-                yield SystemState.PASS_AIMING;
-            case TRENCH_PRESETL:
-                yield SystemState.TRENCH_PRESETTINGL;
-            case TRENCH_PRESETR:
-                yield SystemState.TRENCH_PRESETTINGR;
-            case HUB_PRESET:
-                yield SystemState.HUB_PRESETTING;
-            case TEST:
-                yield SystemState.TESTING;
-
+            case IDLE -> SystemState.IDLING;
+            case IDLE_AIM -> SystemState.IDLE_AIMING;
+            case AIM_HUB -> SystemState.HUB_AIMING;
+            case AIM_PASS -> SystemState.PASS_AIMING;
+            case TRENCH_PRESETL -> SystemState.TRENCH_PRESETTINGL;
+            case TRENCH_PRESETR -> SystemState.TRENCH_PRESETTINGR;
+            case HUB_PRESET -> SystemState.HUB_PRESETTING;
+            case TEST -> SystemState.TESTING;
         };
     }
 
@@ -143,191 +135,97 @@ public class Turret extends SubsystemBase {
             case IDLING:
                 position = 0.0;
                 break;
+
             case IDLE_AIMING:
-                ScoringZone scoringZone = drivetrain.getZone();
-                String zoneString = "";
-                if (scoringZone == ScoringZone.BLUE_HUB || scoringZone == ScoringZone.RED_HUB) {
-                    zoneString = "hub";
-                    double target1 = 0;
-                    double currentTurretToRobotAngle1 = turretMotor.getPosition().getValueAsDouble();
-                    // calculate robot angle relative to field
-                    Rotation2d currentRobotAngle1 = drivetrain.getTurretPose().getRotation();
-                    Rotation2d angleToHub1 = drivetrain.getSOTFTurretAngle(zoneString).getAngle();
-
-                    // calculate desired angle of turret relative to hub
-                    // double angleToHub = (Math.atan2(passSpot.getY(), passSpot.getX()));
-
-                    // calculate desired angle of turret relative to robot
-                    Rotation2d desiredTurretAngle1 = (angleToHub1).minus(currentRobotAngle1);
-                    // convert to rotations
-                    double convertedTurretAngle1 = desiredTurretAngle1.getDegrees() / 360;
-
-                    // compute shortest delta between branches
-                    double delta1 = convertedTurretAngle1 - (currentTurretToRobotAngle1);
-                    delta1 = Math.IEEEremainder(delta1, 1.0);
-
-                    // now apply
-                    target1 = currentTurretToRobotAngle1 + delta1;
-
-                    // now enforce mechanical limits with wrap only if truly needed
-                    while (target1 > CCWlimit)
-                        target1 -= 1.0;
-                    while (target1 < CWLimit)
-                        target1 += 1.0;
-
-                    position = target1;
-                } else if (scoringZone == ScoringZone.NO_TRACK) {
-                    zoneString = "hub";
-                    double target1 = 0;
-                    double currentTurretToRobotAngle1 = turretMotor.getPosition().getValueAsDouble();
-                    // calculate robot angle relative to field
-                    Rotation2d currentRobotAngle1 = drivetrain.getTurretPose().getRotation();
-                    Rotation2d angleToHub1 = drivetrain.getSOTFTurretAngle(zoneString).getAngle();
-
-                    // calculate desired angle of turret relative to hub
-                    // double angleToHub = (Math.atan2(passSpot.getY(), passSpot.getX()));
-
-                    // calculate desired angle of turret relative to robot
-                    Rotation2d desiredTurretAngle1 = (angleToHub1).minus(currentRobotAngle1);
-                    // convert to rotations
-                    double convertedTurretAngle1 = desiredTurretAngle1.getDegrees() / 360;
-
-                    // compute shortest delta between branches
-                    double delta1 = convertedTurretAngle1 - (currentTurretToRobotAngle1);
-                    delta1 = Math.IEEEremainder(delta1, 1.0);
-
-                    // now apply
-                    target1 = currentTurretToRobotAngle1 + delta1;
-
-                    // now enforce mechanical limits with wrap only if truly needed
-                    while (target1 > CCWlimit)
-                        target1 -= 1.0;
-                    while (target1 < CWLimit)
-                        target1 += 1.0;
-
-                    position = target1;
-                } else {
-                    zoneString = "pass";
-                    double target1 = 0;
-                    double currentTurretToRobotAngle1 = turretMotor.getPosition().getValueAsDouble();
-                    // calculate robot angle relative to field
-                    Rotation2d currentRobotAngle1 = drivetrain.getTurretPose().getRotation();
-                    Rotation2d angleToHub1 = drivetrain.getSOTFTurretAngle(zoneString).getAngle();
-
-                    // calculate desired angle of turret relative to hub
-                    // double angleToHub = (Math.atan2(passSpot.getY(), passSpot.getX()));
-
-                    // calculate desired angle of turret relative to robot
-                    Rotation2d desiredTurretAngle1 = (angleToHub1).minus(currentRobotAngle1);
-                    // convert to rotations
-                    double convertedTurretAngle1 = desiredTurretAngle1.getDegrees() / 360;
-
-                    // compute shortest delta between branches
-                    double delta1 = convertedTurretAngle1 - (currentTurretToRobotAngle1);
-                    delta1 = Math.IEEEremainder(delta1, 1.0);
-
-                    // now apply
-                    target1 = currentTurretToRobotAngle1 + delta1;
-
-                    // now enforce mechanical limits with wrap only if truly needed
-                    while (target1 > CCWlimit)
-                        target1 -= 1.0;
-                    while (target1 < CWLimit)
-                        target1 += 1.0;
-
-                    position = target1;
-                }
+                // commented out pending update
                 break;
+
             case PASS_AIMING:
                 double target = 0;
-                Translation2d passSpot;
-                if (DriverStation.getAlliance().get() == Alliance.Red) {
-                    if (drivetrain.getPose().getY() > 4.03) {
-                        passSpot = new Translation2d(15.5, 7);
-                    } else {
-                        passSpot = new Translation2d(15.5, 1);
-                    }
-                } else {
-                    if (drivetrain.getPose().getY() > 4.03) {
-                        passSpot = new Translation2d(1, 7);
-                    } else {
-                        passSpot = new Translation2d(1, 1);
-                    }
-                }
-                // leds.LED_ScrollPatternRelative(LEDPattern.gradient(GradientType.kContinuous,
-                // Color.kOrange, Color.kYellow), 2.5);
-                double currentTurretToRobotAngle = turretMotor.getPosition().getValueAsDouble();
-                // calculate robot angle relative to field
+                double currentTurretToRobotAngle = getTurretPosition();
                 Rotation2d currentRobotAngle = drivetrain.getPose().getRotation();
-                Rotation2d angleToHub = drivetrain.getSOTFTurretAngle("pass").getAngle();
 
-                // calculate desired angle of turret relative to hub
-                // double angleToHub = (Math.atan2(passSpot.getY(), passSpot.getX()));
+                double dt = Timer.getFPGATimestamp() - drivetrain.shotCommandTimestamp;
+                double omegaRad = drivetrain.getState().Speeds.omegaRadiansPerSecond;
+                Rotation2d rotationCorrection = Rotation2d.fromRadians(omegaRad * dt);
 
-                // calculate desired angle of turret relative to robot
-                Rotation2d desiredTurretAngle = (angleToHub)
+                Rotation2d angleToHub = drivetrain.currentShotCommand.turretAngle()
+                        .plus(rotationCorrection);
+
+                Rotation2d desiredTurretAngle = angleToHub
                         .minus(currentRobotAngle)
                         .plus(Rotation2d.fromDegrees(180));
-                // convert to rotations
+
                 double convertedTurretAngle = desiredTurretAngle.getDegrees() / 360;
-
-                // compute shortest delta between branches
-                double delta = convertedTurretAngle - (currentTurretToRobotAngle);
+                double delta = convertedTurretAngle - currentTurretToRobotAngle;
                 delta = Math.IEEEremainder(delta, 1.0);
-
-                // now apply
                 target = currentTurretToRobotAngle + delta;
 
-                // now enforce mechanical limits with wrap only if truly needed
                 while (target > CCWlimit)
                     target -= 1.0;
                 while (target < CWLimit)
                     target += 1.0;
 
-                // probe
-                SmartDashboard.putNumber("Turret Setpoint with adjustment", target);
-
+                target += offset;
                 position = target;
                 break;
+
             case HUB_AIMING:
                 double target2 = 0;
-                // leds.LED_ScrollPatternRelative(LEDPattern.gradient(GradientType.kContinuous,
-                // Color.kCadetBlue, Color.kLightGreen), 2.5);
-                double currentTurretToRobotAngle2 = turretMotor.getPosition().getValueAsDouble();
-                // calculate robot angle relative to field
+                double currentTurretToRobotAngle2 = getTurretPosition();
                 Rotation2d currentRobotAngle2 = drivetrain.getPose().getRotation();
-                Rotation2d angleToHub2 = drivetrain.getSOTFTurretAngle("hub").getAngle();
+                // Rotation2d angleToHub2 = drivetrain.getSOTFTurretAngle().getAngle();
+
+                /* OPTION 1 */
+                // Rotation2d angleToHub2 = drivetrain.SOTF_CALC().getAngle();
+
+                /* OPTION 2 */
+                // Rotation2d angleToHub2 = Rotation2d.fromDegrees(drivetrain.SOTFcalc()[0]);
+
+                /* OPTION 3 */
+                // ChassisSpeeds rawFieldSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(
+                // drivetrain.getState().Speeds,
+                // drivetrain.getPose().getRotation());
+                // Rotation2d angleToHub2 = (ShotCalc.calculateSOTF(
+                // drivetrain.getTurretPose().getTranslation(),
+                // rawFieldSpeeds, drivetrain.getScoringLocation(),
+                // ShooterConstants.latencyCompensation).turretAngle());
+
+                /* OPTION 4 */
+                // Rotation2d angleToHub2 = ShotCalc2.calculateSOTF(drivetrain).turretAngle();
 
                 // calculate desired angle of turret relative to hub
                 // double angleToHub2 = (Math.atan2(drivetrain.getYfromHub(),
                 // drivetrain.getXfromHub()));
 
                 // calculate desired angle of turret relative to robot
-                Rotation2d desiredTurretAngle2 = (angleToHub2)
+                // Rotation2d desiredTurretAngle2 = (angleToHub2)
+
+                double dt2 = Timer.getFPGATimestamp() - drivetrain.shotCommandTimestamp;
+                double omegaRad2 = drivetrain.getState().Speeds.omegaRadiansPerSecond;
+                Rotation2d rotationCorrection2 = Rotation2d.fromRadians(omegaRad2 * dt2);
+
+                Rotation2d angleToHub2 = drivetrain.currentShotCommand.turretAngle()
+                        .plus(rotationCorrection2);
+
+                Rotation2d desiredTurretAngle2 = angleToHub2
                         .minus(currentRobotAngle2)
                         .plus(Rotation2d.fromDegrees(180));
-                // Rotation2d desiredTurretAngle2 = currentRobotAngle2;
-                // convert to rotations
+
                 double convertedTurretAngle2 = desiredTurretAngle2.getDegrees() / 360;
-
-                // compute shortest delta between branches
-                double delta2 = convertedTurretAngle2 - (currentTurretToRobotAngle2);
+                double delta2 = convertedTurretAngle2 - currentTurretToRobotAngle2;
                 delta2 = Math.IEEEremainder(delta2, 1.0);
-
-                // now apply
                 target2 = currentTurretToRobotAngle2 + delta2;
 
-                // now enforce mechanical limits with wrap only if truly needed
                 while (target2 > CCWlimit)
                     target2 -= 1.0;
                 while (target2 < CWLimit)
                     target2 += 1.0;
 
-                // probe
-                SmartDashboard.putNumber("Turret Setpoint with adjustment", target2);
-
+                target2 += offset;
                 position = target2;
                 break;
+
             case TRENCH_PRESETTINGL:
                 position = TurretConstants.trenchPresetPositionL;
                 break;
@@ -344,28 +242,37 @@ public class Turret extends SubsystemBase {
     }
 
     public boolean turretIsReady() {
-        if ((turretMotor.getPosition().getValueAsDouble() - position) < TurretConstants.tolerance) {
-            return true;
-        } else {
-            return false;
+        return Math.abs(getTurretPosition() - position) < TurretConstants.tolerance;
+    }
+
+    public void enableEcoModeTurret() {
+        if (!Robot.isSimulation()) {
+            turretMotorConfig.CurrentLimits.StatorCurrentLimit = 40;
+            turretMotorConfig.CurrentLimits.SupplyCurrentLimit = 40;
+            turretMotor.getConfigurator().apply(turretMotorConfig);
         }
     }
 
-    /**
-     * Check LoggedTunableNumbers. If changed, update PID and SVA values of motor
-     */
-    public void checkTunableValues() {
-        if (k_S.hasChanged() || k_V.hasChanged() || k_A.hasChanged()
-                || k_P.hasChanged() || k_I.hasChanged() || k_D.hasChanged()) {
-            turretMotorConfig.Slot0.kS = k_S.get();
-            turretMotorConfig.Slot0.kV = k_V.get();
-            turretMotorConfig.Slot0.kA = k_A.get();
-            turretMotorConfig.Slot0.kP = k_P.get();
-            turretMotorConfig.Slot0.kI = k_I.get();
-            turretMotorConfig.Slot0.kD = k_D.get();
-
+    public void disableEcoModeTurret() {
+        if (!Robot.isSimulation()) {
+            turretMotorConfig.CurrentLimits.StatorCurrentLimit = TurretConstants.StatorCurrentLimit;
+            turretMotorConfig.CurrentLimits.SupplyCurrentLimit = TurretConstants.SupplyCurrentLimit;
             turretMotor.getConfigurator().apply(turretMotorConfig);
+        }
+    }
 
+    public void checkTunableValues() {
+        if (!Robot.isSimulation()) {
+            if (k_S.hasChanged() || k_V.hasChanged() || k_A.hasChanged()
+                    || k_P.hasChanged() || k_I.hasChanged() || k_D.hasChanged()) {
+                turretMotorConfig.Slot0.kS = k_S.get();
+                turretMotorConfig.Slot0.kV = k_V.get();
+                turretMotorConfig.Slot0.kA = k_A.get();
+                turretMotorConfig.Slot0.kP = k_P.get();
+                turretMotorConfig.Slot0.kI = k_I.get();
+                turretMotorConfig.Slot0.kD = k_D.get();
+                turretMotor.getConfigurator().apply(turretMotorConfig);
+            }
         }
     }
 
@@ -374,12 +281,28 @@ public class Turret extends SubsystemBase {
     }
 
     private void logValues() {
-        SmartDashboard.putNumber("Turret Absolute Position", encoder.getAbsolutePosition().getValueAsDouble());
-        SmartDashboard.putNumber("Turret Motor Position", turretMotor.getPosition().getValueAsDouble());
-        SmartDashboard.putNumber("Turret Wanted Position", position);
-        SmartDashboard.putNumber("Turret Encoder Position", encoder.getPosition().getValueAsDouble());
-        SmartDashboard.putString("TURRET WANTED STATE", wantedState.toString());
-        SmartDashboard.putString("TURRET SYSTEM STATE", systemState.toString());
+        SmartDashboard.putNumber("TURRET/Turret Position", getTurretPosition());
+        SmartDashboard.putNumber("TURRET/Turret Wanted Position", position);
+        SmartDashboard.putNumber("TURRET/Turret Offset", offset);
+        SmartDashboard.putBoolean("TURRET/Turret Is Ready", turretIsReady());
+        SmartDashboard.putString("STATE/TURRET WANTED STATE", wantedState.toString());
+        SmartDashboard.putString("STATE/TURRET SYSTEM STATE", systemState.toString());
+        SmartDashboard.putNumber("SOTF/Shot Command Angle", drivetrain.currentShotCommand.turretAngle().getDegrees());
+        SmartDashboard.putNumber("SOTF/Shot Command RPS", drivetrain.currentShotCommand.RPS());
+        SmartDashboard.putNumber("SOTF/Shot Command Hood", drivetrain.currentShotCommand.hoodAngle());
+        SmartDashboard.putNumber("SOTF/Rotation Correction Deg", Math.toDegrees(
+                drivetrain.getState().Speeds.omegaRadiansPerSecond *
+                        (Timer.getFPGATimestamp() - drivetrain.shotCommandTimestamp)));
+        SmartDashboard.putNumber("SOTF/Robot Angle Deg", drivetrain.getPose().getRotation().getDegrees());
+        SmartDashboard.putNumber("SOTF/Turret Field X", drivetrain.getCurrentTurretPose().getX());
+        SmartDashboard.putNumber("SOTF/Turret Field Y", drivetrain.getCurrentTurretPose().getY());
+
+        if (!Robot.isSimulation()) {
+            SmartDashboard.putNumber("TURRET/Turret Absolute Position",
+                    encoder.getAbsolutePosition().getValueAsDouble());
+            SmartDashboard.putNumber("TURRET/Turret Motor Position", turretMotor.getPosition().getValueAsDouble());
+            SmartDashboard.putNumber("TURRET/Turret Encoder Position", encoder.getPosition().getValueAsDouble());
+        }
     }
 
     @Override
@@ -387,8 +310,13 @@ public class Turret extends SubsystemBase {
         logValues();
         systemState = changeCurrentSystemState();
         applyState();
-        // example of how to control motor for position
-        turretMotor.setControl(mmE_request.withPosition(position));
-    }
 
+        if (Robot.isSimulation()) {
+            // In simulation, turret instantly reaches setpoint
+            simTurretPosition = position;
+        } else {
+            turretMotor.setControl(mmE_request.withPosition(position)
+                    .withFeedForward(-drivetrain.getState().Speeds.omegaRadiansPerSecond));
+        }
+    }
 }

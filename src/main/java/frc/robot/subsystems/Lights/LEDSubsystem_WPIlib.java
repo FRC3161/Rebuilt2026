@@ -182,6 +182,8 @@ public class LEDSubsystem_WPIlib extends SubsystemBase {
         state.twinkleBaseColor = baseColor;
         state.twinkleColor = twinkleColor;
         state.twinklePeriod = period;
+        
+        // state.animatedPattern.atBrightness(Percent.of(brightness)).applyTo(buffer);
 
         int length = buffer.getLength();
         state.twinkleMask = new boolean[length];

@@ -7,25 +7,25 @@
         {
           "type": "path",
           "data": {
-            "pathName": "LTrenchMid1.0"
+            "pathName": "RTrenchMid1_OLD.0"
           }
         },
         {
           "type": "named",
           "data": {
-            "name": "Lswipe pathFind"
+            "name": "Rswipe pathFind"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "LTrenchMid1.2"
+            "pathName": "RTrenchMid1_OLD.2"
           }
         },
         {
           "type": "named",
           "data": {
-            "name": "Auto Trench Shoot Left"
+            "name": "Aim Shoot"
           }
         },
         {
@@ -37,7 +37,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "LTrenchMid2"
+            "pathName": "RTrenchMid2_NEW"
           }
         },
         {

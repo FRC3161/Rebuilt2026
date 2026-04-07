@@ -8,6 +8,7 @@ import com.pathplanner.lib.commands.PathfindingCommand;
 
 import edu.wpi.first.net.PortForwarder;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Constants.FeederConstants.FeederWantedState;
@@ -45,6 +46,7 @@ public class Robot extends TimedRobot {
     public void robotInit() {
         PortForwarder.add(5800, "photonvision.local", 5800);
         PathfindingCommand.warmupCommand().schedule();
+        m_robotContainer.LEDSHUTOFF();
     }
 
     /**
@@ -67,7 +69,8 @@ public class Robot extends TimedRobot {
         // robot's periodic
         // block in order for anything in the Command-based framework to work.
         CommandScheduler.getInstance().run();
-        m_robotContainer.drivetrain.updateVisionMeasurements();
+        m_robotContainer.drivetrain.vision.updateVision(m_robotContainer.drivetrain);
+        // m_robotContainer.drivetrain.updateVisionMeasurements();
     }
 
     /** This function is called once each time the robot enters Disabled mode. */
@@ -105,6 +108,8 @@ public class Robot extends TimedRobot {
         // teleop starts running. If you want the autonomous to
         // continue until interrupted by another command, remove
         // this line or comment it out.
+        m_robotContainer.matchTimer.start();
+
         if (m_autonomousCommand != null) {
             m_autonomousCommand.cancel();
         }
