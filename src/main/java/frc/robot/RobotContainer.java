@@ -332,7 +332,7 @@ public class RobotContainer {
                 .onTrue(new SequentialCommandGroup(
                         new InstantCommand(() -> shooter.setWantedShooterState(ShooterWantedState.PASS_SHOOT)),
                         new InstantCommand(() -> turret.setWantedTurretState(TurretWantedState.AIM_PASS)),
-                        new InstantCommand(() -> feeder.setWantedFeederState(FeederWantedState.SHOOT))))
+                        new InstantCommand(() -> feeder.setWantedFeederState(FeederWantedState.PASS))))
                 .onFalse(new ParallelCommandGroup(
                         new InstantCommand(() -> shooter.setWantedShooterState(ShooterWantedState.IDLE)),
                         new InstantCommand(() -> turret.setWantedTurretState(TurretWantedState.IDLE)),

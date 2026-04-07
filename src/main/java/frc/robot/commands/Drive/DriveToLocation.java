@@ -31,8 +31,7 @@ public class DriveToLocation {
                         AutoConstants.kMaxSpeedMetersPerSecond,
                         AutoConstants.kMaxAccelerationMetersPerSecondSquared,
                         AutoConstants.kMaxAngularSpeedRadiansPerSecond,
-                        AutoConstants.kMaxAngularSpeedRadiansPerSecondSquared),
-                0);
+                        AutoConstants.kMaxAngularSpeedRadiansPerSecondSquared));
         command.addRequirements();
         Transform2d error = target.minus(drive.getPose());
         return command.until(
