@@ -419,6 +419,9 @@ public class RobotContainer {
         NamedCommands.registerCommand("FeederIdle",
                 new InstantCommand(() -> feeder.setWantedFeederState(FeederWantedState.IDLE)));
 
+        NamedCommands.registerCommand("Retract Intake",
+                new InstantCommand(() -> intake.setWantedIntakeState(IntakeWantedState.RETRACT)));
+
         NamedCommands.registerCommand("Auto Trench Shoot Left",
                 new SequentialCommandGroup(
                         new InstantCommand(() -> shooter.setWantedShooterState(ShooterWantedState.TRENCH_SHOOT)),
