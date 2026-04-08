@@ -2,6 +2,7 @@ package frc.robot.subsystems.Intake;
 
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.StatusCode;
+import com.ctre.phoenix6.configs.CANrangeConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.DutyCycleOut;
 import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
@@ -26,6 +27,7 @@ public class Intake extends SubsystemBase {
 
     /* SENSOR */
     private CANrange canRange = new CANrange(IntakeConstants.canRangeID, CANBus.roboRIO());
+    private CANrangeConfiguration canRangeConfig = new CANrangeConfiguration();
 
     // for velocity control
     private double motorspeed = 0.0;
@@ -84,6 +86,14 @@ public class Intake extends SubsystemBase {
 
             for (int i = 0; i < 5; ++i) {
                 status = intakeExtensionMotor.getConfigurator().apply(intakeExtensionMotorConfig);
+                if (status.isOK())
+                    break;
+            }
+            if (!status.isOK()) {
+                System.out.println("Could not apply extension motor configs, error code: " + status.toString());
+            }
+            for (int i = 0; i < 5; ++i) {
+                status = canRange.getConfigurator().apply(canRangeConfig);
                 if (status.isOK())
                     break;
             }

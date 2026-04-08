@@ -54,9 +54,9 @@ public final class Constants {
 
     public static class AutoConstants {
         public static double kMaxSpeedMetersPerSecond = 16;
-        public static double kMaxAccelerationMetersPerSecondSquared;
-        public static double kMaxAngularSpeedRadiansPerSecond;
-        public static double kMaxAngularSpeedRadiansPerSecondSquared;
+        public static double kMaxAccelerationMetersPerSecondSquared = 100;
+        public static double kMaxAngularSpeedRadiansPerSecond = 100;
+        public static double kMaxAngularSpeedRadiansPerSecondSquared = 100;
 
         public static double xTolerance = 0.05;
         public static double yTolerance = 0.05;
@@ -184,7 +184,7 @@ public final class Constants {
         };
 
         public static double activeWaitingSpeed = 30;
-        public static double inactiveWaitingSpeed;
+        public static double inactiveWaitingSpeed = 10;
         // public static PolynomialRegression hoodAngleInterpolation = new
         // PolynomialRegression(
         // Arrays.asList(
@@ -229,7 +229,7 @@ public final class Constants {
         public static int hoodSupplyCurrentLimit = 15; // 80
         public static int hoodStatorCurrentLimit = 15; // 80
 
-        public static double homingThreshold;
+        public static double homingThreshold = 13;
         public static double tolerance = 5;
 
         public static int hoodMotorID = 53;
@@ -289,7 +289,6 @@ public final class Constants {
         public static double intakingSpeed = -0.9;
         public static double slowerIntakeKa = 1.0;
         public static double intakeExtensionHomingThreshold = 0.03;
-        public static double shootingPosition;
         public static double retractingPos = 0;
         public static double[] intakePID = { 0.3, 0, 0 };
         public static double[] intakeSVA = { 0, 0.13, 0.01 };
@@ -367,10 +366,6 @@ public final class Constants {
     }
 
     public static class FeederConstants {
-        public static int feederMotionMagicExpoK_V;
-        public static int feederMotionMagicExpoK_A;
-        public static int feederMotionMagicAccel;
-        public static int feederMotionMagicJerk;
 
         public static int SupplyCurrentLimit = 40; // 60
         public static int StatorCurrentLimit = 100; // 60
@@ -523,7 +518,7 @@ public final class Constants {
                         Units.inchesToMeters(17.467 + 2.7525)),
                 new Rotation3d(
                         0,
-                        Units.degreesToRadians(20),
+                        Units.degreesToRadians(-20),
                         0));
         // center back cam
         public static Transform3d kRobotToCam2 = new Transform3d(
@@ -533,7 +528,7 @@ public final class Constants {
                         Units.inchesToMeters(12.195)),
                 new Rotation3d(
                         0,
-                        Units.degreesToRadians(20),
+                        Units.degreesToRadians(-20),
                         Units.degreesToRadians(135)));
         // corner camera
         public static Transform3d kRobotToCam3 = new Transform3d(
@@ -543,7 +538,7 @@ public final class Constants {
                         Units.inchesToMeters(12.195)),
                 new Rotation3d(
                         0,
-                        Units.degreesToRadians(20),
+                        Units.degreesToRadians(-20),
                         Units.degreesToRadians(225)));
 
         public static String cameraName = "camera1";

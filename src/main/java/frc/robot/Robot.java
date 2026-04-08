@@ -7,6 +7,7 @@ package frc.robot;
 import com.pathplanner.lib.commands.PathfindingCommand;
 
 import edu.wpi.first.net.PortForwarder;
+import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -44,6 +45,7 @@ public class Robot extends TimedRobot {
 
     @Override
     public void robotInit() {
+        DataLogManager.stop();
         PortForwarder.add(5800, "photonvision.local", 5800);
         PathfindingCommand.warmupCommand().schedule();
         m_robotContainer.LEDSHUTOFF();

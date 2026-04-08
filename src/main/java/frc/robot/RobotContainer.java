@@ -253,6 +253,9 @@ public class RobotContainer {
 
         /********* OPERATOR *********/
 
+        operator.start().onTrue(
+                new InstantCommand(() -> intake.setZero()));
+
         // spindexer reverse
         operator.a()
                 .onTrue(new InstantCommand(() -> feeder.setWantedFeederState(FeederWantedState.FEEDTEST)))
@@ -376,6 +379,8 @@ public class RobotContainer {
 
     public void configureTestCommands() {
         SmartDashboard.putData("Intake RESET", new InstantCommand(() -> intake.setZero()));
+        SmartDashboard.putData("HOOD RESET", new InstantCommand(() -> shooter.hoodREset()));
+
     }
 
     /**

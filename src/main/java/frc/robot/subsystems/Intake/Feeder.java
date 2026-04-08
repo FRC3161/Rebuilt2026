@@ -3,6 +3,7 @@ package frc.robot.subsystems.Intake;
 import com.ctre.phoenix6.StatusCode;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.InvertedValue;
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -24,7 +25,7 @@ public class Feeder extends SubsystemBase {
     private TalonFXConfiguration spindexerMotorConfig = new TalonFXConfiguration();
     private TalonFX towerMotor = new TalonFX(FeederConstants.towerMotorID, "rio");
     private TalonFXConfiguration towerMotorConfig = new TalonFXConfiguration();
-    private TalonFX rollerMotor = new TalonFX(FeederConstants.rollerMotorID, "rio");
+    private TalonFX rollerMotor = new TalonFX(FeederConstants.rollerMotorID, "canivore3161");
     private TalonFXConfiguration rollerMotorConfig = new TalonFXConfiguration();
 
     // for velocity control
@@ -50,6 +51,7 @@ public class Feeder extends SubsystemBase {
         rollerMotorConfig.CurrentLimits.SupplyCurrentLimit = FeederConstants.SupplyCurrentLimit;
         rollerMotorConfig.CurrentLimits.StatorCurrentLimit = FeederConstants.StatorCurrentLimit;
 
+        rollerMotorConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
         if (!Robot.isSimulation()) {
             StatusCode status = StatusCode.StatusCodeNotInitialized;
             for (int i = 0; i < 5; ++i) {

@@ -313,6 +313,10 @@ public class Shooter extends SubsystemBase {
         }
     }
 
+    public void hoodREset() {
+        hoodMotor.setPosition(0);
+    }
+
     public boolean shooterIsReady() {
         return Math.abs(getShooterVelocity() - motorspeed) < 1.5;
     }

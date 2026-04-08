@@ -42,6 +42,7 @@
     "types": {
       "/FMSInfo": "FMSInfo",
       "/Pose": "Field2d",
+      "/SmartDashboard/HOOD RESET": "Command",
       "/SmartDashboard/Intake RESET": "Command",
       "/SmartDashboard/Module 0": "Mechanism2d",
       "/SmartDashboard/Module 1": "Mechanism2d",
@@ -77,6 +78,11 @@
         },
         "top": 118,
         "width": 16.54119300842285,
+        "window": {
+          "visible": true
+        }
+      },
+      "/SmartDashboard/autos": {
         "window": {
           "visible": true
         }
