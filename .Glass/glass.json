@@ -42,6 +42,7 @@
     "types": {
       "/FMSInfo": "FMSInfo",
       "/Pose": "Field2d",
+      "/SmartDashboard/DRIVE/The field": "Field2d",
       "/SmartDashboard/HOOD RESET": "Command",
       "/SmartDashboard/Intake RESET": "Command",
       "/SmartDashboard/Module 0": "Mechanism2d",
@@ -90,9 +91,6 @@
     }
   },
   "NetworkTables Info": {
-    "Clients": {
-      "open": true
-    },
     "Server": {
       "open": true
     },
