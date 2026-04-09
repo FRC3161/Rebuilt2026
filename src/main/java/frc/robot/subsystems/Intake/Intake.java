@@ -239,23 +239,30 @@ public class Intake extends SubsystemBase {
                 motorspeed = 0.0;
 
                 double elapsed = Timer.getFPGATimestamp() - resetDelay;
+                boolean justReachedHole = false;
 
-                if (elapsed < 1.0) {
+                // if (elapsed < 1.0) {
 
-                    safteyMotorspeed = 0.0;
-                } else {
-                    if (getCanRangeDistance() > IntakeConstants.intakeExtensionHomingThreshold) {
+                // safteyMotorspeed = 0.0;
+                // } else {
+                if (getCanRangeDistance() > IntakeConstants.intakeExtensionHomingThreshold
+                        && Timer.getFPGATimestamp() - resetDelay > 2) {
+                    if (!justReachedHole) {
+                        resetDelay = Timer.getFPGATimestamp();
+                        justReachedHole = true;
+                    } else {
                         if (Robot.isSimulation()) {
                             simExtensionPosition = 0.0;
                         } else {
                             safteyMotorspeed = 0.0;
                             intakeExtensionMotor.setPosition(0);
                         }
-                    } else {
-                        if (!Robot.isSimulation()) {
-                            safteyMotorspeed = -0.1;
-                        }
                     }
+                } else {
+                    if (!Robot.isSimulation()) {
+                        safteyMotorspeed = -0.1;
+                    }
+                    // }
                 }
                 break;
             case SCORING:
