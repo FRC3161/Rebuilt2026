@@ -148,7 +148,14 @@ public class Intake extends SubsystemBase {
                     intakeMotorConfig.MotionMagic.MotionMagicExpo_kA = IntakeConstants.intakeMotionMagicExpoK_A;
                     intakeExtensionMotor.getConfigurator().apply(intakeExtensionMotorConfig);
                 }
-                if (intakeExtensionMotor.getPosition().getValueAsDouble() <= 0.2) {
+                if ((canRange.getDistance().getValueAsDouble() > IntakeConstants.intakeExtensionHomingThreshold
+                        && intakeExtensionMotor.getPosition().getValueAsDouble() >= 0.2)
+
+                        ||
+
+                        (canRange.getDistance().getValueAsDouble() < IntakeConstants.intakeExtensionHomingThreshold
+                                && intakeExtensionMotor.getPosition().getValueAsDouble() <= 0.2
+                                && position == 0)) {
                     yield SystemState.RESETING;
                 }
                 yield SystemState.IDLING;
@@ -168,7 +175,11 @@ public class Intake extends SubsystemBase {
                     intakeMotorConfig.MotionMagic.MotionMagicExpo_kA = IntakeConstants.intakeMotionMagicExpoK_A;
                     intakeExtensionMotor.getConfigurator().apply(intakeMotorConfig);
                 }
+                // if (intakeExtensionMotor.getPosition().getValueAsDouble() <= 0.2) {
+                // yield SystemState.IDLING;
+                // } else {
                 yield SystemState.RETRACTING;
+                // }
             }
             case RESET -> {
                 if (systemState == SystemState.SCORING && !Robot.isSimulation()) {

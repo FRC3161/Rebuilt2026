@@ -25,6 +25,9 @@
         "open": true
       },
       "SmartDashboard": {
+        "INTAKE": {
+          "open": true
+        },
         "Module 3": {
           "open": true
         },
@@ -99,9 +102,6 @@
   "NetworkTables Settings": {
     "mode": "Client (NT4)",
     "serverTeam": "3161",
-    "visible": false
-  },
-  "NetworkTables View": {
     "visible": false
   },
   "Plots": {
