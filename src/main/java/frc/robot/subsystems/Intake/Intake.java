@@ -32,6 +32,7 @@ public class Intake extends SubsystemBase {
     private CANrangeConfiguration canRangeConfig = new CANrangeConfiguration();
     private double resetDelay = 0;
     private boolean resetStarted = false;
+    private boolean justReachedHole = false;
 
     // for velocity control
     private double motorspeed = 0.0;
@@ -239,7 +240,6 @@ public class Intake extends SubsystemBase {
                 motorspeed = 0.0;
 
                 double elapsed = Timer.getFPGATimestamp() - resetDelay;
-                boolean justReachedHole = false;
 
                 // if (elapsed < 1.0) {
 
@@ -259,6 +259,8 @@ public class Intake extends SubsystemBase {
                         }
                     }
                 } else {
+                    justReachedHole = false;
+
                     if (!Robot.isSimulation()) {
                         safteyMotorspeed = -0.1;
                     }
