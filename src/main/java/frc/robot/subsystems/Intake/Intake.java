@@ -32,6 +32,7 @@ public class Intake extends SubsystemBase {
     private CANrangeConfiguration canRangeConfig = new CANrangeConfiguration();
     private double resetDelay = 0;
     private boolean resetStarted = false;
+    private boolean justReachedHole = false;
 
     // for velocity control
     private double motorspeed = 0.0;
@@ -238,8 +239,7 @@ public class Intake extends SubsystemBase {
                 // position = getExtensionPosition();
                 // motorspeed = 0.0;
 
-                // double elapsed = Timer.getFPGATimestamp() - resetDelay;
-                // boolean justReachedHole = false;
+                double elapsed = Timer.getFPGATimestamp() - resetDelay;
 
                 // // if (elapsed < 1.0) {
 
@@ -259,11 +259,25 @@ public class Intake extends SubsystemBase {
                 //         }
                 //     }
                 // } else {
-                //     if (!Robot.isSimulation()) {
-                //         safteyMotorspeed = -0.1;
-                //     }
-                //     // }
-                 canRangeControlledRecalibration();
+                if (getCanRangeDistance() > IntakeConstants.intakeExtensionHomingThreshold
+                        && Timer.getFPGATimestamp() - resetDelay > 2) {
+                    if (!justReachedHole) {
+                        resetDelay = Timer.getFPGATimestamp();
+                        justReachedHole = true;
+                    } else {
+                        if (Robot.isSimulation()) {
+                            simExtensionPosition = 0.0;
+                        } else {
+                            safteyMotorspeed = 0.0;
+                            intakeExtensionMotor.setPosition(0);
+                        }
+                    }
+                } else {
+                    if (!Robot.isSimulation()) {
+                        safteyMotorspeed = -0.1;
+                    }
+                    // }
+                }
                 break;
             case SCORING:
                 if (intakeMotorConfig.MotionMagic.MotionMagicExpo_kA != IntakeConstants.slowerIntakeKa) {
