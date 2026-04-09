@@ -31,6 +31,7 @@ public class Intake extends SubsystemBase {
     private CANrange canRange = new CANrange(IntakeConstants.canRangeID, CANBus.roboRIO());
     private CANrangeConfiguration canRangeConfig = new CANrangeConfiguration();
     private double resetDelay = 0;
+    private boolean resetStarted = false;
 
     // for velocity control
     private double motorspeed = 0.0;
@@ -158,9 +159,13 @@ public class Intake extends SubsystemBase {
                         (canRange.getDistance().getValueAsDouble() < IntakeConstants.intakeExtensionHomingThreshold
                                 && intakeExtensionMotor.getPosition().getValueAsDouble() <= 0.2
                                 && position == 0)) {
-                    resetDelay = Timer.getFPGATimestamp();
+                    if (!resetStarted) {
+                        resetDelay = Timer.getFPGATimestamp();
+                        resetStarted = true;
+                    }
                     yield SystemState.RESETING;
                 }
+                resetStarted = false;
                 yield SystemState.IDLING;
             }
             case INTAKE -> {
@@ -232,18 +237,24 @@ public class Intake extends SubsystemBase {
             case RESETING:
                 // position = getExtensionPosition();
                 motorspeed = 0.0;
-                if (getCanRangeDistance() > IntakeConstants.intakeExtensionHomingThreshold
-                        && (Timer.getFPGATimestamp() - resetDelay) > 2) {
-                    if (Robot.isSimulation()) {
-                        simExtensionPosition = 0.0;
-                    } else {
-                        safteyMotorspeed = 0.0;
-                        intakeExtensionMotor.setPosition(0);
-                    }
+
+                double elapsed = Timer.getFPGATimestamp() - resetDelay;
+
+                if (elapsed < 1.0) {
+
+                    safteyMotorspeed = 0.0;
                 } else {
-                    if (!Robot.isSimulation()) {
-                        // intakeExtensionMotor.set(-0.01);
-                        safteyMotorspeed = -0.1;
+                    if (getCanRangeDistance() > IntakeConstants.intakeExtensionHomingThreshold) {
+                        if (Robot.isSimulation()) {
+                            simExtensionPosition = 0.0;
+                        } else {
+                            safteyMotorspeed = 0.0;
+                            intakeExtensionMotor.setPosition(0);
+                        }
+                    } else {
+                        if (!Robot.isSimulation()) {
+                            safteyMotorspeed = -0.1;
+                        }
                     }
                 }
                 break;
