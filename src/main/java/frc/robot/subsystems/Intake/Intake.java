@@ -11,6 +11,7 @@ import com.ctre.phoenix6.hardware.CANrange;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.UpdateModeValue;
 
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Robot;
@@ -29,6 +30,7 @@ public class Intake extends SubsystemBase {
     /* SENSOR */
     private CANrange canRange = new CANrange(IntakeConstants.canRangeID, CANBus.roboRIO());
     private CANrangeConfiguration canRangeConfig = new CANrangeConfiguration();
+    private double resetDelay = 0;
 
     // for velocity control
     private double motorspeed = 0.0;
@@ -156,6 +158,7 @@ public class Intake extends SubsystemBase {
                         (canRange.getDistance().getValueAsDouble() < IntakeConstants.intakeExtensionHomingThreshold
                                 && intakeExtensionMotor.getPosition().getValueAsDouble() <= 0.2
                                 && position == 0)) {
+                    resetDelay = Timer.getFPGATimestamp();
                     yield SystemState.RESETING;
                 }
                 yield SystemState.IDLING;
@@ -229,7 +232,8 @@ public class Intake extends SubsystemBase {
             case RESETING:
                 // position = getExtensionPosition();
                 motorspeed = 0.0;
-                if (getCanRangeDistance() > IntakeConstants.intakeExtensionHomingThreshold) {
+                if (getCanRangeDistance() > IntakeConstants.intakeExtensionHomingThreshold
+                        && (Timer.getFPGATimestamp() - resetDelay) > 2) {
                     if (Robot.isSimulation()) {
                         simExtensionPosition = 0.0;
                     } else {
