@@ -132,9 +132,9 @@ public class RobotContainer {
         configureAutoCommands();
         configureTestCommands();
 
-        if (Robot.isSimulation()) {
-            drivetrain.resetPose(new Pose2d(2, 4, Rotation2d.fromDegrees(0)));
-        }
+        // if (Robot.isSimulation()) {
+        // drivetrain.resetPose(new Pose2d(2, 4, Rotation2d.fromDegrees(0)));
+        // }
     }
 
     private void configureBindings() {
@@ -149,23 +149,23 @@ public class RobotContainer {
                     double slowFactor = operator.rightTrigger().getAsBoolean() ? .3 : 1.0;
 
                     // Simulation only - driver2 overrides if active
-                    if (Robot.isSimulation() && driver2 != null) {
-                        if (Math.abs(driver2.getLeftY()) > 0.1)
-                            leftY = driver2.getLeftY();
-                        if (Math.abs(driver2.getLeftX()) > 0.1)
-                            leftX = driver2.getLeftX();
-                        if (Math.abs(driver2.getRightX()) > 0.1)
-                            rightX = driver2.getRightX();
-                        if (driver2.rightTrigger().getAsBoolean())
-                            slowFactor = 0.5;
-                    }
+                    // if (Robot.isSimulation() && driver2 != null) {
+                    // if (Math.abs(driver2.getLeftY()) > 0.1)
+                    // leftY = driver2.getLeftY();
+                    // if (Math.abs(driver2.getLeftX()) > 0.1)
+                    // leftX = driver2.getLeftX();
+                    // if (Math.abs(driver2.getRightX()) > 0.1)
+                    // rightX = driver2.getRightX();
+                    // if (driver2.rightTrigger().getAsBoolean())
+                    // slowFactor = 0.5;
+                    // }
 
-                    double simTranslationFactor = Robot.isSimulation() ? 0.3 : 1.0;
+                    // double simTranslationFactor = Robot.isSimulation() ? 0.3 : 1.0;
                     double rawRotation = rightX;
 
                     return drive
-                            .withVelocityX(-leftY * MaxSpeed * slowFactor * simTranslationFactor)
-                            .withVelocityY(-leftX * MaxSpeed * slowFactor * simTranslationFactor)
+                            .withVelocityX(-leftY * MaxSpeed * slowFactor)// * simTranslationFactor)
+                            .withVelocityY(-leftX * MaxSpeed * slowFactor)// * simTranslationFactor)
                             .withRotationalRate(-rawRotation * MaxAngularRate * slowFactor);
                 }));
 

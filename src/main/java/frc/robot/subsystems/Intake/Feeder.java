@@ -48,8 +48,8 @@ public class Feeder extends SubsystemBase {
         spindexerMotorConfig.CurrentLimits.StatorCurrentLimit = FeederConstants.StatorCurrentLimit;
         towerMotorConfig.CurrentLimits.SupplyCurrentLimit = FeederConstants.SupplyCurrentLimit;
         towerMotorConfig.CurrentLimits.StatorCurrentLimit = FeederConstants.StatorCurrentLimit;
-        rollerMotorConfig.CurrentLimits.SupplyCurrentLimit = FeederConstants.SupplyCurrentLimit;
-        rollerMotorConfig.CurrentLimits.StatorCurrentLimit = FeederConstants.StatorCurrentLimit;
+        rollerMotorConfig.CurrentLimits.SupplyCurrentLimit = 0;
+        rollerMotorConfig.CurrentLimits.StatorCurrentLimit = 0;
 
         rollerMotorConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
         if (!Robot.isSimulation()) {
@@ -174,19 +174,19 @@ public class Feeder extends SubsystemBase {
     public void periodic() {
         SmartDashboard.putString("STATE/FEEDER WANTED STATE", wantedState.toString());
         SmartDashboard.putString("STATE/FEEDER SYSTEM STATE", systemState.toString());
-        SmartDashboard.putNumber("FEEDER/Spindexer Speed", spindexerMotorSpeed);
-        SmartDashboard.putNumber("FEEDER/Tower Speed", towerMotorSpeed);
-        SmartDashboard.putNumber("FEEDER/Roller Speed", rollerMotorSpeed);
-        SmartDashboard.putBoolean("FEEDER/Feeder Shooting",
-                spindexerMotorSpeed == FeederConstants.feederShootSpeed);
+        // SmartDashboard.putNumber("FEEDER/Spindexer Speed", spindexerMotorSpeed);
+        // SmartDashboard.putNumber("FEEDER/Tower Speed", towerMotorSpeed);
+        // SmartDashboard.putNumber("FEEDER/Roller Speed", rollerMotorSpeed);
+        // SmartDashboard.putBoolean("FEEDER/Feeder Shooting",
+        // spindexerMotorSpeed == FeederConstants.feederShootSpeed);
 
         systemState = changeCurrentSystemState();
         applyState();
 
-        if (!Robot.isSimulation()) {
-            spindexerMotor.set(spindexerMotorSpeed);
-            towerMotor.set(towerMotorSpeed);
-            rollerMotor.set(rollerMotorSpeed);
-        }
+        // if (!Robot.isSimulation()) {
+        spindexerMotor.set(spindexerMotorSpeed);
+        towerMotor.set(towerMotorSpeed);
+        // rollerMotor.set(rollerMotorSpeed);
+        // }
     }
 }

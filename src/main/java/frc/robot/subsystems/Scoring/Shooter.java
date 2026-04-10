@@ -344,17 +344,18 @@ public class Shooter extends SubsystemBase {
     }
 
     private void logValues() {
-        SmartDashboard.putNumber("SHOOTER/Shooter Actual Speed", getShooterVelocity());
-        SmartDashboard.putNumber("SHOOTER/Hood Actual Position", getHoodPosition());
-        SmartDashboard.putNumber("SHOOTER/Shooter Wanted Speed", motorspeed);
-        SmartDashboard.putNumber("SHOOTER/Hood Wanted Position", position);
-        SmartDashboard.putBoolean("SHOOTER/Shooter Is Ready", shooterIsReady());
+        // SmartDashboard.putNumber("SHOOTER/Shooter Actual Speed",
+        // getShooterVelocity());
+        // SmartDashboard.putNumber("SHOOTER/Hood Actual Position", getHoodPosition());
+        // SmartDashboard.putNumber("SHOOTER/Shooter Wanted Speed", motorspeed);
+        // SmartDashboard.putNumber("SHOOTER/Hood Wanted Position", position);
+        // SmartDashboard.putBoolean("SHOOTER/Shooter Is Ready", shooterIsReady());
         SmartDashboard.putString("STATES/SHOOTER WANTED STATE", wantedState.toString());
         SmartDashboard.putString("STATES/SHOOTER SYSTEM STATE", systemState.toString());
 
-        if (!Robot.isSimulation()) {
-            SmartDashboard.putNumber("Hood Motor Current", getHoodCurrent());
-        }
+        // if (!Robot.isSimulation()) {
+        // SmartDashboard.putNumber("Hood Motor Current", getHoodCurrent());
+        // }
     }
 
     @Override
@@ -363,14 +364,14 @@ public class Shooter extends SubsystemBase {
         systemState = changeCurrentSystemState();
         applyState();
 
-        if (Robot.isSimulation()) {
-            // In simulation, shooter and hood instantly reach setpoint
-            simShooterVelocity = motorspeed;
-            simHoodPosition = position;
-        } else {
-            hoodMotor.setControl(mmE_request.withPosition(position));
-            shooterMotor1.setControl(mm_request.withVelocity(motorspeed));
-            shooterMotor2.setControl(mm_request.withVelocity(motorspeed));
-        }
+        // if (Robot.isSimulation()) {
+        // // In simulation, shooter and hood instantly reach setpoint
+        // simShooterVelocity = motorspeed;
+        // simHoodPosition = position;
+        // } else {
+        hoodMotor.setControl(mmE_request.withPosition(position));
+        shooterMotor1.setControl(mm_request.withVelocity(motorspeed));
+        shooterMotor2.setControl(mm_request.withVelocity(motorspeed));
+        // }
     }
 }

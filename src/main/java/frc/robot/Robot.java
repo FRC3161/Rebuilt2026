@@ -48,7 +48,7 @@ public class Robot extends TimedRobot {
         DataLogManager.stop();
         PortForwarder.add(5800, "photonvision.local", 5800);
         PathfindingCommand.warmupCommand().schedule();
-        m_robotContainer.LEDSHUTOFF();
+        // m_robotContainer.LEDSHUTOFF();
     }
 
     /**
@@ -120,6 +120,8 @@ public class Robot extends TimedRobot {
         m_robotContainer.turret.setWantedTurretState(TurretWantedState.IDLE);
         m_robotContainer.intake.setWantedIntakeState(IntakeWantedState.IDLE);
         new ResetLED(m_robotContainer.normalLights, LEDTarget.SIDES);
+        new ResetLED(m_robotContainer.normalLights, LEDTarget.SIGNAL);
+
     }
 
     /** This function is called periodically during operator control. */

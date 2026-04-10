@@ -260,10 +260,10 @@ public class Turret extends SubsystemBase {
     }
 
     private void logValues() {
-        SmartDashboard.putNumber("Turret Position", getTurretPosition());
-        SmartDashboard.putNumber("Turret Wanted Position", position);
-        SmartDashboard.putNumber("Turret Offset", offset);
-        SmartDashboard.putBoolean("Turret Is Ready", turretIsReady());
+        // SmartDashboard.putNumber("Turret Position", getTurretPosition());
+        // SmartDashboard.putNumber("Turret Wanted Position", position);
+        // SmartDashboard.putNumber("Turret Offset", offset);
+        // SmartDashboard.putBoolean("Turret Is Ready", turretIsReady());
         SmartDashboard.putString("STATES/TURRET WANTED STATE", wantedState.toString());
         SmartDashboard.putString("STATES/TURRET SYSTEM STATE", systemState.toString());
         // SmartDashboard.putNumber("Shot Command Angle",
@@ -292,7 +292,8 @@ public class Turret extends SubsystemBase {
         // }
 
         // if (!Robot.isSimulation()) {
-        SmartDashboard.putNumber("Turret Absolute Position", encoder.getAbsolutePosition().getValueAsDouble());
+        // SmartDashboard.putNumber("Turret Absolute Position",
+        // encoder.getAbsolutePosition().getValueAsDouble());
         // SmartDashboard.putNumber("Turret Motor Position",
         // turretMotor.getPosition().getValueAsDouble());
         // SmartDashboard.putNumber("Turret Encoder Position",
@@ -306,12 +307,12 @@ public class Turret extends SubsystemBase {
         systemState = changeCurrentSystemState();
         applyState();
 
-        if (Robot.isSimulation()) {
-            // In simulation, turret instantly reaches setpoint
-            simTurretPosition = position;
-        } else {
-            turretMotor.setControl(mmE_request.withPosition(position)
-                    .withFeedForward(-drivetrain.getState().Speeds.omegaRadiansPerSecond));
-        }
+        // if (Robot.isSimulation()) {
+        // In simulation, turret instantly reaches setpoint
+        // simTurretPosition = position;
+        // } else {
+        turretMotor.setControl(mmE_request.withPosition(position)
+                .withFeedForward(-drivetrain.getState().Speeds.omegaRadiansPerSecond));
+        // }
     }
 }

@@ -239,44 +239,44 @@ public class Intake extends SubsystemBase {
                 // position = getExtensionPosition();
                 // motorspeed = 0.0;
 
-               // double elapsed = Timer.getFPGATimestamp() - resetDelay;
+                // double elapsed = Timer.getFPGATimestamp() - resetDelay;
 
                 // // if (elapsed < 1.0) {
 
                 // // safteyMotorspeed = 0.0;
                 // // } else {
                 // if (getCanRangeDistance() > IntakeConstants.intakeExtensionHomingThreshold
-                //         && Timer.getFPGATimestamp() - resetDelay > 2) {
-                //     if (!justReachedHole) {
-                //         resetDelay = Timer.getFPGATimestamp();
-                //         justReachedHole = true;
-                //     } else {
-                //         if (Robot.isSimulation()) {
-                //             simExtensionPosition = 0.0;
-                //         } else {
-                //             safteyMotorspeed = 0.0;
-                //             intakeExtensionMotor.setPosition(0);
-                //         }
-                //     }
+                // && Timer.getFPGATimestamp() - resetDelay > 2) {
+                // if (!justReachedHole) {
+                // resetDelay = Timer.getFPGATimestamp();
+                // justReachedHole = true;
+                // } else {
+                // if (Robot.isSimulation()) {
+                // simExtensionPosition = 0.0;
+                // } else {
+                // safteyMotorspeed = 0.0;
+                // intakeExtensionMotor.setPosition(0);
+                // }
+                // }
                 // } else {
                 // if (getCanRangeDistance() > IntakeConstants.intakeExtensionHomingThreshold
-                //         && Timer.getFPGATimestamp() - resetDelay > 2) {
-                //     if (!justReachedHole) {
-                //         resetDelay = Timer.getFPGATimestamp();
-                //         justReachedHole = true;
-                //     } else {
-                //         if (Robot.isSimulation()) {
-                //             simExtensionPosition = 0.0;
-                //         } else {
-                //             safteyMotorspeed = 0.0;
-                //             intakeExtensionMotor.setPosition(0);
-                //         }
-                //     }
+                // && Timer.getFPGATimestamp() - resetDelay > 2) {
+                // if (!justReachedHole) {
+                // resetDelay = Timer.getFPGATimestamp();
+                // justReachedHole = true;
                 // } else {
-                //     if (!Robot.isSimulation()) {
-                //         safteyMotorspeed = -0.1;
-                //     }
-                //     // }
+                // if (Robot.isSimulation()) {
+                // simExtensionPosition = 0.0;
+                // } else {
+                // safteyMotorspeed = 0.0;
+                // intakeExtensionMotor.setPosition(0);
+                // }
+                // }
+                // } else {
+                // if (!Robot.isSimulation()) {
+                // safteyMotorspeed = -0.1;
+                // }
+                // // }
                 // }
                 canRangeControlledRecalibration();
                 break;
@@ -341,37 +341,38 @@ public class Intake extends SubsystemBase {
     }
 
     private void canRangeControlledRecalibration() {
-    safteyMotorspeed = 0.0; // default — moved to top
+        safteyMotorspeed = 0.0; // default — moved to top
 
-    if (canRange.getDistance().getValueAsDouble() > IntakeConstants.intakeExtensionHomingThreshold
-            && intakeExtensionMotor.getPosition().getValueAsDouble() >= 0.7) {
-        intakeExtensionMotor.setPosition(0);
-    }
-    if (canRange.getDistance().getValueAsDouble() < IntakeConstants.intakeExtensionHomingThreshold
-            && intakeExtensionMotor.getPosition().getValueAsDouble() <= 0.2
-            && position == 0) {
-        if (getCanRangeDistance() > IntakeConstants.intakeExtensionHomingThreshold) {
-            if (Robot.isSimulation()) {
-                simExtensionPosition = 0.0;
+        if (canRange.getDistance().getValueAsDouble() > IntakeConstants.intakeExtensionHomingThreshold
+                && intakeExtensionMotor.getPosition().getValueAsDouble() >= 0.7) {
+            intakeExtensionMotor.setPosition(0);
+        }
+        if (canRange.getDistance().getValueAsDouble() < IntakeConstants.intakeExtensionHomingThreshold
+                && intakeExtensionMotor.getPosition().getValueAsDouble() <= 0.2
+                && position == 0) {
+            if (getCanRangeDistance() > IntakeConstants.intakeExtensionHomingThreshold) {
+                if (Robot.isSimulation()) {
+                    simExtensionPosition = 0.0;
+                } else {
+                    safteyMotorspeed = 0.0;
+                    intakeExtensionMotor.setPosition(0);
+                }
             } else {
-                safteyMotorspeed = 0.0;
-                intakeExtensionMotor.setPosition(0);
-            }
-        } else {
-            if (!Robot.isSimulation()) {
-                safteyMotorspeed = -0.1; // now this actually sticks
+                if (!Robot.isSimulation()) {
+                    safteyMotorspeed = -0.1; // now this actually sticks
+                }
             }
         }
     }
-}
 
     public SystemState getState() {
         return systemState;
     }
 
     private void LogValues() {
-        SmartDashboard.putNumber("INTAKE/Extension Motor Position", getExtensionPosition());
-        SmartDashboard.putNumber("INTAKE/CANrange Distance", getCanRangeDistance());
+        // SmartDashboard.putNumber("INTAKE/Extension Motor Position",
+        // getExtensionPosition());
+        // SmartDashboard.putNumber("INTAKE/CANrange Distance", getCanRangeDistance());
         SmartDashboard.putString("STATES/INTAKE WANTED STATE", wantedState.toString());
         SmartDashboard.putString("STATES/INTAKE SYSTEM STATE", systemState.toString());
     }
