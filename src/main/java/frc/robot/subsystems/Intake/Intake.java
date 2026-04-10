@@ -224,6 +224,7 @@ public class Intake extends SubsystemBase {
     }
 
     private void applyState() {
+        safteyMotorspeed = 0.0;
         switch (systemState) {
             case IDLING:
                 motorspeed = 0.0;
@@ -341,26 +342,14 @@ public class Intake extends SubsystemBase {
     }
 
     private void canRangeControlledRecalibration() {
-    safteyMotorspeed = 0.0; // default — moved to top
+    safteyMotorspeed = 0.0;
 
     if (canRange.getDistance().getValueAsDouble() > IntakeConstants.intakeExtensionHomingThreshold
             && intakeExtensionMotor.getPosition().getValueAsDouble() >= 0.7) {
         intakeExtensionMotor.setPosition(0);
-    }
-    if (canRange.getDistance().getValueAsDouble() < IntakeConstants.intakeExtensionHomingThreshold
-            && intakeExtensionMotor.getPosition().getValueAsDouble() <= 0.2
-            && position == 0) {
-        if (getCanRangeDistance() > IntakeConstants.intakeExtensionHomingThreshold) {
-            if (Robot.isSimulation()) {
-                simExtensionPosition = 0.0;
-            } else {
-                safteyMotorspeed = 0.0;
-                intakeExtensionMotor.setPosition(0);
-            }
-        } else {
-            if (!Robot.isSimulation()) {
-                safteyMotorspeed = -0.1; // now this actually sticks
-            }
+    } else {
+        if (!Robot.isSimulation()) {
+            safteyMotorspeed = -0.1;
         }
     }
 }
@@ -379,7 +368,7 @@ public class Intake extends SubsystemBase {
     @Override
     public void periodic() {
         if (canRange.getSignalStrength().getValueAsDouble() > 2500) {
-            canRangeControlledRecalibration();
+           // canRangeControlledRecalibration();
         }
         LogValues();
         systemState = changeCurrentSystemState();
