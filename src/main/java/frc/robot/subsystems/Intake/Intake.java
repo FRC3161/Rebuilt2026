@@ -9,7 +9,9 @@ import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
 import com.ctre.phoenix6.controls.MotionMagicVelocityVoltage;
 import com.ctre.phoenix6.hardware.CANrange;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.UpdateModeValue;
 
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Robot;
@@ -28,12 +30,16 @@ public class Intake extends SubsystemBase {
     /* SENSOR */
     private CANrange canRange = new CANrange(IntakeConstants.canRangeID, CANBus.roboRIO());
     private CANrangeConfiguration canRangeConfig = new CANrangeConfiguration();
+    private double resetDelay = 0;
+    private boolean resetStarted = false;
+    private boolean justReachedHole = false;
 
     // for velocity control
     private double motorspeed = 0.0;
     final MotionMagicVelocityVoltage mm_request = new MotionMagicVelocityVoltage(0);
     // for position control
     private double position = 0.0;
+    private double safteyMotorspeed = 0.0;
     final MotionMagicExpoVoltage mmE_request = new MotionMagicExpoVoltage(0);
     final DutyCycleOut m_leftrequestOut = new DutyCycleOut(0.0);
 
@@ -72,6 +78,8 @@ public class Intake extends SubsystemBase {
         intakeExtensionMotorConfig.MotionMagic.MotionMagicExpo_kA = IntakeConstants.intakeMotionMagicExpoK_A;
         intakeExtensionMotorConfig.MotionMagic.MotionMagicExpo_kV = IntakeConstants.intakeMotionMagicExpoK_V;
 
+        canRangeConfig.ToFParams.UpdateMode = UpdateModeValue.ShortRange100Hz;
+
         if (!Robot.isSimulation()) {
             StatusCode status = StatusCode.StatusCodeNotInitialized;
 
@@ -98,7 +106,7 @@ public class Intake extends SubsystemBase {
                     break;
             }
             if (!status.isOK()) {
-                System.out.println("Could not apply extension motor configs, error code: " + status.toString());
+                System.out.println("Could not apply CANRANGE configs, error code: " + status.toString());
             }
         }
     }
@@ -141,14 +149,29 @@ public class Intake extends SubsystemBase {
         return switch (wantedState) {
             case IDLE -> {
                 if (systemState == SystemState.SCORING && !Robot.isSimulation()) {
-                    intakeMotorConfig.Voltage.PeakReverseVoltage = IntakeConstants.intakeMotionMagicExpoK_A;
+                    intakeMotorConfig.MotionMagic.MotionMagicExpo_kA = IntakeConstants.intakeMotionMagicExpoK_A;
                     intakeExtensionMotor.getConfigurator().apply(intakeExtensionMotorConfig);
                 }
+                if ((canRange.getDistance().getValueAsDouble() > IntakeConstants.intakeExtensionHomingThreshold
+                        && intakeExtensionMotor.getPosition().getValueAsDouble() >= 0.2)
+
+                        ||
+
+                        (canRange.getDistance().getValueAsDouble() < IntakeConstants.intakeExtensionHomingThreshold
+                                && intakeExtensionMotor.getPosition().getValueAsDouble() <= 0.2
+                                && position == 0)) {
+                    if (!resetStarted) {
+                        resetDelay = Timer.getFPGATimestamp();
+                        resetStarted = true;
+                    }
+                    yield SystemState.RESETING;
+                }
+                resetStarted = false;
                 yield SystemState.IDLING;
             }
             case INTAKE -> {
                 if (systemState == SystemState.SCORING && !Robot.isSimulation()) {
-                    intakeMotorConfig.Voltage.PeakReverseVoltage = IntakeConstants.intakeMotionMagicExpoK_A;
+                    intakeMotorConfig.MotionMagic.MotionMagicExpo_kA = IntakeConstants.intakeMotionMagicExpoK_A;
                     intakeExtensionMotor.getConfigurator().apply(intakeExtensionMotorConfig);
                 }
                 // if (systemState == SystemState.INTAKING) {
@@ -158,14 +181,18 @@ public class Intake extends SubsystemBase {
             }
             case RETRACT -> {
                 if (systemState == SystemState.SCORING && !Robot.isSimulation()) {
-                    intakeMotorConfig.Voltage.PeakReverseVoltage = IntakeConstants.intakeMotionMagicExpoK_A;
+                    intakeMotorConfig.MotionMagic.MotionMagicExpo_kA = IntakeConstants.intakeMotionMagicExpoK_A;
                     intakeExtensionMotor.getConfigurator().apply(intakeMotorConfig);
                 }
+                // if (intakeExtensionMotor.getPosition().getValueAsDouble() <= 0.2) {
+                // yield SystemState.IDLING;
+                // } else {
                 yield SystemState.RETRACTING;
+                // }
             }
             case RESET -> {
                 if (systemState == SystemState.SCORING && !Robot.isSimulation()) {
-                    intakeMotorConfig.Voltage.PeakReverseVoltage = IntakeConstants.intakeMotionMagicExpoK_A;
+                    intakeMotorConfig.MotionMagic.MotionMagicExpo_kA = IntakeConstants.intakeMotionMagicExpoK_A;
                     intakeExtensionMotor.getConfigurator().apply(intakeMotorConfig);
                 }
                 yield SystemState.RESETING;
@@ -209,19 +236,49 @@ public class Intake extends SubsystemBase {
                 position = IntakeConstants.retractingPos;
                 break;
             case RESETING:
-                position = getExtensionPosition();
-                if (getCanRangeDistance() > IntakeConstants.intakeExtensionHomingThreshold) {
-                    if (Robot.isSimulation()) {
-                        simExtensionPosition = 0.0;
-                    } else {
-                        intakeExtensionMotor.set(0);
-                        intakeExtensionMotor.setPosition(0);
-                    }
-                } else {
-                    if (!Robot.isSimulation()) {
-                        intakeExtensionMotor.set(-0.01);
-                    }
-                }
+                // position = getExtensionPosition();
+                // motorspeed = 0.0;
+
+               // double elapsed = Timer.getFPGATimestamp() - resetDelay;
+
+                // // if (elapsed < 1.0) {
+
+                // // safteyMotorspeed = 0.0;
+                // // } else {
+                // if (getCanRangeDistance() > IntakeConstants.intakeExtensionHomingThreshold
+                //         && Timer.getFPGATimestamp() - resetDelay > 2) {
+                //     if (!justReachedHole) {
+                //         resetDelay = Timer.getFPGATimestamp();
+                //         justReachedHole = true;
+                //     } else {
+                //         if (Robot.isSimulation()) {
+                //             simExtensionPosition = 0.0;
+                //         } else {
+                //             safteyMotorspeed = 0.0;
+                //             intakeExtensionMotor.setPosition(0);
+                //         }
+                //     }
+                // } else {
+                // if (getCanRangeDistance() > IntakeConstants.intakeExtensionHomingThreshold
+                //         && Timer.getFPGATimestamp() - resetDelay > 2) {
+                //     if (!justReachedHole) {
+                //         resetDelay = Timer.getFPGATimestamp();
+                //         justReachedHole = true;
+                //     } else {
+                //         if (Robot.isSimulation()) {
+                //             simExtensionPosition = 0.0;
+                //         } else {
+                //             safteyMotorspeed = 0.0;
+                //             intakeExtensionMotor.setPosition(0);
+                //         }
+                //     }
+                // } else {
+                //     if (!Robot.isSimulation()) {
+                //         safteyMotorspeed = -0.1;
+                //     }
+                //     // }
+                // }
+                canRangeControlledRecalibration();
                 break;
             case SCORING:
                 if (intakeMotorConfig.MotionMagic.MotionMagicExpo_kA != IntakeConstants.slowerIntakeKa) {
@@ -236,16 +293,19 @@ public class Intake extends SubsystemBase {
                 motorspeed = -IntakeConstants.intakingSpeed;
                 break;
             case IN_MANUAL_CONTROL_POS:
-                position = intakeExtensionMotor.getPosition().getValueAsDouble();
-                intakeExtensionMotor.set(0.01);
+                // position = intakeExtensionMotor.getPosition().getValueAsDouble();
+                // intakeExtensionMotor.set(0.1);
+                safteyMotorspeed = 0.1;
                 break;
             case IN_MANUAL_CONTROL_NEG:
-                position = intakeExtensionMotor.getPosition().getValueAsDouble();
-                intakeExtensionMotor.set(-0.01);
+                // position = intakeExtensionMotor.getPosition().getValueAsDouble();
+                // intakeExtensionMotor.set(-0.1);
+                safteyMotorspeed = -0.1;
                 break;
             case IN_MANUAL_IDLE:
-                position = intakeExtensionMotor.getPosition().getValueAsDouble();
-                intakeExtensionMotor.set(0);
+                // position = intakeExtensionMotor.getPosition().getValueAsDouble();
+                // intakeExtensionMotor.set(0);
+                safteyMotorspeed = 0.0;
                 break;
             case IN_MANUAL_RESET:
                 setZero();
@@ -281,11 +341,29 @@ public class Intake extends SubsystemBase {
     }
 
     private void canRangeControlledRecalibration() {
-        if (canRange.getDistance().getValueAsDouble() > IntakeConstants.intakeExtensionHomingThreshold
-                && intakeExtensionMotor.getPosition().getValueAsDouble() != 0) {
-            intakeExtensionMotor.setPosition(0);
+    safteyMotorspeed = 0.0; // default — moved to top
+
+    if (canRange.getDistance().getValueAsDouble() > IntakeConstants.intakeExtensionHomingThreshold
+            && intakeExtensionMotor.getPosition().getValueAsDouble() >= 0.7) {
+        intakeExtensionMotor.setPosition(0);
+    }
+    if (canRange.getDistance().getValueAsDouble() < IntakeConstants.intakeExtensionHomingThreshold
+            && intakeExtensionMotor.getPosition().getValueAsDouble() <= 0.2
+            && position == 0) {
+        if (getCanRangeDistance() > IntakeConstants.intakeExtensionHomingThreshold) {
+            if (Robot.isSimulation()) {
+                simExtensionPosition = 0.0;
+            } else {
+                safteyMotorspeed = 0.0;
+                intakeExtensionMotor.setPosition(0);
+            }
+        } else {
+            if (!Robot.isSimulation()) {
+                safteyMotorspeed = -0.1; // now this actually sticks
+            }
         }
     }
+}
 
     public SystemState getState() {
         return systemState;
@@ -300,17 +378,26 @@ public class Intake extends SubsystemBase {
 
     @Override
     public void periodic() {
-        canRangeControlledRecalibration();
+        if (canRange.getSignalStrength().getValueAsDouble() > 2500) {
+            canRangeControlledRecalibration();
+        }
         LogValues();
         systemState = changeCurrentSystemState();
         applyState();
 
-        if (Robot.isSimulation()) {
-            // In simulation, extension instantly reaches setpoint
-            simExtensionPosition = position;
+        // if (Robot.isSimulation()) {
+        // // In simulation, extension instantly reaches setpoint
+        // simExtensionPosition = position;
+        // } else {
+        if (systemState == SystemState.IN_MANUAL_CONTROL_NEG
+                || systemState == SystemState.IN_MANUAL_CONTROL_POS
+                || systemState == SystemState.IN_MANUAL_IDLE
+                || systemState == SystemState.RESETING) {
+            intakeExtensionMotor.set(safteyMotorspeed);
         } else {
             intakeExtensionMotor.setControl(mmE_request.withPosition(position));
-            intakeMotor.setControl(m_leftrequestOut.withOutput(motorspeed));
         }
+        intakeMotor.setControl(m_leftrequestOut.withOutput(motorspeed));
+        // }
     }
 }

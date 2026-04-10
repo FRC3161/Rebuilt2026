@@ -218,26 +218,26 @@ public class RobotContainer {
                 .onFalse(new InstantCommand(() -> intake.setWantedIntakeState(IntakeWantedState.IDLE)));
 
         // eco mode
-        driver.povUp()
-                .onTrue(
-                        new ParallelCommandGroup(
-                                new InstantCommand(() -> intake.enableEcoModeIntake()),
-                                new InstantCommand(() -> turret.enableEcoModeTurret()),
-                                new InstantCommand(() -> feeder.enableEcoModeFeeder())));
-        driver.povDown()
-                .onTrue(
-                        new ParallelCommandGroup(
-                                new InstantCommand(() -> intake.disableEcoModeIntake()),
-                                new InstantCommand(() -> turret.disableEcoModeTurret()),
-                                new InstantCommand(() -> feeder.disableEcoModeFeeder())));
+        // driver.povUp()
+        // .onTrue(
+        // new ParallelCommandGroup(
+        // new InstantCommand(() -> intake.enableEcoModeIntake()),
+        // new InstantCommand(() -> turret.enableEcoModeTurret()),
+        // new InstantCommand(() -> feeder.enableEcoModeFeeder())));
+        // driver.povDown()
+        // .onTrue(
+        // new ParallelCommandGroup(
+        // new InstantCommand(() -> intake.disableEcoModeIntake()),
+        // new InstantCommand(() -> turret.disableEcoModeTurret()),
+        // new InstantCommand(() -> feeder.disableEcoModeFeeder())));
         // manual intake safety
         // run one way
-        driver.povLeft()
+        driver.povUp()
                 .onTrue(new InstantCommand(() -> intake.setWantedIntakeState(IntakeWantedState.MANUAL_CONTROL_POS)))
                 .onFalse(new InstantCommand(() -> intake.setWantedIntakeState(IntakeWantedState.MANUAL_IDLE)));
 
         // run other way
-        driver.povRight()
+        driver.povDown()
                 .onTrue(new InstantCommand(() -> intake.setWantedIntakeState(IntakeWantedState.MANUAL_CONTROL_NEG)))
                 .onFalse(new InstantCommand(() -> intake.setWantedIntakeState(IntakeWantedState.MANUAL_IDLE)));
 
