@@ -547,7 +547,7 @@ public final class Constants {
 
         /* standard deviations for vision calculations */
         public static edu.wpi.first.math.Vector<N3> kSingleTagStdDevs = VecBuilder.fill(4, 4, 4);
-        public static edu.wpi.first.math.Vector<N3> kMultiTagStdDevs = VecBuilder.fill(4, 4, 4);
+        public static edu.wpi.first.math.Vector<N3> kMultiTagStdDevs = VecBuilder.fill(1, 1, 4); //Was 4,4,4
         public static edu.wpi.first.math.Vector<N3> odoStdDEvs = VecBuilder.fill(.2, .2, .05);
         public static double odometryUpdateFrequency = 250;
     }
