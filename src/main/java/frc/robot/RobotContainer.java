@@ -199,10 +199,13 @@ public class RobotContainer {
 
         // intake
         driver.rightBumper()
-                .onTrue(new ConditionalCommand(
-                        new InstantCommand(() -> intake.setWantedIntakeState(IntakeWantedState.IDLE)),
-                        new InstantCommand(() -> intake.setWantedIntakeState(IntakeWantedState.INTAKE)),
-                        () -> intake.getState() == SystemState.INTAKING));
+                .onTrue(new InstantCommand(() -> intake.setWantedIntakeState(IntakeWantedState.INTAKE))) // make this
+                                                                                                          // RESET
+                .onFalse(new InstantCommand(() -> intake.setWantedIntakeState(IntakeWantedState.IDLE)));
+                // .onTrue(new ConditionalCommand(
+                //         new InstantCommand(() -> intake.setWantedIntakeState(IntakeWantedState.IDLE)),
+                //         new InstantCommand(() -> intake.setWantedIntakeState(IntakeWantedState.INTAKE)),
+                //         () -> intake.getState() == SystemState.INTAKING));
         // .onFalse(new InstantCommand(() ->
         // intake.setWantedIntakeState(IntakeWantedState.IDLE)));
 

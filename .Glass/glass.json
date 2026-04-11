@@ -58,6 +58,14 @@
       "/SmartDashboard/autos": "String Chooser"
     },
     "windows": {
+      "/Pose": {
+        "bottom": 1914,
+        "height": 8.069275856018066,
+        "left": 245,
+        "right": 3942,
+        "top": 118,
+        "width": 16.54119300842285
+      },
       "/SmartDashboard/Intake RESET": {
         "window": {
           "visible": true
@@ -96,12 +104,14 @@
   "NetworkTables Info": {
     "Server": {
       "open": true
-    },
-    "visible": true
+    }
   },
   "NetworkTables Settings": {
     "mode": "Client (NT4)",
     "serverTeam": "3161",
+    "visible": false
+  },
+  "NetworkTables View": {
     "visible": false
   },
   "Plots": {

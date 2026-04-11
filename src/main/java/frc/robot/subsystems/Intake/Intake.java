@@ -392,7 +392,7 @@ public class Intake extends SubsystemBase {
     @Override
     public void periodic() {
         if (canRange.getSignalStrength().getValueAsDouble() > 2500) {
-            // canRangeControlledRecalibration();
+            canRangeControlledRecalibration();
         }
         LogValues();
         systemState = changeCurrentSystemState();
