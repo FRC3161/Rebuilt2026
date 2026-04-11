@@ -146,7 +146,7 @@ public class RobotContainer {
                     double leftY = driver.getLeftY();
                     double leftX = driver.getLeftX();
                     double rightX = driver.getRightX();
-                    double slowFactor = operator.rightTrigger().getAsBoolean() ? .3 : 1.0;
+                    double slowFactor = operator.rightTrigger().getAsBoolean() ? .2 : 1.0;
 
                     // Simulation only - driver2 overrides if active
                     // if (Robot.isSimulation() && driver2 != null) {
@@ -268,7 +268,7 @@ public class RobotContainer {
         operator.y()
                 .onTrue(new SequentialCommandGroup(
                         new InstantCommand(() -> shooter.setWantedShooterState(ShooterWantedState.TEST)),
-                        new InstantCommand(() -> turret.setWantedTurretState(TurretWantedState.AIM_PASS)),
+                        // new InstantCommand(() -> turret.setWantedTurretState(TurretWantedState.AIM_PASS)),
                         new InstantCommand(() -> feeder.setWantedFeederState(FeederWantedState.SHOOT))))
                 .onFalse(new ParallelCommandGroup(
                         new InstantCommand(() -> shooter.setWantedShooterState(ShooterWantedState.IDLE)),
@@ -471,7 +471,7 @@ public class RobotContainer {
                         // wait(1.5),
                         // new InstantCommand(() ->
                         // intake.setWantedIntakeState(IntakeWantedState.RETRACT)))
-                        .alongWith(wait(3.0)));
+                        .alongWith(wait(10.0))); //3
 
         NamedCommands.registerCommand("Intake",
                 new InstantCommand(() -> intake.setWantedIntakeState(IntakeWantedState.INTAKE)));

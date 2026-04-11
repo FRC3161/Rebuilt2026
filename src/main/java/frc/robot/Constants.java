@@ -68,7 +68,7 @@ public final class Constants {
         public static double hoodConversionRotToDeg = 360.0 / 129.6;
         public static double latencyCompensation = .20;
         public static double MIN_RPS = 0;
-        public static double MAX_RPS = 100;
+        public static double MAX_RPS = 90;
 
         public static final InterpolatingDoubleTreeMap RPS_MAP = new InterpolatingDoubleTreeMap();
         static {
@@ -79,8 +79,8 @@ public final class Constants {
             RPS_MAP.put(4.0, 52d); // 52
             RPS_MAP.put(4.5, 54.5d);
             RPS_MAP.put(5.0, 56d); // 55
-            RPS_MAP.put(5.5, 58.5d);
-            RPS_MAP.put(6.0, 62d); // 62
+            RPS_MAP.put(5.5, 60d);
+            RPS_MAP.put(6.0, 64d); // 62
             // RPS_MAP.put(10.0, 85d);
         };
 
@@ -327,7 +327,7 @@ public final class Constants {
         public static int turretMotionMagicJerk;
 
         public static int SupplyCurrentLimit = 40; // 60 (should be 80)
-        public static int StatorCurrentLimit = 120; // 60 (should be 80)
+        public static int StatorCurrentLimit = 100; // 60 (should be 80)
 
         public static int turretMotorID = 50;
         public static int encoderID = 54;

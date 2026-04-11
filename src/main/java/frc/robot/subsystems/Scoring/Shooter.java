@@ -277,8 +277,8 @@ public class Shooter extends SubsystemBase {
                 }
                 break;
             case TESTING:
-                motorspeed = 95;
-                position = 7.5;
+                motorspeed = 100;
+                position = 0;
                 break;
             case RETRACTING_AUTO:
                 position = 0;
@@ -318,7 +318,11 @@ public class Shooter extends SubsystemBase {
     }
 
     public boolean shooterIsReady() {
+        if(systemState == SystemState.PASS_SHOOTING){
+        return Math.abs(getShooterVelocity() - motorspeed) < 5;
+    } else {
         return Math.abs(getShooterVelocity() - motorspeed) < 1.5;
+    }
     }
 
     public void enableEcoModeShooter() {
@@ -344,8 +348,8 @@ public class Shooter extends SubsystemBase {
     }
 
     private void logValues() {
-        // SmartDashboard.putNumber("SHOOTER/Shooter Actual Speed",
-        // getShooterVelocity());
+        SmartDashboard.putNumber("SHOOTER/Shooter Actual Speed",
+        getShooterVelocity());
         // SmartDashboard.putNumber("SHOOTER/Hood Actual Position", getHoodPosition());
         // SmartDashboard.putNumber("SHOOTER/Shooter Wanted Speed", motorspeed);
         // SmartDashboard.putNumber("SHOOTER/Hood Wanted Position", position);

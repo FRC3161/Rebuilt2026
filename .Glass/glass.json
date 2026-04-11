@@ -31,6 +31,15 @@
         "Module 3": {
           "open": true
         },
+        "SHOOTER": {
+          "open": true
+        },
+        "STATE": {
+          "open": true
+        },
+        "STATES": {
+          "open": true
+        },
         "open": true
       },
       "photonvision": {
@@ -64,7 +73,10 @@
         "left": 245,
         "right": 3942,
         "top": 118,
-        "width": 16.54119300842285
+        "width": 16.54119300842285,
+        "window": {
+          "visible": true
+        }
       },
       "/SmartDashboard/Intake RESET": {
         "window": {
@@ -104,14 +116,12 @@
   "NetworkTables Info": {
     "Server": {
       "open": true
-    }
+    },
+    "visible": true
   },
   "NetworkTables Settings": {
     "mode": "Client (NT4)",
     "serverTeam": "3161",
-    "visible": false
-  },
-  "NetworkTables View": {
     "visible": false
   },
   "Plots": {

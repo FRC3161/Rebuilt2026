@@ -382,9 +382,11 @@ public class Intake extends SubsystemBase {
     }
 
     private void LogValues() {
-        // SmartDashboard.putNumber("INTAKE/Extension Motor Position",
-        // getExtensionPosition());
-        // SmartDashboard.putNumber("INTAKE/CANrange Distance", getCanRangeDistance());
+        SmartDashboard.putNumber("INTAKE/Extension Motor Position",
+        getExtensionPosition());
+        SmartDashboard.putNumber("INTAKE/CANrange Distance", getCanRangeDistance());
+        SmartDashboard.putNumber("INTAKE/Intake  speed", intakeMotor.get());
+
         SmartDashboard.putString("STATES/INTAKE WANTED STATE", wantedState.toString());
         SmartDashboard.putString("STATES/INTAKE SYSTEM STATE", systemState.toString());
     }

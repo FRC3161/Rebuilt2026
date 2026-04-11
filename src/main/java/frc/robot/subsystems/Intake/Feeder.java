@@ -25,13 +25,13 @@ public class Feeder extends SubsystemBase {
     private TalonFXConfiguration spindexerMotorConfig = new TalonFXConfiguration();
     private TalonFX towerMotor = new TalonFX(FeederConstants.towerMotorID, "rio");
     private TalonFXConfiguration towerMotorConfig = new TalonFXConfiguration();
-    private TalonFX rollerMotor = new TalonFX(FeederConstants.rollerMotorID, "canivore3161");
-    private TalonFXConfiguration rollerMotorConfig = new TalonFXConfiguration();
+    // private TalonFX rollerMotor = new TalonFX(FeederConstants.rollerMotorID, "canivore3161");
+    // private TalonFXConfiguration rollerMotorConfig = new TalonFXConfiguration();
 
     // for velocity control
     private double spindexerMotorSpeed = 0.0;
     private double towerMotorSpeed = 0.0;
-    private double rollerMotorSpeed = 0.0;
+    // private double rollerMotorSpeed = 0.0;
 
     /* STATES */
     FeederWantedState wantedState = FeederWantedState.IDLE;
@@ -48,10 +48,10 @@ public class Feeder extends SubsystemBase {
         spindexerMotorConfig.CurrentLimits.StatorCurrentLimit = FeederConstants.StatorCurrentLimit;
         towerMotorConfig.CurrentLimits.SupplyCurrentLimit = FeederConstants.SupplyCurrentLimit;
         towerMotorConfig.CurrentLimits.StatorCurrentLimit = FeederConstants.StatorCurrentLimit;
-        rollerMotorConfig.CurrentLimits.SupplyCurrentLimit = 0;
-        rollerMotorConfig.CurrentLimits.StatorCurrentLimit = 0;
+        // rollerMotorConfig.CurrentLimits.SupplyCurrentLimit = 0;
+        // rollerMotorConfig.CurrentLimits.StatorCurrentLimit = 0;
 
-        rollerMotorConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+        // rollerMotorConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
         if (!Robot.isSimulation()) {
             StatusCode status = StatusCode.StatusCodeNotInitialized;
             for (int i = 0; i < 5; ++i) {
@@ -72,14 +72,14 @@ public class Feeder extends SubsystemBase {
                 System.out.println("Could not apply tower configs, error code: " + status.toString());
             }
 
-            for (int i = 0; i < 5; ++i) {
-                status = rollerMotor.getConfigurator().apply(rollerMotorConfig);
-                if (status.isOK())
-                    break;
-            }
-            if (!status.isOK()) {
-                System.out.println("Could not apply roller configs, error code: " + status.toString());
-            }
+            // for (int i = 0; i < 5; ++i) {
+            //     status = rollerMotor.getConfigurator().apply(rollerMotorConfig);
+            //     if (status.isOK())
+            //         break;
+            // }
+            // if (!status.isOK()) {
+            //     System.out.println("Could not apply roller configs, error code: " + status.toString());
+            // }
         }
     }
 
@@ -100,7 +100,11 @@ public class Feeder extends SubsystemBase {
                     yield SystemState.IDLING;
                 }
             case PASS:
+            if (shooter.shooterIsReady() && turret.turretIsReady()) {
                 yield SystemState.PASSING;
+                } else {
+                    yield SystemState.IDLING;
+                }
             case FEEDTEST:
                 yield SystemState.FEEDTESTING;
         };
@@ -111,33 +115,33 @@ public class Feeder extends SubsystemBase {
             case IDLING:
                 spindexerMotorSpeed = 0.0;
                 towerMotorSpeed = 0.0;
-                rollerMotorSpeed = 0.0;
+                // rollerMotorSpeed = 0.0;
                 break;
             case INTAKING:
                 spindexerMotorSpeed = FeederConstants.feederIntakeSpeed;
                 towerMotorSpeed = 0.0;
-                rollerMotorSpeed = 0.0;
+                // rollerMotorSpeed = 0.0;
                 break;
             case SHOOTING:
                 spindexerMotorSpeed = FeederConstants.feederShootSpeed;
                 towerMotorSpeed = FeederConstants.feederShootSpeed;
-                rollerMotorSpeed = 0.7;
+                // rollerMotorSpeed = 0.7;
                 break;
             case PASSING:
                 if (drivetrain.getPose().getY() > 3.53 && drivetrain.getPose().getY() < 4.53) {
                     spindexerMotorSpeed = 0;
                     towerMotorSpeed = 0;
-                    rollerMotorSpeed = 0;
+                    // rollerMotorSpeed = 0;
                 } else {
                     spindexerMotorSpeed = FeederConstants.feederShootSpeed;
                     towerMotorSpeed = FeederConstants.feederShootSpeed;
-                    rollerMotorSpeed = 0.7;
+                    // rollerMotorSpeed = 0.7;
                 }
                 break;
             case FEEDTESTING:
                 spindexerMotorSpeed = -0.7;
                 towerMotorSpeed = -0.7;
-                rollerMotorSpeed = 0.0;
+                // rollerMotorSpeed = 0.0;
                 break;
         }
     }
@@ -150,9 +154,9 @@ public class Feeder extends SubsystemBase {
             spindexerMotorConfig.CurrentLimits.StatorCurrentLimit = 40;
             spindexerMotorConfig.CurrentLimits.SupplyCurrentLimit = 40;
             spindexerMotor.getConfigurator().apply(spindexerMotorConfig); // fix: was applying towerMotorConfig
-            rollerMotorConfig.CurrentLimits.StatorCurrentLimit = 40;
-            rollerMotorConfig.CurrentLimits.SupplyCurrentLimit = 40;
-            rollerMotor.getConfigurator().apply(rollerMotorConfig);
+            // rollerMotorConfig.CurrentLimits.StatorCurrentLimit = 40;
+            // rollerMotorConfig.CurrentLimits.SupplyCurrentLimit = 40;
+            // rollerMotor.getConfigurator().apply(rollerMotorConfig);
         }
     }
 
@@ -164,9 +168,9 @@ public class Feeder extends SubsystemBase {
             spindexerMotorConfig.CurrentLimits.StatorCurrentLimit = FeederConstants.StatorCurrentLimit;
             spindexerMotorConfig.CurrentLimits.SupplyCurrentLimit = FeederConstants.SupplyCurrentLimit;
             spindexerMotor.getConfigurator().apply(spindexerMotorConfig); // fix: was applying towerMotorConfig
-            rollerMotorConfig.CurrentLimits.StatorCurrentLimit = FeederConstants.StatorCurrentLimit;
-            rollerMotorConfig.CurrentLimits.SupplyCurrentLimit = FeederConstants.SupplyCurrentLimit;
-            rollerMotor.getConfigurator().apply(rollerMotorConfig);
+            // rollerMotorConfig.CurrentLimits.StatorCurrentLimit = FeederConstants.StatorCurrentLimit;
+            // rollerMotorConfig.CurrentLimits.SupplyCurrentLimit = FeederConstants.SupplyCurrentLimit;
+            // rollerMotor.getConfigurator().apply(rollerMotorConfig);
         }
     }
 
