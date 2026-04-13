@@ -277,7 +277,7 @@ public class Shooter extends SubsystemBase {
                 }
                 break;
             case TESTING:
-                motorspeed = 100;
+                motorspeed = 90;
                 position = 0;
                 break;
             case RETRACTING_AUTO:
@@ -319,7 +319,7 @@ public class Shooter extends SubsystemBase {
 
     public boolean shooterIsReady() {
         if(systemState == SystemState.PASS_SHOOTING){
-        return Math.abs(getShooterVelocity() - motorspeed) < 5;
+        return Math.abs(getShooterVelocity() - motorspeed) < 10;
     } else {
         return Math.abs(getShooterVelocity() - motorspeed) < 1.5;
     }

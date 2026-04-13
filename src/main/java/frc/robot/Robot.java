@@ -49,7 +49,7 @@ public class Robot extends TimedRobot {
         DataLogManager.stop();
         PortForwarder.add(5800, "photonvision.local", 5800);
         PathfindingCommand.warmupCommand().schedule();
-        // m_robotContainer.LEDSHUTOFF();
+        m_robotContainer.LEDSHUTOFF();
     }
 
     /**

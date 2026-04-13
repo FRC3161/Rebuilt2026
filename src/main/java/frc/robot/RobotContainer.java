@@ -377,7 +377,7 @@ public class RobotContainer {
     }
 
     public void LEDSHUTOFF() {
-        // new DisableLED(normalLights).schedule();
+        new DisableLED(normalLights).schedule();
     }
 
     public void configureTestCommands() {
