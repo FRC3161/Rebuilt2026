@@ -103,7 +103,7 @@ public final class ShotCalc {
         double requiredVelocity = shotVelocity.getNorm();
         double velocityRatio = requiredVelocity / baselineVelocity;
         double adjustedRPS = MathUtil.clamp(
-                baselineRPS * velocityRatio,
+                baselineRPS, /* * velocityRatio, */
                 ShooterConstants.MIN_RPS,
                 ShooterConstants.MAX_RPS);
 
