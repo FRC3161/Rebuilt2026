@@ -7,13 +7,13 @@
         {
           "type": "path",
           "data": {
-            "pathName": "LEFTBUMP1L"
+            "pathName": "LEFTBUMP1S"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "LEFTBUMP2L"
+            "pathName": "LEFTBUMP2S"
           }
         }
       ]
