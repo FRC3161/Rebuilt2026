@@ -7,13 +7,13 @@
         {
           "type": "path",
           "data": {
-            "pathName": "LEFTBUMP1M"
+            "pathName": "Zamboni"
           }
         },
         {
-          "type": "path",
+          "type": "named",
           "data": {
-            "pathName": "LEFTBUMP2S"
+            "name": "SOTF"
           }
         }
       ]

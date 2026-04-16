@@ -104,9 +104,9 @@ public final class Constants {
             HOOD_MAP.put(3.0, 2.2d); // 2,5
             HOOD_MAP.put(3.5, 3d);
             HOOD_MAP.put(4.0, 3.8d); // 5
-            HOOD_MAP.put(4.5, 4d);
-            HOOD_MAP.put(5.0, 4.3d); // 5.5
-            HOOD_MAP.put(5.5, 4.6d);
+            HOOD_MAP.put(4.5, 4.3d);
+            HOOD_MAP.put(5.0, 4.6d); // 5.5
+            HOOD_MAP.put(5.5, 5d);
             HOOD_MAP.put(6.0, 5.5d); // 6.5
             // HOOD_MAP.put(10.0, 8d);
         };
