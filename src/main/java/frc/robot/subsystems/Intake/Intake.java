@@ -165,15 +165,15 @@ public class Intake extends SubsystemBase {
                     intakeExtensionMotor.getConfigurator().apply(intakeExtensionMotorConfig);
                 }
                 if ((canRange.getDistance().getValueAsDouble() > IntakeConstants.intakeExtensionHomingThreshold
-                        && intakeExtensionMotor.getPosition().getValueAsDouble() >= 0.2)
+                        && intakeExtensionMotor.getPosition().getValueAsDouble() <= 10) // 0.2
 
                         ||
 
                         (canRange.getDistance().getValueAsDouble() < IntakeConstants.intakeExtensionHomingThreshold
-                                && intakeExtensionMotor.getPosition().getValueAsDouble() <= 0.2
-                                && position == 0)) {
+                                && intakeExtensionMotor.getPosition().getValueAsDouble() >= 10
+                                && position == 10)) {
                     if (!resetStarted) {
-                        resetDelay = Timer.getFPGATimestamp();
+                        // resetDelay = Timer.getFPGATimestamp();
                         resetStarted = true;
                     }
                     yield SystemState.RESETING;
@@ -353,15 +353,19 @@ public class Intake extends SubsystemBase {
         intakeExtensionMotor.setPosition(0);
     }
 
+    public void setOut() {
+        intakeExtensionMotor.setPosition(10);
+    }
+
     private void canRangeControlledRecalibration() {
         safteyMotorspeed = 0.0;
 
         if (canRange.getDistance().getValueAsDouble() > IntakeConstants.intakeExtensionHomingThreshold
-                && intakeExtensionMotor.getPosition().getValueAsDouble() >= 0.7) {
-            intakeExtensionMotor.setPosition(0);
+        /* && intakeExtensionMotor.getPosition().getValueAsDouble() <= 10 */) { // 0.7
+            intakeExtensionMotor.setPosition(10);
         } else {
             if (!Robot.isSimulation()) {
-                safteyMotorspeed = -0.1;
+                safteyMotorspeed = 0.1; // -0.1
             }
         }
     }

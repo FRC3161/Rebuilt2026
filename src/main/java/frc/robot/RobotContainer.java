@@ -200,12 +200,14 @@ public class RobotContainer {
         // intake
         driver.rightBumper()
                 .onTrue(new InstantCommand(() -> intake.setWantedIntakeState(IntakeWantedState.INTAKE))) // make this
-                                                                                                          // RESET
+                                                                                                         // RESET
                 .onFalse(new InstantCommand(() -> intake.setWantedIntakeState(IntakeWantedState.IDLE)));
-                // .onTrue(new ConditionalCommand(
-                //         new InstantCommand(() -> intake.setWantedIntakeState(IntakeWantedState.IDLE)),
-                //         new InstantCommand(() -> intake.setWantedIntakeState(IntakeWantedState.INTAKE)),
-                //         () -> intake.getState() == SystemState.INTAKING));
+        // .onTrue(new ConditionalCommand(
+        // new InstantCommand(() ->
+        // intake.setWantedIntakeState(IntakeWantedState.IDLE)),
+        // new InstantCommand(() ->
+        // intake.setWantedIntakeState(IntakeWantedState.INTAKE)),
+        // () -> intake.getState() == SystemState.INTAKING));
         // .onFalse(new InstantCommand(() ->
         // intake.setWantedIntakeState(IntakeWantedState.IDLE)));
 
@@ -245,7 +247,7 @@ public class RobotContainer {
                 .onFalse(new InstantCommand(() -> intake.setWantedIntakeState(IntakeWantedState.MANUAL_IDLE)));
 
         // manually set intake to 0
-        driver.back().onTrue(new InstantCommand(() -> intake.setZero()));
+        driver.back().onTrue(new InstantCommand(() -> intake.setOut()));
 
         // brake
         driver.rightTrigger().whileTrue(drivetrain.applyRequest(() -> brake));
@@ -268,7 +270,8 @@ public class RobotContainer {
         operator.y()
                 .onTrue(new SequentialCommandGroup(
                         new InstantCommand(() -> shooter.setWantedShooterState(ShooterWantedState.TEST)),
-                        // new InstantCommand(() -> turret.setWantedTurretState(TurretWantedState.AIM_PASS)),
+                        // new InstantCommand(() ->
+                        // turret.setWantedTurretState(TurretWantedState.AIM_PASS)),
                         new InstantCommand(() -> feeder.setWantedFeederState(FeederWantedState.SHOOT))))
                 .onFalse(new ParallelCommandGroup(
                         new InstantCommand(() -> shooter.setWantedShooterState(ShooterWantedState.IDLE)),
@@ -471,7 +474,7 @@ public class RobotContainer {
                         // wait(1.5),
                         // new InstantCommand(() ->
                         // intake.setWantedIntakeState(IntakeWantedState.RETRACT)))
-                        .alongWith(wait(10.0))); //3
+                        .alongWith(wait(10.0))); // 3
 
         NamedCommands.registerCommand("Intake",
                 new InstantCommand(() -> intake.setWantedIntakeState(IntakeWantedState.INTAKE)));
