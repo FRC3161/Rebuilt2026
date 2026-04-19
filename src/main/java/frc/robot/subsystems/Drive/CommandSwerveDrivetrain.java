@@ -154,23 +154,25 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             return FieldConstants.BLUE_HUB_POSE.getY() - getCurrentTurretPose().getY();
         }
     }
+
     private void clampPoseToField() {
-    if (!Robot.isSimulation()) return;
-    
-    Pose2d currentPose = getPose();
-    
-    double fieldWidth = 16.54;
-    double fieldHeight = 8.06;
-    
-    double robotRadius = 0.432;
-    
-    double clampedX = MathUtil.clamp(currentPose.getX(), robotRadius, fieldWidth - robotRadius);
-    double clampedY = MathUtil.clamp(currentPose.getY(), robotRadius, fieldHeight - robotRadius);
-    
-    if (clampedX != currentPose.getX() || clampedY != currentPose.getY()) {
-        resetPose(new Pose2d(clampedX, clampedY, currentPose.getRotation()));
+        if (!Robot.isSimulation())
+            return;
+
+        Pose2d currentPose = getPose();
+
+        double fieldWidth = 16.54;
+        double fieldHeight = 8.06;
+
+        double robotRadius = 0.432;
+
+        double clampedX = MathUtil.clamp(currentPose.getX(), robotRadius, fieldWidth - robotRadius);
+        double clampedY = MathUtil.clamp(currentPose.getY(), robotRadius, fieldHeight - robotRadius);
+
+        if (clampedX != currentPose.getX() || clampedY != currentPose.getY()) {
+            resetPose(new Pose2d(clampedX, clampedY, currentPose.getRotation()));
+        }
     }
-}
 
     // private void updateBallTrajectory() {
     // if (!Robot.isSimulation())
@@ -389,8 +391,6 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                     getScoringLocation());
         }
 
-        
-
         // Publish clean 50Hz pose for simulation visualization
         if (Robot.isSimulation()) {
             SmartDashboard.putNumberArray("SimRobotPose", new double[] {
@@ -398,7 +398,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                     getPose().getY(),
                     getPose().getRotation().getRadians()
             });
-           clampPoseToField();
+            // clampPoseToField();
             // updateBallTrajectory();
         }
 

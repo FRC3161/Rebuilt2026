@@ -164,20 +164,22 @@ public class Intake extends SubsystemBase {
                     intakeExtensionMotorConfig.MotionMagic.MotionMagicExpo_kA = IntakeConstants.intakeMotionMagicExpoK_A;
                     intakeExtensionMotor.getConfigurator().apply(intakeExtensionMotorConfig);
                 }
-                if ((canRange.getDistance().getValueAsDouble() > IntakeConstants.intakeExtensionHomingThreshold
-                        && intakeExtensionMotor.getPosition().getValueAsDouble() <= 10) // 0.2
+                // // if ((canRange.getDistance().getValueAsDouble() >
+                // IntakeConstants.intakeExtensionHomingThreshold
+                // // && intakeExtensionMotor.getPosition().getValueAsDouble() <= 10) // 0.2
 
-                        ||
+                // // ||
 
-                        (canRange.getDistance().getValueAsDouble() < IntakeConstants.intakeExtensionHomingThreshold
-                                && intakeExtensionMotor.getPosition().getValueAsDouble() >= 10
-                                && position == 10)) {
-                    if (!resetStarted) {
-                        // resetDelay = Timer.getFPGATimestamp();
-                        resetStarted = true;
-                    }
-                    yield SystemState.RESETING;
-                }
+                // // (canRange.getDistance().getValueAsDouble() <
+                // IntakeConstants.intakeExtensionHomingThreshold
+                // // && intakeExtensionMotor.getPosition().getValueAsDouble() >= 10
+                // // && position == 10)) {
+                // // if (!resetStarted) {
+                // // // resetDelay = Timer.getFPGATimestamp();
+                // // resetStarted = true;
+                // // }
+                // yield SystemState.RESETING;
+                // }
                 resetStarted = false;
                 yield SystemState.IDLING;
             }
@@ -409,9 +411,9 @@ public class Intake extends SubsystemBase {
 
     @Override
     public void periodic() {
-        if (canRange.getSignalStrength().getValueAsDouble() > 2500) {
-            canRangeControlledRecalibration();
-        }
+        // if (canRange.getSignalStrength().getValueAsDouble() > 2500) {
+        // canRangeControlledRecalibration();
+        // }
         LogValues();
         systemState = changeCurrentSystemState();
         applyState();
