@@ -164,21 +164,21 @@ public class Intake extends SubsystemBase {
                     intakeExtensionMotorConfig.MotionMagic.MotionMagicExpo_kA = IntakeConstants.intakeMotionMagicExpoK_A;
                     intakeExtensionMotor.getConfigurator().apply(intakeExtensionMotorConfig);
                 }
-                if ((canRange.getDistance().getValueAsDouble() > IntakeConstants.intakeExtensionHomingThreshold
-                        && intakeExtensionMotor.getPosition().getValueAsDouble() <= 10) // 0.2
+                // if ((canRange.getDistance().getValueAsDouble() > IntakeConstants.intakeExtensionHomingThreshold
+                //         && intakeExtensionMotor.getPosition().getValueAsDouble() <= 10) // 0.2
 
-                        ||
+                //         ||
 
-                        (canRange.getDistance().getValueAsDouble() < IntakeConstants.intakeExtensionHomingThreshold
-                                && intakeExtensionMotor.getPosition().getValueAsDouble() >= 10
-                                && position == 10)) {
-                    if (!resetStarted) {
-                        // resetDelay = Timer.getFPGATimestamp();
-                        resetStarted = true;
-                    }
-                    yield SystemState.RESETING;
-                }
-                resetStarted = false;
+                //         (canRange.getDistance().getValueAsDouble() < IntakeConstants.intakeExtensionHomingThreshold
+                //                 && intakeExtensionMotor.getPosition().getValueAsDouble() >= 10
+                //                 && position == 10)) {
+                //     if (!resetStarted) {
+                //         // resetDelay = Timer.getFPGATimestamp();
+                //         resetStarted = true;
+                //     }
+                //     yield SystemState.RESETING;
+                // }
+                // resetStarted = false;
                 yield SystemState.IDLING;
             }
             case INTAKE -> {
@@ -186,10 +186,27 @@ public class Intake extends SubsystemBase {
                     intakeExtensionMotorConfig.MotionMagic.MotionMagicExpo_kA = IntakeConstants.intakeMotionMagicExpoK_A;
                     intakeExtensionMotor.getConfigurator().apply(intakeExtensionMotorConfig);
                 }
+                // if ((canRange.getDistance().getValueAsDouble() > IntakeConstants.intakeExtensionHomingThreshold
+                //         && intakeExtensionMotor.getPosition().getValueAsDouble() < 10) // 0.2
+
+                //         ||
+
+                //         (canRange.getDistance().getValueAsDouble() < IntakeConstants.intakeExtensionHomingThreshold
+                //                 && intakeExtensionMotor.getPosition().getValueAsDouble() > 10
+                //                 && position == 10)) {
+                //     if (!resetStarted) {
+                //         // resetDelay = Timer.getFPGATimestamp();
+                //         resetStarted = true;
+                //     }
+                //     yield SystemState.RESETING;
+                // } else {
+                    yield SystemState.INTAKING;
+                // }
+
                 // if (systemState == SystemState.INTAKING) {
                 // yield SystemState.IDLING;
                 // } else {
-                yield SystemState.INTAKING;
+                // yield SystemState.INTAKING;
             }
             case RETRACT -> {
                 if (systemState == SystemState.SCORING && !Robot.isSimulation()) {
@@ -308,12 +325,12 @@ public class Intake extends SubsystemBase {
             case IN_MANUAL_CONTROL_POS:
                 // position = intakeExtensionMotor.getPosition().getValueAsDouble();
                 // intakeExtensionMotor.set(0.1);
-                safteyMotorspeed = 0.1;
+                safteyMotorspeed = 0.2;
                 break;
             case IN_MANUAL_CONTROL_NEG:
                 // position = intakeExtensionMotor.getPosition().getValueAsDouble();
                 // intakeExtensionMotor.set(-0.1);
-                safteyMotorspeed = -0.1;
+                safteyMotorspeed = -0.2;
                 break;
             case IN_MANUAL_IDLE:
                 // position = intakeExtensionMotor.getPosition().getValueAsDouble();
@@ -354,7 +371,7 @@ public class Intake extends SubsystemBase {
     }
 
     public void setOut() {
-        intakeExtensionMotor.setPosition(10);
+        intakeExtensionMotor.setPosition(10.2);
     }
 
     private void canRangeControlledRecalibration() {
@@ -362,7 +379,7 @@ public class Intake extends SubsystemBase {
 
         if (canRange.getDistance().getValueAsDouble() > IntakeConstants.intakeExtensionHomingThreshold
         /* && intakeExtensionMotor.getPosition().getValueAsDouble() <= 10 */) { // 0.7
-            intakeExtensionMotor.setPosition(10);
+            intakeExtensionMotor.setPosition(10.2);
         } else {
             if (!Robot.isSimulation()) {
                 safteyMotorspeed = 0.1; // -0.1
@@ -409,9 +426,9 @@ public class Intake extends SubsystemBase {
 
     @Override
     public void periodic() {
-        if (canRange.getSignalStrength().getValueAsDouble() > 2500) {
-            canRangeControlledRecalibration();
-        }
+        // if (canRange.getSignalStrength().getValueAsDouble() > 2500) {
+            // canRangeControlledRecalibration();
+        // }
         LogValues();
         systemState = changeCurrentSystemState();
         applyState();

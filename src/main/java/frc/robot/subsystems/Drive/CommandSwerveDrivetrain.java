@@ -398,7 +398,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                     getPose().getY(),
                     getPose().getRotation().getRadians()
             });
-           clampPoseToField();
+        //    clampPoseToField();
             // updateBallTrajectory();
         }
 

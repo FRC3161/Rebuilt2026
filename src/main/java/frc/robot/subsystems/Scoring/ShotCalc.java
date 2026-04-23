@@ -102,11 +102,10 @@ public final class ShotCalc {
         // 10. SCALE RPS PROPORTIONALLY
         double requiredVelocity = shotVelocity.getNorm();
         double velocityRatio = requiredVelocity / baselineVelocity;
-        double clampedRatio = Math.max(1.0, velocityRatio);
         double adjustedRPS = MathUtil.clamp(
-        baselineRPS * clampedRatio,
-        ShooterConstants.MIN_RPS,
-        ShooterConstants.MAX_RPS);
+                baselineRPS * velocityRatio,
+                ShooterConstants.MIN_RPS,
+                ShooterConstants.MAX_RPS);
 
         // SmartDashboard.putNumber("Baseline Velocity", baselineVelocity);
         // SmartDashboard.putNumber("Target Velocity Norm", targetVelocity.getNorm());
@@ -117,6 +116,10 @@ public final class ShotCalc {
 
         // 11. HOOD ANGLE
         double adjustedHood = baselineHoodAngle;
+        // double adjustedHood = MathUtil.clamp(
+        //         baselineRPS * velocityRatio, //* velocityRatio,
+        //         -0.5,
+                // 8);
 
         return new ShooterCommand(adjustedRPS, turretAngle, adjustedHood);
     }

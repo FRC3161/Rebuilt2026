@@ -121,14 +121,15 @@
   },
   "NetworkTables Info": {
     "Server": {
+      "Publishers": {
+        "open": true
+      },
       "open": true
     }
   },
   "NetworkTables Settings": {
     "mode": "Client (NT4)",
-    "serverTeam": "3161"
-  },
-  "NetworkTables View": {
+    "serverTeam": "3161",
     "visible": false
   },
   "Plots": {

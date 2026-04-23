@@ -79,8 +79,16 @@ public final class Constants {
             RPS_MAP.put(4.0, 52d); // 52
             RPS_MAP.put(4.5, 54.5d);
             RPS_MAP.put(5.0, 56d); // 55
-            RPS_MAP.put(5.5, 60d);
-            RPS_MAP.put(6.0, 64d); // 62
+            RPS_MAP.put(5.5, 66d);
+            RPS_MAP.put(6.0, 70d); // 62
+            RPS_MAP.put(6.5, 74.5d); //
+            RPS_MAP.put(7.0, 79d); //
+            RPS_MAP.put(7.5, 83.5d); //
+            RPS_MAP.put(8.0, 88d); //
+
+
+
+
             // RPS_MAP.put(10.0, 85d);
         };
 
@@ -101,19 +109,22 @@ public final class Constants {
         static {
             HOOD_MAP.put(2.0, 0d); // 0
             HOOD_MAP.put(2.5, 1d);
-            HOOD_MAP.put(3.0, 2.2d); // 2,5
-            HOOD_MAP.put(3.5, 3d);
-            HOOD_MAP.put(4.0, 3.8d); // 5
+            HOOD_MAP.put(3.0, 2d); // 2,5 --> 2.2
+            HOOD_MAP.put(3.5, 2.8d); // 3
+            HOOD_MAP.put(4.0, 3.5d); // 5
             HOOD_MAP.put(4.5, 4.3d);
             HOOD_MAP.put(5.0, 4.6d); // 5.5
             HOOD_MAP.put(5.5, 5d);
             HOOD_MAP.put(6.0, 5.5d); // 6.5
+            HOOD_MAP.put(6.5, 6d);
+            HOOD_MAP.put(8.0, 6.5);
+
             // HOOD_MAP.put(10.0, 8d);
         };
 
         public static final InterpolatingDoubleTreeMap TOF_MAP = new InterpolatingDoubleTreeMap();
         static {
-            TOF_MAP.put(2.0, 0.5);
+            TOF_MAP.put(2.0, 0.3);
             // TOF_MAP.put(2.5, 0d);
             TOF_MAP.put(3.0, 0.5);
             // TOF_MAP.put(3.5, 0d);
@@ -290,8 +301,8 @@ public final class Constants {
         public static double intakingPosition = 10;
         public static double intakingSpeed = -0.9;
         public static double slowerIntakeKa = 1.0;
-        public static double intakeExtensionHomingThreshold = 0.03;
-        public static double retractingPos = 0;
+        public static double intakeExtensionHomingThreshold = 0.01;
+        public static double retractingPos = 0.5;
         public static double[] intakePID = { 0.3, 0, 0 };
         public static double[] intakeSVA = { 0, 0.13, 0.01 };
 

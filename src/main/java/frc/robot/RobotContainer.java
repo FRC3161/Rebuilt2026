@@ -478,6 +478,9 @@ public class RobotContainer {
 
         NamedCommands.registerCommand("Intake",
                 new InstantCommand(() -> intake.setWantedIntakeState(IntakeWantedState.INTAKE)));
+        
+        NamedCommands.registerCommand("Outtake",
+                new InstantCommand(() -> intake.setWantedIntakeState(IntakeWantedState.OUTTAKE)));
 
         NamedCommands.registerCommand("Rswipe pathFind",
                 drivetrain.defer(
