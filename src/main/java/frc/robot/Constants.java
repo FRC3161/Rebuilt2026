@@ -197,8 +197,11 @@ public final class Constants {
         // (slow squeeze), restored on leaving the state.
         public static final double slowerIntakeKa = 1.0;
         // CANrange distance (meters) beyond which the extension is considered
-        // to be at its home position. 0 disables auto-zeroing during RESET.
-        public static final double intakeExtensionHomingThreshold = 0; // TODO: tune (meters)
+        // at home, used only by the (currently unbound) RESET auto-zero state.
+        // 0 disables it. The intended re-zero workflow after a big impact is
+        // manual: D-pad nudge the intake into the hard stop, then press the
+        // driver's back button (setZero).
+        public static final double intakeExtensionHomingThreshold = 0;
         public static final double retractingPos = 0;
         // Duty cycle used for manual nudging and homing crawl.
         public static final double manualDutyCycle = 0.01;
