@@ -3,17 +3,18 @@ package frc.robot;
 import java.util.Optional;
 
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.LEDPattern;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.LightsConstants;
-import frc.robot.commands.Lights.WPIlib.ResetLED;
-import frc.robot.commands.Lights.WPIlib.SetBlinkingPattern;
-import frc.robot.subsystems.Lights.LEDSubsystem_WPIlib;
 
+/**
+ * Tracks match phase, hub-active shifts, and warning windows from Driver
+ * Station data. LED signaling hooks are stubbed out (see updateShiftWarning)
+ * pending the LED strategy being finalized — the state tracking runs
+ * regardless so the data is available on the dashboard and to other systems.
+ */
 public class MatchInformation extends SubsystemBase {
-    // private final LEDSubsystem_WPIlib normalLights;
     private final Timer matchTimer;
 
     // Match Phases
@@ -26,7 +27,7 @@ public class MatchInformation extends SubsystemBase {
         UNKNOWN
     }
 
-    // Driver Station Info - Required for ALL other calculations
+    // Driver Station Info - required for all other calculations
     public boolean enabled;
     public boolean autonomous;
     public boolean teleop;
@@ -46,10 +47,7 @@ public class MatchInformation extends SubsystemBase {
     public static final double SHIFT_WARNING_THRESHOLD = 5;
     public boolean shift1Active;
     public boolean redInactiveFirst;
-    public boolean shiftWarning_advised;
-    public boolean shiftWarning_active;
     public double internalTeleopTime; // Internal teleop timer used for LED / shift logic
-    // private boolean transitionSignalActive;
 
     private enum WarningStage {
         NONE,
@@ -71,9 +69,8 @@ public class MatchInformation extends SubsystemBase {
     public double teleopStartTimestamp;
     public double autoStartTimestamp;
 
-    public MatchInformation(/*LEDSubsystem_WPIlib m_normalLights,*/ Timer m_matchTime) {
+    public MatchInformation(Timer m_matchTime) {
         matchTimer = m_matchTime;
-        // normalLights = m_normalLights;
         revertDefaultState();
     }
 
@@ -93,7 +90,6 @@ public class MatchInformation extends SubsystemBase {
         phase = MatchPhase.DISABLED;
         shiftTimeRemaining = 0;
         phaseElapsed = 0;
-        shiftWarning_active = false;
 
         hubActive = false;
         teleopShift = 0;
@@ -104,7 +100,6 @@ public class MatchInformation extends SubsystemBase {
         climbAdvised = false;
         scoringSafeWindow = false;
         currentWarningStage = WarningStage.NONE;
-        // transitionSignalActive = false;
 
         fpgaTimestamp = 0;
         teleopStartTimestamp = -1;
@@ -112,8 +107,8 @@ public class MatchInformation extends SubsystemBase {
     }
 
     /**
-     * Update [Driver Station] information. ! Run first - other data is based on
-     * this. !
+     * Update [Driver Station] information. ! Run first - other data is based
+     * on this. !
      */
     public void updateDriverStation() {
         enabled = DriverStation.isEnabled();
@@ -129,8 +124,8 @@ public class MatchInformation extends SubsystemBase {
     }
 
     /**
-     * Update timestamps and calculate elapsed time for phases. ! Run after updating
-     * Driver Station info. !
+     * Update timestamps and calculate elapsed time for phases. ! Run after
+     * updating Driver Station info. !
      */
     public void updateTimestamps() {
         fpgaTimestamp = Timer.getFPGATimestamp();
@@ -156,11 +151,10 @@ public class MatchInformation extends SubsystemBase {
     }
 
     /**
-     * Update the current match phase based on Driver Station info and timestamps. !
-     * Run after updating Driver Station info and timestamps. !
+     * Update the current match phase based on Driver Station info and
+     * timestamps. ! Run after updating Driver Station info and timestamps. !
      */
     public void updatePhase() {
-
         if (disabled) {
             phase = MatchPhase.DISABLED;
             phaseElapsed = 0;
@@ -175,7 +169,6 @@ public class MatchInformation extends SubsystemBase {
         }
 
         if (teleop) {
-
             if (matchTime > 130) {
                 phase = MatchPhase.TRANSITION;
                 endgame = false;
@@ -201,11 +194,10 @@ public class MatchInformation extends SubsystemBase {
     }
 
     /**
-     * Update hub and shift logic based on match time and game data. ! Run after
-     * updating Driver Station info and timestamps. !
+     * Update hub and shift logic based on match time and game data. ! Run
+     * after updating Driver Station info and timestamps. !
      */
     public void updateHubLogic(double teleopTime) {
-
         teleopShift = 0;
         shiftTimeRemaining = 0;
 
@@ -278,11 +270,10 @@ public class MatchInformation extends SubsystemBase {
     }
 
     /**
-     * Update convenience flags based on current match state. ! Run after updating
-     * Driver Station info, timestamps, and hub logic. !
-     * - climbAllowed: true during endgame, false otherwise
-     * - scoringSafeWindow: true when hub is active and it's not endgame, false
-     * otherwise
+     * Update convenience flags based on current match state. ! Run after
+     * updating Driver Station info, timestamps, and hub logic. !
+     * - climbAdvised: true during endgame
+     * - scoringSafeWindow: true when hub is active and it's not endgame
      */
     public void updateFlags() {
         climbAdvised = endgame;
@@ -294,104 +285,66 @@ public class MatchInformation extends SubsystemBase {
     }
 
     /**
-     * Update shift warning lights based on remaining shift time.
+     * Tracks which warning window we are in based on remaining shift time.
+     * LED calls are intentionally left out until the LED strategy is
+     * finalized — wire them where marked.
      */
     public void updateShiftWarning() {
-
-        // ================================
         // ENDGAME
-        // ================================
         if (endgame) {
             if (currentWarningStage != WarningStage.ENDGAME) {
                 currentWarningStage = WarningStage.ENDGAME;
-                // new SetBlinkingPattern(
-                //         normalLights,
-                //         LEDSubsystem_WPIlib.LEDTarget.SIDES,
-                //         LEDPattern.solid(LightsConstants.RBGColors.get("yellow")),
-                //         0.25,
-                //         0.25).schedule();
+                // LED hook: blink yellow
             }
             return;
         }
 
-        // ================================
-        // INVALID CONDITIONS
-        // ================================
+        // Invalid conditions — not in a shift
         if (!teleop || teleopShift <= 0) {
             if (currentWarningStage != WarningStage.NONE) {
                 currentWarningStage = WarningStage.NONE;
-
-            //     new ResetLED(
-            //             normalLights,
-            //             LEDSubsystem_WPIlib.LEDTarget.SIDES).schedule();
-            // }
+                // LED hook: reset
+            }
             return;
         }
-    }
 
         double t = shiftTimeRemaining;
+        @SuppressWarnings("unused")
         Color nextColor = hubActive
                 ? LightsConstants.RBGColors.get("red")
                 : LightsConstants.RBGColors.get("green");
 
-        // ================================
-        // MAGENTA SHIFT SIGNAL (25–23s)
-        // ================================
+        // Magenta shift signal (25-23s)
         if (t >= 23 && t <= 25) {
             if (currentWarningStage != WarningStage.SHIFT) {
                 currentWarningStage = WarningStage.SHIFT;
-                // new SetBlinkingPattern(
-                //         normalLights,
-                //         LEDSubsystem_WPIlib.LEDTarget.SIDES,
-                //         LEDPattern.solid(LightsConstants.RBGColors.get("magenta")),
-                //         0.25,
-                //         0.25).schedule();
+                // LED hook: blink magenta
             }
             return;
         }
 
-        // ================================
-        // SLOW WARNING (10–5s)
-        // ================================
+        // Slow warning (10-5s)
         if (t <= 10 && t > 5) {
             if (currentWarningStage != WarningStage.SLOW) {
                 currentWarningStage = WarningStage.SLOW;
-                // new SetBlinkingPattern(
-                //         normalLights,
-                //         LEDSubsystem_WPIlib.LEDTarget.SIDES,
-                //         LEDPattern.solid(nextColor),
-                //         0.5,
-                //         0.5).schedule();
+                // LED hook: blink nextColor slowly
             }
             return;
         }
 
-        // ================================
-        // FAST WARNING (5–0s)
-        // ================================
+        // Fast warning (5-0s)
         if (t <= 5 && t > 0) {
             if (currentWarningStage != WarningStage.FAST) {
                 currentWarningStage = WarningStage.FAST;
-                // new SetBlinkingPattern(
-                //         normalLights,
-                //         LEDSubsystem_WPIlib.LEDTarget.SIDES,
-                //         LEDPattern.solid(nextColor),
-                //         0.25,
-                //         0.25).schedule();
+                // LED hook: blink nextColor quickly
             }
             return;
         }
 
-        // ================================
-        // OUTSIDE WARNING WINDOW (23-10s)
-        // ================================
+        // Outside warning windows (23-10s)
         if (currentWarningStage != WarningStage.NONE) {
             currentWarningStage = WarningStage.NONE;
-            // new ResetLED(
-            //         normalLights,
-            //         LEDSubsystem_WPIlib.LEDTarget.SIDES).schedule();
-        } else {
-            return;
+            // LED hook: reset
         }
     }
 

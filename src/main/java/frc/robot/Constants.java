@@ -4,7 +4,9 @@
 
 package frc.robot;
 
-import java.util.Optional;
+import static edu.wpi.first.units.Units.Meters;
+
+import java.util.Map;
 
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -15,37 +17,20 @@ import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
-import edu.wpi.first.math.interpolation.InterpolatingTreeMap;
-import edu.wpi.first.math.interpolation.Interpolator;
-import edu.wpi.first.math.interpolation.InverseInterpolator;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
-import frc.util.Interpolation.Point;
-import frc.util.Interpolation.PolynomialRegression;
-
-import java.util.Arrays;
-// Lights
-import java.util.Map;
-import static edu.wpi.first.units.Units.Meters;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.util.Color;
 
 /**
- * The Constants class provides a convenient place for teams to hold robot-wide
- * numerical or boolean
- * constants. This class should not be used for any other purpose. All constants
- * should be declared
- * globally (i.e. public static). Do not put anything functional in this class.
+ * Robot-wide constants. All values are public static; nothing in this class
+ * should be functional.
  *
- * <p>
- * It is advised to statically import this class (or one of its inner classes)
- * wherever the
- * constants are needed, to reduce verbosity.
+ * NOTE: alliance color must always be read live via
+ * DriverStation.getAlliance() — never cache it in a static field, since it is
+ * empty until the Driver Station connects.
  */
 public final class Constants {
-    public static Optional<Alliance> alliance = DriverStation.getAlliance();
 
     public static class OperatorConstants {
         public static final int kDriverControllerPort = 0;
@@ -53,171 +38,118 @@ public final class Constants {
     }
 
     public static class AutoConstants {
-        public static double kMaxSpeedMetersPerSecond = 16;
-        public static double kMaxAccelerationMetersPerSecondSquared;
-        public static double kMaxAngularSpeedRadiansPerSecond;
-        public static double kMaxAngularSpeedRadiansPerSecondSquared;
+        // Pathfinding constraints. Drivetrain free speed is ~4.58 m/s
+        // (TunerConstants.kSpeedAt12Volts) — keep max speed below that.
+        public static final double kMaxSpeedMetersPerSecond = 4.0; // TODO: tune
+        public static final double kMaxAccelerationMetersPerSecondSquared = 3.0; // TODO: tune
+        public static final double kMaxAngularSpeedRadiansPerSecond = 2 * Math.PI; // TODO: tune
+        public static final double kMaxAngularSpeedRadiansPerSecondSquared = 4 * Math.PI; // TODO: tune
 
-        public static double xTolerance = 0.05;
-        public static double yTolerance = 0.05;
-        public static double rotTolerance = Units.degreesToRadians(5);
+        public static final double xTolerance = 0.05;
+        public static final double yTolerance = 0.05;
+        public static final double rotTolerance = Units.degreesToRadians(5);
     }
 
     public static class ShooterConstants {
-        public static double hoodConversionRotToDeg = 360 / 129.6;
-        public static double latencyCompensation = .20;
-        public static double MIN_RPS = 0;
-        public static double MAX_RPS = 100;
+        public static final double hoodConversionRotToDeg = 360 / 129.6;
+        public static final double MIN_RPS = 0;
+        public static final double MAX_RPS = 100;
 
+        /*
+         * Tuned shot tables (distance to hub in meters -> value).
+         * These are the single source of truth for shot parameters; they were
+         * calibrated with the robot stationary.
+         */
         public static final InterpolatingDoubleTreeMap RPS_MAP = new InterpolatingDoubleTreeMap();
         static {
             RPS_MAP.put(2.0, 47d);
-            // RPS_MAP.put(2.5, 0d);
             RPS_MAP.put(3.0, 50d);
-            // RPS_MAP.put(3.5, 0d);
             RPS_MAP.put(4.0, 52d);
-            // RPS_MAP.put(4.5, 0d);
             RPS_MAP.put(5.0, 55d);
-            // RPS_MAP.put(5.5, 0d);
             RPS_MAP.put(6.0, 62d);
             RPS_MAP.put(10.0, 85d);
-        };
-
-        public static final InterpolatingDoubleTreeMap REVERSE_RPM_MAP = new InterpolatingDoubleTreeMap();
-        static {
-            REVERSE_RPM_MAP.put(0d, 2.0);
-            REVERSE_RPM_MAP.put(0d, 2.5);
-            REVERSE_RPM_MAP.put(0d, 3.0);
-            REVERSE_RPM_MAP.put(0d, 3.5);
-            REVERSE_RPM_MAP.put(0d, 4.0);
-            REVERSE_RPM_MAP.put(0d, 4.5);
-            REVERSE_RPM_MAP.put(0d, 5.0);
-            REVERSE_RPM_MAP.put(0d, 5.5);
-            REVERSE_RPM_MAP.put(0d, 6.0);
-        };
+        }
 
         public static final InterpolatingDoubleTreeMap HOOD_MAP = new InterpolatingDoubleTreeMap();
         static {
             HOOD_MAP.put(2.0, 0d);
-            // HOOD_MAP.put(2.5, 0d);
             HOOD_MAP.put(3.0, 2.5d);
-            // HOOD_MAP.put(3.5, 0d);
             HOOD_MAP.put(4.0, 5d);
-            // HOOD_MAP.put(4.5, 0d);
             HOOD_MAP.put(5.0, 5.5d);
-            // HOOD_MAP.put(5.5, 0d);
             HOOD_MAP.put(6.0, 6.5d);
             HOOD_MAP.put(10.0, 8d);
-        };
+        }
 
+        // Time of flight (seconds) by distance. Feeds the SOTF virtual-target
+        // lead (v * tof), so errors here directly under/over-correct moving
+        // shots. TODO: validate against real footage — the ball-physics model
+        // in the sim visualization suggests real flight times may be ~3-4x
+        // longer than these values.
         public static final InterpolatingDoubleTreeMap TOF_MAP = new InterpolatingDoubleTreeMap();
         static {
             TOF_MAP.put(2.0, 0.2);
-            // TOF_MAP.put(2.5, 0d);
             TOF_MAP.put(3.0, 0.25);
-            // TOF_MAP.put(3.5, 0d);
             TOF_MAP.put(4.0, 0.3);
-            // TOF_MAP.put(4.5, 0d);
             TOF_MAP.put(5.0, 0.35);
-            // TOF_MAP.put(5.5, 0d);
             TOF_MAP.put(6.0, 0.4);
             TOF_MAP.put(10.0, 0.7);
-        };
+        }
 
+        /*
+         * Passing shot tables — NOT YET TUNED (all zeros). ShotCalc falls back
+         * to the hub tables until these contain real data.
+         */
         public static final InterpolatingDoubleTreeMap PASSING_TOF_MAP = new InterpolatingDoubleTreeMap();
-        static {
-            PASSING_TOF_MAP.put(2.0, 0d);
-            PASSING_TOF_MAP.put(2.5, 0d);
-            PASSING_TOF_MAP.put(3.0, 0d);
-            PASSING_TOF_MAP.put(3.5, 0d);
-            PASSING_TOF_MAP.put(4.0, 0d);
-            PASSING_TOF_MAP.put(4.5, 0d);
-            PASSING_TOF_MAP.put(5.0, 0d);
-            PASSING_TOF_MAP.put(5.5, 0d);
-            PASSING_TOF_MAP.put(6.0, 0d);
-        };
-
         public static final InterpolatingDoubleTreeMap PASSING_HOOD_MAP = new InterpolatingDoubleTreeMap();
-        static {
-            PASSING_HOOD_MAP.put(2.0, 0d);
-            PASSING_HOOD_MAP.put(2.5, 0d);
-            PASSING_HOOD_MAP.put(3.0, 0d);
-            PASSING_HOOD_MAP.put(3.5, 0d);
-            PASSING_HOOD_MAP.put(4.0, 0d);
-            PASSING_HOOD_MAP.put(4.5, 0d);
-            PASSING_HOOD_MAP.put(5.0, 0d);
-            PASSING_HOOD_MAP.put(5.5, 0d);
-            PASSING_HOOD_MAP.put(6.0, 0d);
-        };
-
         public static final InterpolatingDoubleTreeMap PASSING_RPS_MAP = new InterpolatingDoubleTreeMap();
         static {
-            PASSING_RPS_MAP.put(2.0, 0d);
-            PASSING_RPS_MAP.put(2.5, 0d);
-            PASSING_RPS_MAP.put(3.0, 0d);
-            PASSING_RPS_MAP.put(3.5, 0d);
-            PASSING_RPS_MAP.put(4.0, 0d);
-            PASSING_RPS_MAP.put(4.5, 0d);
-            PASSING_RPS_MAP.put(5.0, 0d);
-            PASSING_RPS_MAP.put(5.5, 0d);
-            PASSING_RPS_MAP.put(6.0, 0d);
-        };
+            for (double d = 2.0; d <= 6.0; d += 0.5) {
+                PASSING_TOF_MAP.put(d, 0d);
+                PASSING_HOOD_MAP.put(d, 0d);
+                PASSING_RPS_MAP.put(d, 0d);
+            }
+        }
 
-        public static double activeWaitingSpeed = 30;
-        public static double inactiveWaitingSpeed;
-        public static PolynomialRegression hoodAngleInterpolation = new PolynomialRegression(
-                Arrays.asList(
-                        new Point(2, 0),
-                        new Point(3, 2.5),
-                        new Point(4, 5),
-                        new Point(5, 5.5), // 6.3
-                        new Point(6, 6.5), // 7.5
-                        new Point(10, 8)),
-                2);
+        /*
+         * Historical polynomial-regression tuning data, superseded by the maps
+         * above. Kept for reference:
+         * hood:    (2,0), (3,2.5), (4,5), (5,5.5), (6,6.5), (10,8)     [deg 2]
+         * rps:     (2,47), (3,50), (4,50), (5,55), (6,62), (10,85)     [deg 2]
+         * tof:     (2,0.25), (3,0.30), (4,0.35), (5,0.40), (6,0.45)    [deg 2]
+         */
 
-        public static PolynomialRegression shooterSpeedInterpolation = new PolynomialRegression(
-                Arrays.asList(
-                        new Point(2, 47),
-                        new Point(3, 50),
-                        new Point(4, 50),
-                        new Point(5, 55),
-                        new Point(6, 62),
-                        new Point(10, 85)),
-                2);
-        public static PolynomialRegression timeOfFlightInterpolation = new PolynomialRegression(
-                Arrays.asList(
-                        new Point(2, 0.25),
-                        new Point(3, 0.30),
-                        new Point(4, 0.35),
-                        new Point(5, 0.40),
-                        new Point(6, 0.45)),
-                2);
-        public static double distanceToHub;
-        public static double passDistance;
+        public static final double activeWaitingSpeed = 30;
+        public static final double inactiveWaitingSpeed = 0;
 
-        public static double shooterMotionMagicExpoK_V = 0.1;
-        public static double shooterMotionMagicExpoK_A = 0.1;
-        public static double shooterMotionMagicAccel = 400; // rps^2
-        public static double shooterMotionMagicJerk = 4000; // rps^2/s
+        public static final double shooterMotionMagicExpoK_V = 0.1;
+        public static final double shooterMotionMagicExpoK_A = 0.1;
+        public static final double shooterMotionMagicAccel = 400; // rps^2
+        public static final double shooterMotionMagicJerk = 4000; // rps^2/s
 
-        public static int SupplyCurrentLimit = 80; // 80
-        public static int StatorCurrentLimit = 80; // 80
+        public static final int SupplyCurrentLimit = 80;
+        public static final int StatorCurrentLimit = 80;
 
-        public static int hoodSupplyCurrentLimit = 15; // 80
-        public static int hoodStatorCurrentLimit = 15; // 80
+        public static final int hoodSupplyCurrentLimit = 15;
+        public static final int hoodStatorCurrentLimit = 15;
 
-        public static double homingThreshold;
-        public static double tolerance = 5;
+        // Supply current (amps) above which hood homing considers itself
+        // against the hard stop. 0 disables auto-zeroing during HOMING
+        // (the state will hold gently against the stop but never re-zero).
+        public static final double homingThreshold = 0; // TODO: tune (amps)
 
-        public static int hoodMotorID = 53;
-        public static int shooterMotor1ID = 61;
-        public static int shooterMotor2ID = 60;
+        // Flywheel is "ready" when actual speed is within this many RPS of
+        // the setpoint.
+        public static final double readyToleranceRPS = 3.5;
 
-        public static double[] hoodPID = { 2.0, 0, 0 };
-        public static double[] hoodSVA = { 0.0, 0, 0 };
+        public static final int hoodMotorID = 53;
+        public static final int shooterMotor1ID = 61;
+        public static final int shooterMotor2ID = 60;
 
-        public static double[] shooterPID = { 1.5, 0, 0.02 };
-        public static double[] shooterSVA = { 0.5, 0.117, 0.02 };
+        public static final double[] hoodPID = { 2.0, 0, 0 };
+        public static final double[] hoodSVA = { 0.0, 0, 0 };
+
+        public static final double[] shooterPID = { 1.5, 0, 0.02 };
+        public static final double[] shooterSVA = { 0.5, 0.117, 0.02 };
 
         public enum ShooterWantedState {
             IDLE,
@@ -246,30 +178,33 @@ public final class Constants {
     }
 
     public static class IntakeConstants {
-        public static double intakeMotionMagicExpoK_V = 0.13;
-        public static double intakeMotionMagicExpoK_A = 0.1;
-        public static double intakeMotionMagicAccel;
-        public static double intakeMotionMagicCruiseVel;
+        public static final double intakeMotionMagicExpoK_V = 0.13;
+        public static final double intakeMotionMagicExpoK_A = 0.1;
 
-        public static int SupplyCurrentLimit = 40; // 80
-        public static int StatorCurrentLimit = 100; // 80
+        public static final int SupplyCurrentLimit = 40;
+        public static final int StatorCurrentLimit = 100;
 
-        public static int ExtensionSupplyCurrentLimit = 80; // 80
-        public static int ExtensionStatorCurrentLimit = 50; // 80
+        public static final int ExtensionSupplyCurrentLimit = 80;
+        public static final int ExtensionStatorCurrentLimit = 50;
 
-        public static int intakeMotorID = 32;
-        public static int intakeExtensionMotorID = 31;
-        public static int canRangeID = 33;
+        public static final int intakeMotorID = 32;
+        public static final int intakeExtensionMotorID = 31;
+        public static final int canRangeID = 33;
 
-        public static double intakingMAXPosition = 10.022461;
-        public static double intakingPosition = 10;
-        public static double intakingSpeed = -0.9;
-        public static double slowerIntakeKa = 1.0;
-        public static double intakeExtensionHomingThreshold;
-        public static double shootingPosition;
-        public static double retractingPos = 0;
-        public static double[] intakePID = { 0.3, 0, 0 };
-        public static double[] intakeSVA = { 0, 0.13, 0.01 };
+        public static final double intakingPosition = 10;
+        public static final double intakingSpeed = -0.9;
+        // Slower Motion Magic kA applied to the extension while SCORING
+        // (slow squeeze), restored on leaving the state.
+        public static final double slowerIntakeKa = 1.0;
+        // CANrange distance (meters) beyond which the extension is considered
+        // to be at its home position. 0 disables auto-zeroing during RESET.
+        public static final double intakeExtensionHomingThreshold = 0; // TODO: tune (meters)
+        public static final double retractingPos = 0;
+        // Duty cycle used for manual nudging and homing crawl.
+        public static final double manualDutyCycle = 0.01;
+
+        public static final double[] intakePID = { 0.3, 0, 0 };
+        public static final double[] intakeSVA = { 0, 0.13, 0.01 };
 
         public enum IntakeWantedState {
             IDLE,
@@ -299,25 +234,28 @@ public final class Constants {
     }
 
     public static class TurretConstants {
-        public static int turretMotionMagicExpoK_V;
-        public static int turretMotionMagicExpoK_A;
-        public static int turretMotionMagicAccel;
-        public static int turretMotionMagicJerk;
+        public static final int SupplyCurrentLimit = 40;
+        public static final int StatorCurrentLimit = 120;
 
-        public static int SupplyCurrentLimit = 40; // 60 (should be 80)
-        public static int StatorCurrentLimit = 120; // 60 (should be 80)
+        public static final int turretMotorID = 50;
+        public static final int encoderID = 54;
 
-        public static int turretMotorID = 50;
-        public static int encoderID = 54;
+        public static final double passAimPosition = 0;
+        public static final double hubPresetPosition = 0;
+        public static final double trenchPresetPositionL = .53;
+        public static final double trenchPresetPositionR = .50;
 
-        public static double passAimPosition = 0;
-        public static double hubPresetPosition;
-        public static double trenchPresetPositionL = .53;
-        public static double trenchPresetPositionR = .50;
-        public static double tolerance = 0.05; // 0.007
+        // Mechanism rotations. 0.05 rot = 18 degrees — generous on purpose
+        // while SOTF is being tuned; tighten toward 0.007 once trusted.
+        public static final double tolerance = 0.05;
 
-        public static double[] turretPID = { 51, 0, 0 };
-        public static double[] turretSVA = { 0, 0, 0 };
+        // Soft limits (mechanism rotations) and gearing.
+        public static final double ccwLimit = 0.85;
+        public static final double cwLimit = -0.85;
+        public static final double gearRatio = 38.8888888889;
+
+        public static final double[] turretPID = { 51, 0, 0 };
+        public static final double[] turretSVA = { 0, 0, 0 };
 
         public enum TurretWantedState {
             IDLE,
@@ -328,7 +266,6 @@ public final class Constants {
             TRENCH_PRESETR,
             HUB_PRESET,
             TEST
-
         }
 
         public enum SystemState {
@@ -344,23 +281,21 @@ public final class Constants {
     }
 
     public static class FeederConstants {
-        public static int feederMotionMagicExpoK_V;
-        public static int feederMotionMagicExpoK_A;
-        public static int feederMotionMagicAccel;
-        public static int feederMotionMagicJerk;
+        public static final int SupplyCurrentLimit = 40;
+        public static final int StatorCurrentLimit = 100;
 
-        public static int SupplyCurrentLimit = 40; // 60
-        public static int StatorCurrentLimit = 100; // 60
+        public static final int towerMotorID = 41;
+        public static final int spindexerMotorID = 40;
+        public static final int rollerMotorID = 42;
 
-        public static int towerMotorID = 41;
-        public static int spindexerMotorID = 40;
-        public static int rollerMotorID = 42;
+        public static final double feederIntakeSpeed = 0;
+        public static final double feederShootSpeed = 0.8;
+        public static final double feederReverseSpeed = -0.7;
 
-        public static double feederIntakeSpeed = 0;
-        public static double feederShootSpeed = 0.8;
-
-        public static double[] feederPID = { 0, 0, 0 };
-        public static double[] feederSVA = { 0, 0, 0 };
+        // While PASSING, hold fire inside this field-Y band (the hub shadow)
+        // so passes don't hit the hub structure.
+        public static final double passExclusionYMin = 3.53;
+        public static final double passExclusionYMax = 4.53;
 
         public enum FeederWantedState {
             IDLE,
@@ -380,15 +315,16 @@ public final class Constants {
     }
 
     public static class LightsConstants {
-        public static Distance spacing = Meters.of(1 / 60); // (1 / 60) - 60 leds per 1m strip [Spacing: 1m/#ofLEDs]
+        // 60 LEDs per 1m strip [spacing = 1m / #ofLEDs]
+        public static final Distance spacing = Meters.of(1.0 / 60.0);
         // LED Strip
-        public static int led_port = 0;
-        public static int led_length = 40; // 48 LEDs, 24 a side
-        public static int led_brightness = 30;
-        // Signal LED Sector (on shooter)
-        public static int signal_length = 10; // 10, 5 a side
+        public static final int led_port = 0;
+        public static final int led_length = 40; // 48 LEDs, 24 a side
+        public static final int led_brightness = 30;
+        // Signal LED sector (on shooter)
+        public static final int signal_length = 10; // 10, 5 a side
 
-        public static enum LightsType {
+        public enum LightsType {
             ENDGAME,
             CLIMB,
             SHOOTING,
@@ -397,18 +333,8 @@ public final class Constants {
             DISABLED
         }
 
-        public static class Colors {
-            public static int[] RED = new int[] { 255, 0, 0 };
-            public static int[] GREEN = new int[] { 0, 255, 0 };
-            public static int[] BLUE = new int[] { 0, 0, 255 };
-            public static int[] GOLD = new int[] { 175, 184, 6 };
-            public static int[] MAGENTA = new int[] { 255, 0, 255 };
-            public static int[] BRIGHT = new int[] { 234, 255, 48 };
-        }
-
         // RGB Color Map
-        // Not needed: use Color.k[colorname]
-        public static Map<String, Color> RGBColors = Map.ofEntries(
+        public static final Map<String, Color> RGBColors = Map.ofEntries(
                 Map.entry("black", new Color(0, 0, 0)),
                 Map.entry("white", new Color(255, 255, 255)),
                 Map.entry("red", new Color(255, 0, 0)),
@@ -422,8 +348,8 @@ public final class Constants {
                 Map.entry("magenta", new Color(255, 0, 255)),
                 Map.entry("bright", new Color(234, 255, 48)));
 
-        // RBG Color Map (New LEDs)
-        public static Map<String, Color> RBGColors = Map.ofEntries(
+        // RBG Color Map (new LEDs)
+        public static final Map<String, Color> RBGColors = Map.ofEntries(
                 Map.entry("black", new Color(0, 0, 0)),
                 Map.entry("white", new Color(255, 255, 255)),
                 Map.entry("red", new Color(255, 0, 0)),
@@ -437,8 +363,8 @@ public final class Constants {
                 Map.entry("magenta", new Color(255, 255, 0)),
                 Map.entry("bright", new Color(234, 48, 255)));
 
-        // GRB Color Map (Old LEDs)
-        public static Map<String, Color> GRBColors = Map.ofEntries(
+        // GRB Color Map (old LEDs)
+        public static final Map<String, Color> GRBColors = Map.ofEntries(
                 Map.entry("black", new Color(0, 0, 0)),
                 Map.entry("white", new Color(255, 255, 255)),
                 Map.entry("red", new Color(0, 255, 0)),
@@ -451,51 +377,17 @@ public final class Constants {
                 Map.entry("pink", new Color(20, 255, 147)),
                 Map.entry("magenta", new Color(0, 255, 255)),
                 Map.entry("bright", new Color(255, 234, 48)));
-
-        // GBR Color Map
-        public static Map<String, Color> GBRColors = Map.ofEntries(
-                Map.entry("black", new Color(0, 0, 0)),
-                Map.entry("white", new Color(255, 255, 255)),
-                Map.entry("red", new Color(0, 0, 255)),
-                Map.entry("green", new Color(255, 0, 0)),
-                Map.entry("blue", new Color(0, 255, 0)),
-                Map.entry("gold", new Color(184, 6, 175)),
-                Map.entry("team_Gold", new Color(134, 27, 179)),
-                Map.entry("yellow", new Color(255, 0, 255)),
-                Map.entry("orange", new Color(165, 0, 255)),
-                Map.entry("pink", new Color(20, 147, 255)),
-                Map.entry("magenta", new Color(0, 255, 255)),
-                Map.entry("bright", new Color(255, 48, 234)));
-
-        // BRG Color Map
-        public static Map<String, Color> BRGColors = Map.ofEntries(
-                Map.entry("black", new Color(0, 0, 0)), // (0,0,0) → (0,0,0)
-                Map.entry("white", new Color(255, 255, 255)), // (255,255,255) → (255,255,255)
-                Map.entry("red", new Color(0, 255, 0)), // RGB(255,0,0) → BRG(0,255,0)
-                Map.entry("green", new Color(0, 0, 255)), // RGB(0,255,0) → BRG(0,0,255)
-                Map.entry("blue", new Color(255, 0, 0)), // RGB(0,0,255) → BRG(255,0,0)
-                Map.entry("gold", new Color(6, 175, 184)), // RGB(175,184,6) → BRG(6,175,184)
-                Map.entry("team_Gold", new Color(27, 179, 134)), // RGB(179,134,27) → BRG(27,179,134)
-                Map.entry("yellow", new Color(0, 255, 255)), // RGB(255,255,0) → BRG(0,255,255)
-                Map.entry("orange", new Color(0, 255, 165)), // RGB(255,165,0) → BRG(0,255,165)
-                Map.entry("pink", new Color(147, 255, 20)), // RGB(255,20,147) → BRG(147,255,20)
-                Map.entry("magenta", new Color(255, 255, 0)), // RGB(255,0,255) → BRG(255,255,0)
-                Map.entry("bright", new Color(48, 234, 255))); // RGB(234,255,48) → BRG(48,234,255)
     }
 
     public static class VisionConstants {
-        public static Transform2d turretToCenter = new Transform2d(
+        public static final Transform2d turretToCenter = new Transform2d(
                 Units.inchesToMeters(-6.5),
                 Units.inchesToMeters(-6),
                 new Rotation2d());
-        // public static double leftOffset = 0.01;
-        // public static double rightOffset = -0.01;
 
-        public static double bumperToBumper; // inches
-
-        public static Transform3d kRobotToCam = new Transform3d(
+        public static final Transform3d kRobotToCam = new Transform3d(
                 new Translation3d(
-                        (Units.inchesToMeters(6.643)),
+                        Units.inchesToMeters(6.643),
                         -Units.inchesToMeters(0.616),
                         Units.inchesToMeters(17.467 + 2.7525)),
                 new Rotation3d(
@@ -503,9 +395,9 @@ public final class Constants {
                         Units.degreesToRadians(20),
                         0));
         // center back cam
-        public static Transform3d kRobotToCam2 = new Transform3d(
+        public static final Transform3d kRobotToCam2 = new Transform3d(
                 new Translation3d(
-                        -(Units.inchesToMeters(12.844)),
+                        -Units.inchesToMeters(12.844),
                         Units.inchesToMeters(0.848),
                         Units.inchesToMeters(12.195)),
                 new Rotation3d(
@@ -513,25 +405,25 @@ public final class Constants {
                         Units.degreesToRadians(20),
                         Units.degreesToRadians(135)));
         // corner camera
-        public static Transform3d kRobotToCam3 = new Transform3d(
+        public static final Transform3d kRobotToCam3 = new Transform3d(
                 new Translation3d(
-                        -(Units.inchesToMeters(12.843)),
-                        -(Units.inchesToMeters(12.851)),
+                        -Units.inchesToMeters(12.843),
+                        -Units.inchesToMeters(12.851),
                         Units.inchesToMeters(12.195)),
                 new Rotation3d(
                         0,
                         Units.degreesToRadians(20),
                         Units.degreesToRadians(225)));
 
-        public static String cameraName = "camera1";
-        public static String camera2Name = "camera2";
-        public static String camera3Name = "camera3";
+        public static final String cameraName = "camera1";
+        public static final String camera2Name = "camera2";
+        public static final String camera3Name = "camera3";
 
         /* standard deviations for vision calculations */
-        public static edu.wpi.first.math.Vector<N3> kSingleTagStdDevs = VecBuilder.fill(4, 4, 4);
-        public static edu.wpi.first.math.Vector<N3> kMultiTagStdDevs = VecBuilder.fill(4, 4, 4);
-        public static edu.wpi.first.math.Vector<N3> odoStdDEvs = VecBuilder.fill(.2, .2, .05);
-        public static double odometryUpdateFrequency = 250;
+        public static final edu.wpi.first.math.Vector<N3> kSingleTagStdDevs = VecBuilder.fill(4, 4, 4);
+        public static final edu.wpi.first.math.Vector<N3> kMultiTagStdDevs = VecBuilder.fill(4, 4, 4);
+        public static final edu.wpi.first.math.Vector<N3> odoStdDEvs = VecBuilder.fill(.2, .2, .05);
+        public static final double odometryUpdateFrequency = 250;
     }
 
     public static class FieldConstants {
@@ -545,23 +437,21 @@ public final class Constants {
             NO_TRACK
         }
 
-        public static Translation2d BLUE_HUB_POSE = new Translation2d(4.62, 4.03); // was 4.03
-        public static Translation2d RED_HUB_POSE = new Translation2d(12, 4.03); // was 11.92, 4.03
+        public static final Translation2d BLUE_HUB_POSE = new Translation2d(4.62, 4.03);
+        public static final Translation2d RED_HUB_POSE = new Translation2d(12, 4.03);
 
-        public static Translation2d BLUE_PASS_SPOT_1 = new Translation2d(1, 3); // 1
-        public static Translation2d BLUE_PASS_SPOT_2 = new Translation2d(1, 5); // 7
-        public static Translation2d RED_PASS_SPOT_1 = new Translation2d(14.5, 3); // 15.5, 7
-        public static Translation2d RED_PASS_SPOT_2 = new Translation2d(14.5, 5); // 15.5, 1
+        public static final Translation2d BLUE_PASS_SPOT_1 = new Translation2d(1, 3);
+        public static final Translation2d BLUE_PASS_SPOT_2 = new Translation2d(1, 5);
+        public static final Translation2d RED_PASS_SPOT_1 = new Translation2d(14.5, 3);
+        public static final Translation2d RED_PASS_SPOT_2 = new Translation2d(14.5, 5);
 
-        public static Map<ScoringZone, Pose2d> scoringZoneLUT = Map.ofEntries(
+        public static final Map<ScoringZone, Pose2d> scoringZoneLUT = Map.ofEntries(
                 Map.entry(ScoringZone.RED_PASSING_1, new Pose2d(RED_PASS_SPOT_1, new Rotation2d())),
                 Map.entry(ScoringZone.RED_PASSING_2, new Pose2d(RED_PASS_SPOT_2, new Rotation2d())),
                 Map.entry(ScoringZone.RED_HUB, new Pose2d(RED_HUB_POSE, new Rotation2d())),
                 Map.entry(ScoringZone.BLUE_PASSING_1, new Pose2d(BLUE_PASS_SPOT_1, new Rotation2d())),
                 Map.entry(ScoringZone.BLUE_PASSING_2, new Pose2d(BLUE_PASS_SPOT_2, new Rotation2d())),
                 Map.entry(ScoringZone.BLUE_HUB, new Pose2d(BLUE_HUB_POSE, new Rotation2d())),
-                Map.entry(ScoringZone.NO_TRACK, Pose2d.kZero)
-
-        );
+                Map.entry(ScoringZone.NO_TRACK, Pose2d.kZero));
     }
 }

@@ -1,5 +1,6 @@
 package frc.robot.subsystems.Intake;
 
+import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.StatusCode;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -15,28 +16,26 @@ import frc.robot.subsystems.Scoring.Shooter;
 import frc.robot.subsystems.Scoring.Turret;
 
 public class Feeder extends SubsystemBase {
-    private Turret turret;
-    private Shooter shooter;
-    private CommandSwerveDrivetrain drivetrain;
+    private final Turret turret;
+    private final Shooter shooter;
+    private final CommandSwerveDrivetrain drivetrain;
 
     /* MOTORS */
-    private TalonFX spindexerMotor = new TalonFX(FeederConstants.spindexerMotorID, "rio");
-    private TalonFXConfiguration spindexerMotorConfig = new TalonFXConfiguration();
-    private TalonFX towerMotor = new TalonFX(FeederConstants.towerMotorID, "rio");
-    private TalonFXConfiguration towerMotorConfig = new TalonFXConfiguration();
-    private TalonFX rollerMotor = new TalonFX(FeederConstants.rollerMotorID, "rio");
-    private TalonFXConfiguration rollerMotorConfig = new TalonFXConfiguration();
+    private final TalonFX spindexerMotor = new TalonFX(FeederConstants.spindexerMotorID, CANBus.roboRIO());
+    private final TalonFXConfiguration spindexerMotorConfig = new TalonFXConfiguration();
+    private final TalonFX towerMotor = new TalonFX(FeederConstants.towerMotorID, CANBus.roboRIO());
+    private final TalonFXConfiguration towerMotorConfig = new TalonFXConfiguration();
+    private final TalonFX rollerMotor = new TalonFX(FeederConstants.rollerMotorID, CANBus.roboRIO());
+    private final TalonFXConfiguration rollerMotorConfig = new TalonFXConfiguration();
 
-    // for velocity control
     private double spindexerMotorSpeed = 0.0;
     private double towerMotorSpeed = 0.0;
     private double rollerMotorSpeed = 0.0;
 
     /* STATES */
-    FeederWantedState wantedState = FeederWantedState.IDLE;
-    SystemState systemState = SystemState.IDLING;
+    private FeederWantedState wantedState = FeederWantedState.IDLE;
+    private SystemState systemState = SystemState.IDLING;
 
-    /** Creates a new Feeder */
     public Feeder(Turret m_turret, Shooter m_shooter, CommandSwerveDrivetrain m_Drivetrain) {
         this.turret = m_turret;
         this.shooter = m_shooter;
@@ -51,33 +50,21 @@ public class Feeder extends SubsystemBase {
         rollerMotorConfig.CurrentLimits.StatorCurrentLimit = FeederConstants.StatorCurrentLimit;
 
         if (!Robot.isSimulation()) {
-            StatusCode status = StatusCode.StatusCodeNotInitialized;
-            for (int i = 0; i < 5; ++i) {
-                status = spindexerMotor.getConfigurator().apply(spindexerMotorConfig);
-                if (status.isOK())
-                    break;
-            }
-            if (!status.isOK()) {
-                System.out.println("Could not apply spindexer configs, error code: " + status.toString());
-            }
+            applyConfigWithRetry(spindexerMotor, spindexerMotorConfig, "spindexer");
+            applyConfigWithRetry(towerMotor, towerMotorConfig, "tower");
+            applyConfigWithRetry(rollerMotor, rollerMotorConfig, "roller");
+        }
+    }
 
-            for (int i = 0; i < 5; ++i) {
-                status = towerMotor.getConfigurator().apply(towerMotorConfig);
-                if (status.isOK())
-                    break;
-            }
-            if (!status.isOK()) {
-                System.out.println("Could not apply tower configs, error code: " + status.toString());
-            }
-
-            for (int i = 0; i < 5; ++i) {
-                status = rollerMotor.getConfigurator().apply(rollerMotorConfig);
-                if (status.isOK())
-                    break;
-            }
-            if (!status.isOK()) {
-                System.out.println("Could not apply roller configs, error code: " + status.toString());
-            }
+    private static void applyConfigWithRetry(TalonFX motor, TalonFXConfiguration config, String name) {
+        StatusCode status = StatusCode.StatusCodeNotInitialized;
+        for (int i = 0; i < 5; ++i) {
+            status = motor.getConfigurator().apply(config);
+            if (status.isOK())
+                break;
+        }
+        if (!status.isOK()) {
+            System.out.println("Could not apply " + name + " configs, error code: " + status.toString());
         }
     }
 
@@ -87,20 +74,15 @@ public class Feeder extends SubsystemBase {
 
     private SystemState changeCurrentSystemState() {
         return switch (wantedState) {
-            case IDLE:
-                yield SystemState.IDLING;
-            case INTAKE:
-                yield SystemState.INTAKING;
-            case SHOOT:
-                if (shooter.shooterIsReady() && turret.turretIsReady()) {
-                    yield SystemState.SHOOTING;
-                } else {
-                    yield SystemState.IDLING;
-                }
-            case PASS:
-                yield SystemState.PASSING;
-            case FEEDTEST:
-                yield SystemState.FEEDTESTING;
+            case IDLE -> SystemState.IDLING;
+            case INTAKE -> SystemState.INTAKING;
+            // Only feed once the flywheel is at speed and the turret is on
+            // target — otherwise hold the ball.
+            case SHOOT -> (shooter.shooterIsReady() && turret.turretIsReady())
+                    ? SystemState.SHOOTING
+                    : SystemState.IDLING;
+            case PASS -> SystemState.PASSING;
+            case FEEDTEST -> SystemState.FEEDTESTING;
         };
     }
 
@@ -122,7 +104,12 @@ public class Feeder extends SubsystemBase {
                 rollerMotorSpeed = 0.0;
                 break;
             case PASSING:
-                if (drivetrain.getPose().getY() > 3.53 && drivetrain.getPose().getY() < 4.53) {
+                // Hold fire while inside the hub shadow so passes don't hit
+                // the hub structure.
+                double y = drivetrain.getPose().getY();
+                boolean inExclusionZone = y > FeederConstants.passExclusionYMin
+                        && y < FeederConstants.passExclusionYMax;
+                if (inExclusionZone) {
                     spindexerMotorSpeed = 0;
                     towerMotorSpeed = 0;
                     rollerMotorSpeed = 0;
@@ -131,10 +118,10 @@ public class Feeder extends SubsystemBase {
                     towerMotorSpeed = FeederConstants.feederShootSpeed;
                     rollerMotorSpeed = 0.0;
                 }
-                break; // fix: was missing break, was falling through to FEEDTESTING
+                break;
             case FEEDTESTING:
-                spindexerMotorSpeed = -0.7;
-                towerMotorSpeed = -0.7;
+                spindexerMotorSpeed = FeederConstants.feederReverseSpeed;
+                towerMotorSpeed = FeederConstants.feederReverseSpeed;
                 rollerMotorSpeed = 0.0;
                 break;
         }
@@ -147,7 +134,7 @@ public class Feeder extends SubsystemBase {
             towerMotor.getConfigurator().apply(towerMotorConfig);
             spindexerMotorConfig.CurrentLimits.StatorCurrentLimit = 40;
             spindexerMotorConfig.CurrentLimits.SupplyCurrentLimit = 40;
-            spindexerMotor.getConfigurator().apply(spindexerMotorConfig); // fix: was applying towerMotorConfig
+            spindexerMotor.getConfigurator().apply(spindexerMotorConfig);
             rollerMotorConfig.CurrentLimits.StatorCurrentLimit = 40;
             rollerMotorConfig.CurrentLimits.SupplyCurrentLimit = 40;
             rollerMotor.getConfigurator().apply(rollerMotorConfig);
@@ -161,7 +148,7 @@ public class Feeder extends SubsystemBase {
             towerMotor.getConfigurator().apply(towerMotorConfig);
             spindexerMotorConfig.CurrentLimits.StatorCurrentLimit = FeederConstants.StatorCurrentLimit;
             spindexerMotorConfig.CurrentLimits.SupplyCurrentLimit = FeederConstants.SupplyCurrentLimit;
-            spindexerMotor.getConfigurator().apply(spindexerMotorConfig); // fix: was applying towerMotorConfig
+            spindexerMotor.getConfigurator().apply(spindexerMotorConfig);
             rollerMotorConfig.CurrentLimits.StatorCurrentLimit = FeederConstants.StatorCurrentLimit;
             rollerMotorConfig.CurrentLimits.SupplyCurrentLimit = FeederConstants.SupplyCurrentLimit;
             rollerMotor.getConfigurator().apply(rollerMotorConfig);
@@ -175,8 +162,7 @@ public class Feeder extends SubsystemBase {
         SmartDashboard.putNumber("FEEDER/Spindexer Speed", spindexerMotorSpeed);
         SmartDashboard.putNumber("FEEDER/Tower Speed", towerMotorSpeed);
         SmartDashboard.putNumber("FEEDER/Roller Speed", rollerMotorSpeed);
-        SmartDashboard.putBoolean("FEEDER/Feeder Shooting",
-                spindexerMotorSpeed == FeederConstants.feederShootSpeed);
+        SmartDashboard.putBoolean("FEEDER/Feeder Shooting", systemState == SystemState.SHOOTING);
 
         systemState = changeCurrentSystemState();
         applyState();

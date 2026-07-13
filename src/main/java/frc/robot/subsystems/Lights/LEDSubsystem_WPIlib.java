@@ -17,7 +17,6 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.LightsConstants;
-import frc.robot.Constants.LightsConstants.Colors;
 
 public class LEDSubsystem_WPIlib extends SubsystemBase {
     // edu.wpi.first.wpilibj.AddressableLED

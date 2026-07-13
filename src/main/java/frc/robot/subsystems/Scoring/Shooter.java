@@ -1,20 +1,14 @@
 package frc.robot.subsystems.Scoring;
 
-import java.util.function.Function;
-
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.StatusCode;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.DutyCycleOut;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Robot;
@@ -22,57 +16,51 @@ import frc.robot.Constants.ShooterConstants;
 import frc.robot.Constants.ShooterConstants.ShooterWantedState;
 import frc.robot.Constants.ShooterConstants.SystemState;
 import frc.robot.subsystems.Drive.CommandSwerveDrivetrain;
-import frc.robot.subsystems.Scoring.ShotCalc.ShooterCommand;
 import frc.util.Interpolation.LoggedTunableNumber;
 
 public class Shooter extends SubsystemBase {
-    private CommandSwerveDrivetrain drivetrain;
+    private final CommandSwerveDrivetrain drivetrain;
 
     /* MOTORS */
-    private TalonFX hoodMotor = new TalonFX(ShooterConstants.hoodMotorID, CANBus.roboRIO());
-    private TalonFXConfiguration hoodMotorConfig = new TalonFXConfiguration();
-    private TalonFX shooterMotor1 = new TalonFX(ShooterConstants.shooterMotor1ID, CANBus.roboRIO());
-    private TalonFX shooterMotor2 = new TalonFX(ShooterConstants.shooterMotor2ID, CANBus.roboRIO());
-    private TalonFXConfiguration shooterMotor1Config = new TalonFXConfiguration();
-    private TalonFXConfiguration shooterMotor2Config = new TalonFXConfiguration();
+    private final TalonFX hoodMotor = new TalonFX(ShooterConstants.hoodMotorID, CANBus.roboRIO());
+    private final TalonFXConfiguration hoodMotorConfig = new TalonFXConfiguration();
+    private final TalonFX shooterMotor1 = new TalonFX(ShooterConstants.shooterMotor1ID, CANBus.roboRIO());
+    private final TalonFX shooterMotor2 = new TalonFX(ShooterConstants.shooterMotor2ID, CANBus.roboRIO());
+    private final TalonFXConfiguration shooterMotor1Config = new TalonFXConfiguration();
+    private final TalonFXConfiguration shooterMotor2Config = new TalonFXConfiguration();
 
-    // for velocity control
-    final DutyCycleOut t_request = new DutyCycleOut(0);
+    // Plain velocity control, not motion-profiled: a flywheel should hit
+    // target speed as fast as the motor/battery allow, not follow a smoothed
+    // trapezoidal trajectory meant for mechanisms that need protecting from
+    // abrupt accel.
+    private final VelocityVoltage velocityRequest = new VelocityVoltage(0);
     private double motorspeed = 0.0;
-    // plain velocity control, not motion-profiled: a flywheel should hit target
-    // speed as fast as the motor/battery allow, not follow a smoothed trapezoidal
-    // trajectory meant for mechanisms that need protecting from abrupt accel
-    final VelocityVoltage mm_request = new VelocityVoltage(0);
-    // for position control
+    // hood position control
+    private final PositionVoltage hoodPositionRequest = new PositionVoltage(0);
     private double position = 0.0;
-    final PositionVoltage mmE_request = new PositionVoltage(0);
 
     // sim state
     private double simShooterVelocity = 0.0;
     private double simHoodPosition = 0.0;
 
     /* PIDFF CONTROL */
-    private LoggedTunableNumber k_S = new LoggedTunableNumber("shooter_s", ShooterConstants.shooterSVA[0]);
-    private LoggedTunableNumber k_V = new LoggedTunableNumber("shooter_v", ShooterConstants.shooterSVA[1]);
-    private LoggedTunableNumber k_A = new LoggedTunableNumber("shooter_a", ShooterConstants.shooterSVA[2]);
-    private LoggedTunableNumber k_P = new LoggedTunableNumber("shooter_p", ShooterConstants.shooterPID[0]);
-    private LoggedTunableNumber k_I = new LoggedTunableNumber("shooter_i", ShooterConstants.shooterPID[1]);
-    private LoggedTunableNumber k_D = new LoggedTunableNumber("shooter_d", ShooterConstants.shooterPID[2]);
+    private final LoggedTunableNumber k_S = new LoggedTunableNumber("shooter_s", ShooterConstants.shooterSVA[0]);
+    private final LoggedTunableNumber k_V = new LoggedTunableNumber("shooter_v", ShooterConstants.shooterSVA[1]);
+    private final LoggedTunableNumber k_A = new LoggedTunableNumber("shooter_a", ShooterConstants.shooterSVA[2]);
+    private final LoggedTunableNumber k_P = new LoggedTunableNumber("shooter_p", ShooterConstants.shooterPID[0]);
+    private final LoggedTunableNumber k_I = new LoggedTunableNumber("shooter_i", ShooterConstants.shooterPID[1]);
+    private final LoggedTunableNumber k_D = new LoggedTunableNumber("shooter_d", ShooterConstants.shooterPID[2]);
 
     /* STATES */
-    ShooterWantedState wantedState = ShooterWantedState.IDLE;
-    SystemState systemState = SystemState.IDLING;
-    static SystemState publicSystemState = SystemState.IDLING;
+    private ShooterWantedState wantedState = ShooterWantedState.IDLE;
+    private SystemState systemState = SystemState.IDLING;
 
-    /** Creates a new Shooter */
     public Shooter(CommandSwerveDrivetrain m_drivetrain) {
         this.drivetrain = m_drivetrain;
 
         // CURRENT LIMITS
         hoodMotorConfig.CurrentLimits.SupplyCurrentLimit = ShooterConstants.hoodSupplyCurrentLimit;
         hoodMotorConfig.CurrentLimits.StatorCurrentLimit = ShooterConstants.hoodStatorCurrentLimit;
-        shooterMotor2Config.CurrentLimits.SupplyCurrentLimit = ShooterConstants.SupplyCurrentLimit;
-        shooterMotor2Config.CurrentLimits.StatorCurrentLimit = ShooterConstants.StatorCurrentLimit;
         shooterMotor1Config.CurrentLimits.SupplyCurrentLimit = ShooterConstants.SupplyCurrentLimit;
         shooterMotor1Config.CurrentLimits.StatorCurrentLimit = ShooterConstants.StatorCurrentLimit;
         shooterMotor2Config.CurrentLimits.SupplyCurrentLimit = ShooterConstants.SupplyCurrentLimit;
@@ -86,6 +74,36 @@ public class Shooter extends SubsystemBase {
         hoodMotorConfig.Slot0.kI = ShooterConstants.hoodPID[1];
         hoodMotorConfig.Slot0.kD = ShooterConstants.hoodPID[2];
 
+        applyTunableGains();
+
+        shooterMotor1Config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+        shooterMotor2Config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+        hoodMotorConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+
+        // Never drive the flywheel backwards.
+        shooterMotor1Config.Voltage.PeakReverseVoltage = 0;
+        shooterMotor2Config.Voltage.PeakReverseVoltage = 0;
+
+        hoodMotorConfig.MotionMagic.MotionMagicExpo_kV = ShooterConstants.shooterMotionMagicExpoK_V;
+        hoodMotorConfig.MotionMagic.MotionMagicExpo_kA = ShooterConstants.shooterMotionMagicExpoK_A;
+
+        if (!Robot.isSimulation()) {
+            applyConfigWithRetry(hoodMotor, hoodMotorConfig, "hood");
+            applyConfigWithRetry(shooterMotor1, shooterMotor1Config, "shooter1");
+            applyConfigWithRetry(shooterMotor2, shooterMotor2Config, "shooter2");
+
+            hoodMotor.setPosition(0);
+
+            // Stator current defaults to a slow CAN frame rate (unlike
+            // velocity, which is kept fresh for closed-loop control); bump it
+            // so current telemetry can resolve short transients like a game
+            // piece passing through the flywheel.
+            shooterMotor1.getStatorCurrent().setUpdateFrequency(50);
+            shooterMotor2.getStatorCurrent().setUpdateFrequency(50);
+        }
+    }
+
+    private void applyTunableGains() {
         shooterMotor1Config.Slot0.kS = k_S.get();
         shooterMotor1Config.Slot0.kV = k_V.get();
         shooterMotor1Config.Slot0.kA = k_A.get();
@@ -99,64 +117,18 @@ public class Shooter extends SubsystemBase {
         shooterMotor2Config.Slot0.kP = k_P.get();
         shooterMotor2Config.Slot0.kI = k_I.get();
         shooterMotor2Config.Slot0.kD = k_D.get();
+    }
 
-        shooterMotor1Config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
-        shooterMotor2Config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
-        hoodMotorConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
-
-        shooterMotor1Config.Voltage.PeakReverseVoltage = 0;
-        shooterMotor2Config.Voltage.PeakReverseVoltage = 0;
-
-        shooterMotor1Config.MotionMagic.MotionMagicAcceleration = ShooterConstants.shooterMotionMagicAccel;
-        shooterMotor1Config.MotionMagic.MotionMagicJerk = ShooterConstants.shooterMotionMagicJerk;
-        shooterMotor2Config.MotionMagic.MotionMagicAcceleration = ShooterConstants.shooterMotionMagicAccel;
-        shooterMotor2Config.MotionMagic.MotionMagicJerk = ShooterConstants.shooterMotionMagicJerk;
-
-        hoodMotorConfig.MotionMagic.MotionMagicExpo_kV = ShooterConstants.shooterMotionMagicExpoK_V;
-        hoodMotorConfig.MotionMagic.MotionMagicExpo_kA = ShooterConstants.shooterMotionMagicExpoK_A;
-
-        if (!Robot.isSimulation()) {
-            StatusCode hoodMotorStatus = StatusCode.StatusCodeNotInitialized;
-            for (int i = 0; i < 5; ++i) {
-                hoodMotorStatus = hoodMotor.getConfigurator().apply(hoodMotorConfig);
-                if (hoodMotorStatus.isOK())
-                    break;
-            }
-            if (!hoodMotorStatus.isOK()) {
-                System.out.println("Could not apply hood configs, error code: "
-                        + hoodMotorStatus.toString() + hoodMotor.getDeviceID());
-            }
-
-            StatusCode shooterMotor1Status = StatusCode.StatusCodeNotInitialized;
-            for (int i = 0; i < 5; ++i) {
-                shooterMotor1Status = shooterMotor1.getConfigurator().apply(shooterMotor1Config);
-                if (shooterMotor1Status.isOK())
-                    break;
-            }
-            if (!shooterMotor1Status.isOK()) {
-                System.out.println("Could not apply shooter1 configs, error code: "
-                        + shooterMotor1Status.toString() + shooterMotor1.getDeviceID());
-            }
-
-            StatusCode shooterMotor2Status = StatusCode.StatusCodeNotInitialized;
-            for (int i = 0; i < 5; ++i) {
-                shooterMotor2Status = shooterMotor2.getConfigurator().apply(shooterMotor2Config);
-                if (shooterMotor2Status.isOK())
-                    break;
-            }
-            if (!shooterMotor2Status.isOK()) {
-                System.out.println("Could not apply shooter2 configs, error code: "
-                        + shooterMotor2Status.toString() + shooterMotor2.getDeviceID());
-            }
-
-            hoodMotor.setPosition(0);
-
-            // stator current defaults to a slow CAN frame rate (unlike velocity,
-            // which is kept fresh for closed-loop control); bump it so current
-            // telemetry can actually resolve short transients like a game piece
-            // passing through the flywheel
-            shooterMotor1.getStatorCurrent().setUpdateFrequency(50);
-            shooterMotor2.getStatorCurrent().setUpdateFrequency(50);
+    private static void applyConfigWithRetry(TalonFX motor, TalonFXConfiguration config, String name) {
+        StatusCode status = StatusCode.StatusCodeNotInitialized;
+        for (int i = 0; i < 5; ++i) {
+            status = motor.getConfigurator().apply(config);
+            if (status.isOK())
+                break;
+        }
+        if (!status.isOK()) {
+            System.out.println("Could not apply " + name + " configs, error code: "
+                    + status.toString() + " id: " + motor.getDeviceID());
         }
     }
 
@@ -240,52 +212,16 @@ public class Shooter extends SubsystemBase {
                 position = 5.5;
                 break;
             case HUB_SHOOTING:
-                // Translation2d correctedVector = drivetrain.getSOTFTurretAngle();
-                // option 1
-                // Translation2d correctedVector = drivetrain.SOTF_CALC();
-                // double correctedDistance = correctedVector.getNorm();
-
-                // motorspeed = ShooterConstants.shooterSpeedInterpolation
-                // .getPrediction(correctedDistance);
-
-                // position = MathUtil.clamp(
-                // ShooterConstants.hoodAngleInterpolation.getPrediction(correctedDistance),
-                // -0.5,
-                // 8);
-                // option 2
-                // position = drivetrain.SOTFcalc()[1] /
-                // ShooterConstants.hoodConversionRotToDeg;
-                // motorspeed = drivetrain.SOTFcalc()[2];
-
-                // option 3
-                // ChassisSpeeds rawFieldSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(
-                // drivetrain.getState().Speeds,
-                // drivetrain.getPose().getRotation());
-                // position = ShotCalc.calculateSOTF(
-                // drivetrain.getPose().getTranslation(),
-                // rawFieldSpeeds,
-                // drivetrain.getScoringLocation(),
-                // ShooterConstants.latencyCompensation).hoodAngle();
-                // motorspeed = ShotCalc.calculateSOTF(
-                // drivetrain.getPose().getTranslation(),
-                // rawFieldSpeeds,
-                // drivetrain.getScoringLocation(),
-                // ShooterConstants.latencyCompensation).RPS();
-                // option 4
-                // frc.robot.subsystems.Scoring.ShotCalc2.ShooterCommand values =
-                // ShotCalc2.calculateSOTF(drivetrain);
-                // position = values.hoodAngle();
-                // motorspeed = values.RPS();
-                motorspeed = drivetrain.currentShotCommand.RPS();
-                position = MathUtil.clamp(drivetrain.currentShotCommand.hoodAngle(), -0.5, 8);
-                break;
             case PASS_SHOOTING:
                 motorspeed = drivetrain.currentShotCommand.RPS();
                 position = MathUtil.clamp(drivetrain.currentShotCommand.hoodAngle(), -0.5, 8);
                 break;
             case HOMING:
                 position = -0.1;
-                if (getHoodCurrent() >= ShooterConstants.homingThreshold) {
+                // homingThreshold of 0 disables auto-zeroing (would trigger
+                // instantly and re-zero the hood wherever it happens to be).
+                if (ShooterConstants.homingThreshold > 0
+                        && getHoodCurrent() >= ShooterConstants.homingThreshold) {
                     if (!Robot.isSimulation()) {
                         hoodMotor.setPosition(0);
                     }
@@ -300,7 +236,7 @@ public class Shooter extends SubsystemBase {
                 break;
             case RETRACTING_AUTO:
                 position = 0;
-                break; // fix: was falling through to TURNING_ON_AUTO
+                break;
             case TURNING_ON_AUTO:
                 motorspeed = 50;
                 break;
@@ -311,28 +247,21 @@ public class Shooter extends SubsystemBase {
         if (!Robot.isSimulation()) {
             if (k_S.hasChanged() || k_V.hasChanged() || k_A.hasChanged()
                     || k_P.hasChanged() || k_I.hasChanged() || k_D.hasChanged()) {
-                shooterMotor1Config.Slot0.kS = k_S.get();
-                shooterMotor1Config.Slot0.kV = k_V.get();
-                shooterMotor1Config.Slot0.kA = k_A.get();
-                shooterMotor1Config.Slot0.kP = k_P.get();
-                shooterMotor1Config.Slot0.kI = k_I.get();
-                shooterMotor1Config.Slot0.kD = k_D.get();
-
-                shooterMotor2Config.Slot0.kS = k_S.get();
-                shooterMotor2Config.Slot0.kV = k_V.get();
-                shooterMotor2Config.Slot0.kA = k_A.get();
-                shooterMotor2Config.Slot0.kP = k_P.get();
-                shooterMotor2Config.Slot0.kI = k_I.get();
-                shooterMotor2Config.Slot0.kD = k_D.get();
-
+                applyTunableGains();
                 shooterMotor1.getConfigurator().apply(shooterMotor1Config);
                 shooterMotor2.getConfigurator().apply(shooterMotor2Config);
             }
         }
     }
 
+    /**
+     * True when the flywheel is at its commanded speed AND that speed is a
+     * real shot (spinning) — never reports ready on a stopped flywheel, so
+     * the feeder can't push a ball into it.
+     */
     public boolean shooterIsReady() {
-        return Math.abs(getShooterVelocity() - motorspeed) < 3.5;
+        return motorspeed > 1.0
+                && Math.abs(getShooterVelocity() - motorspeed) < ShooterConstants.readyToleranceRPS;
     }
 
     public void enableEcoModeShooter() {
@@ -357,10 +286,6 @@ public class Shooter extends SubsystemBase {
         }
     }
 
-    public static SystemState getState() {
-        return publicSystemState;
-    }
-
     private void logValues() {
         SmartDashboard.putNumber("SHOOTER/Shooter Actual Speed", getShooterVelocity());
         SmartDashboard.putNumber("SHOOTER/Shooter Actual Speed 2", getShooter2Velocity());
@@ -372,7 +297,7 @@ public class Shooter extends SubsystemBase {
         SmartDashboard.putString("STATE/SHOOTER SYSTEM STATE", systemState.toString());
 
         if (!Robot.isSimulation()) {
-            SmartDashboard.putNumber("Hood Motor Current", getHoodCurrent());
+            SmartDashboard.putNumber("SHOOTER/Hood Motor Current", getHoodCurrent());
             SmartDashboard.putNumber("SHOOTER/Shooter Motor Current", getShooterCurrent());
             SmartDashboard.putNumber("SHOOTER/Shooter Motor 2 Current", getShooter2Current());
         }
@@ -380,6 +305,7 @@ public class Shooter extends SubsystemBase {
 
     @Override
     public void periodic() {
+        checkTunableValues();
         logValues();
         systemState = changeCurrentSystemState();
         applyState();
@@ -389,9 +315,9 @@ public class Shooter extends SubsystemBase {
             simShooterVelocity = motorspeed;
             simHoodPosition = position;
         } else {
-            hoodMotor.setControl(mmE_request.withPosition(position));
-            shooterMotor1.setControl(mm_request.withVelocity(motorspeed));
-            shooterMotor2.setControl(mm_request.withVelocity(motorspeed));
+            hoodMotor.setControl(hoodPositionRequest.withPosition(position));
+            shooterMotor1.setControl(velocityRequest.withVelocity(motorspeed));
+            shooterMotor2.setControl(velocityRequest.withVelocity(motorspeed));
         }
     }
 }
