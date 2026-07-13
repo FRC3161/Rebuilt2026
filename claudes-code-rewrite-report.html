@@ -1,0 +1,495 @@
+<meta charset="utf-8">
+<title>The Claudes-Code Rewrite — FRC 3161</title>
+<style>
+  :root {
+    --paper: #e7eaec;
+    --surface: #ffffff;
+    --surface-2: #f0f2f3;
+    --ink: #161c22;
+    --ink-soft: #4b5862;
+    --ink-faint: #7c8890;
+    --accent: #a35f16;
+    --accent-2: #276b5d;
+    --good: #2f7a4f;
+    --good-bg: #e3efe6;
+    --warn: #a35f16;
+    --warn-bg: #f3e6d3;
+    --bad: #a13a3a;
+    --bad-bg: #f4e2e0;
+    --open-bg: #e3e6e8;
+    --line: rgba(22, 28, 34, 0.14);
+    --line-soft: rgba(22, 28, 34, 0.08);
+    --shadow: 0 1px 2px rgba(22, 28, 34, 0.06), 0 8px 24px -12px rgba(22, 28, 34, 0.18);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #10151a;
+      --surface: #171f26;
+      --surface-2: #1d262e;
+      --ink: #e7ecef;
+      --ink-soft: #9fabb4;
+      --ink-faint: #6c7982;
+      --accent: #e2a24a;
+      --accent-2: #55bfa9;
+      --good: #6cc48f;
+      --good-bg: #1c2b22;
+      --warn: #e2a24a;
+      --warn-bg: #2f2717;
+      --bad: #e2857f;
+      --bad-bg: #2f1e1c;
+      --open-bg: #232c33;
+      --line: rgba(231, 236, 239, 0.16);
+      --line-soft: rgba(231, 236, 239, 0.09);
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px -12px rgba(0, 0, 0, 0.5);
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #10151a; --surface: #171f26; --surface-2: #1d262e;
+    --ink: #e7ecef; --ink-soft: #9fabb4; --ink-faint: #6c7982;
+    --accent: #e2a24a; --accent-2: #55bfa9;
+    --good: #6cc48f; --good-bg: #1c2b22;
+    --warn: #e2a24a; --warn-bg: #2f2717;
+    --bad: #e2857f; --bad-bg: #2f1e1c;
+    --open-bg: #232c33;
+    --line: rgba(231, 236, 239, 0.16); --line-soft: rgba(231, 236, 239, 0.09);
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px -12px rgba(0, 0, 0, 0.5);
+  }
+  :root[data-theme="light"] {
+    --paper: #e7eaec; --surface: #ffffff; --surface-2: #f0f2f3;
+    --ink: #161c22; --ink-soft: #4b5862; --ink-faint: #7c8890;
+    --accent: #a35f16; --accent-2: #276b5d;
+    --good: #2f7a4f; --good-bg: #e3efe6;
+    --warn: #a35f16; --warn-bg: #f3e6d3;
+    --bad: #a13a3a; --bad-bg: #f4e2e0;
+    --open-bg: #e3e6e8;
+    --line: rgba(22, 28, 34, 0.14); --line-soft: rgba(22, 28, 34, 0.08);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Corbel", "Segoe UI", sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection { background: var(--accent); color: var(--surface); }
+
+  .page { max-width: 780px; margin: 0 auto; padding: 0 24px 96px; }
+
+  /* ---------- header ---------- */
+  .masthead {
+    position: relative;
+    padding: 56px 0 32px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 40px;
+    overflow: hidden;
+  }
+  .masthead::before {
+    content: "";
+    position: absolute;
+    inset: -20% -10% auto -10%;
+    height: 140%;
+    background-image:
+      linear-gradient(var(--line-soft) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line-soft) 1px, transparent 1px);
+    background-size: 28px 28px;
+    -webkit-mask-image: linear-gradient(to bottom, black, transparent 85%);
+    mask-image: linear-gradient(to bottom, black, transparent 85%);
+    pointer-events: none;
+    opacity: 0.7;
+  }
+  .eyebrow {
+    position: relative;
+    font-family: "Bahnschrift", sans-serif;
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+  .eyebrow .rule { width: 28px; height: 1px; background: var(--accent); opacity: 0.6; }
+  h1 {
+    position: relative;
+    font-family: "Bahnschrift", sans-serif;
+    font-weight: 600;
+    font-size: 38px;
+    line-height: 1.12;
+    letter-spacing: -0.01em;
+    margin: 0 0 14px;
+    text-wrap: balance;
+    max-width: 15ch;
+  }
+  .dek { position: relative; font-size: 17px; color: var(--ink-soft); max-width: 58ch; margin: 0 0 26px; }
+  .meta-row {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px 32px;
+    font-family: "Consolas", monospace;
+    font-size: 12.5px;
+    color: var(--ink-faint);
+  }
+  .meta-row div { display: flex; flex-direction: column; gap: 3px; }
+  .meta-row span { font-family: "Bahnschrift", sans-serif; text-transform: uppercase; letter-spacing: 0.08em; font-size: 10.5px; color: var(--ink-faint); }
+  .meta-row b { color: var(--ink); font-weight: 400; font-variant-numeric: tabular-nums; }
+
+  .trace { position: relative; margin-top: 28px; width: 100%; height: 46px; }
+  .trace svg { width: 100%; height: 100%; display: block; overflow: visible; }
+
+  /* ---------- generic sections ---------- */
+  section { margin: 52px 0; }
+  section > h2 {
+    font-family: "Bahnschrift", sans-serif;
+    font-weight: 600;
+    font-size: 21px;
+    letter-spacing: -0.005em;
+    margin: 0 0 6px;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  section > h2 .idx { font-family: "Consolas", monospace; font-size: 13px; color: var(--ink-faint); font-weight: 400; }
+  section > .lede { color: var(--ink-soft); font-size: 15px; margin: 0 0 24px; max-width: 62ch; }
+  p { max-width: 66ch; }
+  a { color: var(--accent); text-decoration-color: currentColor; text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  code { font-family: "Consolas", monospace; font-size: 0.92em; background: var(--surface-2); padding: 0.1em 0.4em; border-radius: 3px; }
+
+  /* ---------- exec summary callout ---------- */
+  .callout { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 26px 28px; box-shadow: var(--shadow); display: grid; gap: 18px; }
+  .callout .headline { font-family: "Bahnschrift", sans-serif; font-weight: 600; font-size: 19px; line-height: 1.4; margin: 0; text-wrap: balance; }
+  .callout .headline em { font-style: normal; color: var(--accent); }
+  .stat-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 18px; padding-top: 16px; border-top: 1px solid var(--line-soft); }
+  .stat { display: flex; flex-direction: column; gap: 4px; }
+  .stat .num { font-family: "Consolas", monospace; font-variant-numeric: tabular-nums; font-size: 24px; color: var(--ink); font-weight: 700; }
+  .stat .num small { font-size: 13px; color: var(--ink-faint); font-weight: 400; margin-left: 2px; }
+  .stat .lbl { font-family: "Bahnschrift", sans-serif; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-faint); }
+
+  /* ---------- process list ---------- */
+  .tool-list { display: grid; gap: 2px; }
+  .tool-item { display: grid; grid-template-columns: 20px 1fr; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--line-soft); }
+  .tool-item:last-child { border-bottom: none; }
+  .tool-item .mark { color: var(--accent-2); font-family: "Consolas", monospace; font-size: 14px; padding-top: 2px; }
+  .tool-item .body b { font-weight: 700; }
+  .tool-item .body p { margin: 3px 0 0; color: var(--ink-soft); font-size: 14.5px; }
+
+  /* ---------- chip ---------- */
+  .chip {
+    font-family: "Bahnschrift", sans-serif; font-size: 10.5px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.06em; padding: 4px 10px; border-radius: 100px; white-space: nowrap;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .chip::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .chip.fixed { background: var(--good-bg); color: var(--good); }
+  .chip.behavior { background: var(--warn-bg); color: var(--warn); }
+  .chip.removed { background: var(--bad-bg); color: var(--bad); }
+  .chip.added { background: var(--open-bg); color: var(--ink-soft); }
+
+  /* ---------- SOTF correction panels ---------- */
+  .sotf-panels { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; margin-bottom: 20px; }
+  .corr-panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 20px 22px; box-shadow: var(--shadow); }
+  .corr-panel h4 { margin: 0 0 4px; font-family: "Bahnschrift", sans-serif; font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
+  .corr-panel.bad h4 { color: var(--bad); }
+  .corr-panel.good h4 { color: var(--good); }
+  .corr-panel .sub { margin: 0 0 14px; font-size: 12.5px; color: var(--ink-faint); }
+  .mini-baseline svg { width: 100%; height: auto; display: block; margin-bottom: 14px; }
+  .corr-row { display: flex; gap: 10px; align-items: baseline; font-size: 13.5px; color: var(--ink-soft); padding: 8px 0; border-top: 1px dashed var(--line-soft); }
+  .corr-row:first-of-type { border-top: none; }
+  .corr-row .n { font-family: "Consolas", monospace; color: var(--ink-faint); flex: 0 0 16px; }
+  .corr-results { margin-top: 14px; display: grid; gap: 6px; }
+  .corr-result { padding: 9px 12px; border-radius: 8px; font-family: "Consolas", monospace; font-size: 12.5px; display: flex; justify-content: space-between; gap: 10px; }
+  .corr-panel.bad .corr-result { background: var(--bad-bg); color: var(--bad); }
+  .corr-panel.good .corr-result { background: var(--good-bg); color: var(--good); }
+
+  /* ---------- chart ---------- */
+  .chart-wrap { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 20px 22px 16px; box-shadow: var(--shadow); }
+  .chart-wrap svg { width: 100%; height: auto; display: block; }
+  .chart-title { margin: 0 0 4px; font-family: "Bahnschrift", sans-serif; font-weight: 600; font-size: 14px; }
+  .chart-legend { display: flex; gap: 22px; flex-wrap: wrap; margin-top: 12px; font-size: 13px; color: var(--ink-soft); }
+  .chart-legend span { display: inline-flex; align-items: center; gap: 7px; }
+  .chart-legend i { width: 16px; height: 2px; border-radius: 2px; display: inline-block; }
+  .chart-caption { margin: 12px 0 0; font-size: 12.5px; color: var(--ink-faint); max-width: 62ch; }
+
+  /* ---------- change list ---------- */
+  .change-list { display: grid; gap: 2px; }
+  .change-item { display: grid; grid-template-columns: 130px 1fr; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--line-soft); align-items: start; }
+  .change-item:last-child { border-bottom: none; }
+  .change-item .chip { margin-top: 2px; }
+  .change-item .body b { font-family: "Bahnschrift", sans-serif; font-weight: 600; font-size: 15px; display: block; margin-bottom: 4px; }
+  .change-item .body p { margin: 0; color: var(--ink-soft); font-size: 14.5px; }
+  .change-item .body code { font-size: 0.85em; }
+
+  /* ---------- next steps ---------- */
+  .next-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+  .next-card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 20px 22px; }
+  .next-card .why { font-family: "Bahnschrift", sans-serif; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent-2); margin: 0 0 8px; }
+  .next-card h3 { font-family: "Bahnschrift", sans-serif; font-size: 16px; font-weight: 600; margin: 0 0 8px; }
+  .next-card p { font-size: 14.5px; color: var(--ink-soft); margin: 0; }
+
+  footer {
+    margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--line);
+    font-family: "Consolas", monospace; font-size: 12px; color: var(--ink-faint);
+    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+  }
+
+  @media (max-width: 640px) {
+    h1 { font-size: 30px; }
+    .change-item { grid-template-columns: 1fr; }
+  }
+</style>
+
+<div class="page">
+
+  <header class="masthead">
+    <div class="eyebrow"><span class="rule"></span> Code audit &amp; rewrite — Scoring / Drive / Intake</div>
+    <h1>The Claudes-Code Rewrite</h1>
+    <p class="dek">A full-source audit turned up a shoot-on-the-fly bug that was silently under-powering every shot taken while driving, plus a string of subsystem control bugs. This is what changed, why, and what still needs a sign-off before it goes on the robot.</p>
+    <div class="meta-row">
+      <div><span>Team</span><b>FRC 3161 — Rebuilt2026</b></div>
+      <div><span>Branch</span><b>Claudes-Code</b></div>
+      <div><span>Base commit</span><b>bbbd413 (main)</b></div>
+      <div><span>Files changed</span><b>23 · +1,032 / &minus;3,935</b></div>
+    </div>
+    <div class="trace" aria-hidden="true">
+      <svg viewBox="0 0 760 46" preserveAspectRatio="none">
+        <polyline fill="none" stroke="var(--good)" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"
+          points="0,6 127,6.4 253,7 380,7.4 507,8.1 633,8.6 760,8.8"></polyline>
+        <polyline fill="none" stroke="var(--bad)" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="1,4"
+          points="0,6 127,11.7 253,17.3 380,21.6 507,28.7 633,35.75 760,40"></polyline>
+      </svg>
+    </div>
+  </header>
+
+  <section id="summary">
+    <h2><span class="idx">00</span> Executive summary</h2>
+    <div class="callout">
+      <p class="headline">The centerpiece is a shoot-on-the-fly bug that was quietly asking the flywheel to spin at <em>up to half</em> its needed speed while driving toward the hub — the velocity-compensation math was counting the same correction three times. Everything else is tightened control-loop behavior across four subsystems and ten deleted dead files. No PID gain, shot-map entry, or current limit was changed.</p>
+      <div class="stat-strip">
+        <div class="stat"><div class="num">3&nbsp;&rarr;&nbsp;1</div><div class="lbl">Compensation passes in ShotCalc</div></div>
+        <div class="stat"><div class="num">23</div><div class="lbl">Files changed</div></div>
+        <div class="stat"><div class="num">10</div><div class="lbl">Dead files deleted</div></div>
+        <div class="stat"><div class="num">0</div><div class="lbl">Tuned constants touched</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="method">
+    <h2><span class="idx">01</span> How this happened</h2>
+    <p class="lede">What started as a full source audit turned into a diagnosis, then a rewrite, once the team's own field observation — "we undershoot while moving" — pointed at a specific formula.</p>
+    <div class="tool-list">
+      <div class="tool-item">
+        <div class="mark">&rarr;</div>
+        <div class="body"><b>Full audit.</b><p>Read every subsystem end to end. Found roughly a dozen correctness bugs — dead homing thresholds, config applies aliased to the wrong motor, an auto-pathfind end condition that never updated — plus a long list of unreachable states and dead files.</p></div>
+      </div>
+      <div class="tool-item">
+        <div class="mark">&rarr;</div>
+        <div class="body"><b>Diagnosis.</b><p>The team reported undershooting while driving. Turret aim tracked correctly, but flywheel speed sagged with closing speed — the signature of an error that lives entirely on the radial axis. Traced to <code>ShotCalc</code> applying the same velocity correction three times.</p></div>
+      </div>
+      <div class="tool-item">
+        <div class="mark">&rarr;</div>
+        <div class="body"><b>Visualization audit.</b><p>The sim's ball-trajectory view — built to check exactly this — turned out not to draw the commanded shot at all, and disagreed with itself on flight time. Audited and rebuilt alongside the fix so it can actually verify the fix.</p></div>
+      </div>
+      <div class="tool-item">
+        <div class="mark">&rarr;</div>
+        <div class="body"><b>Rewrite + review.</b><p>Full rewrite on a dedicated branch, verified against a Gradle build, then put through an 8-angle automated code review. Two review findings are still open — see §04.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="sotf">
+    <h2><span class="idx">02</span> The core fix — shoot-on-the-fly</h2>
+    <p class="lede">This is the one change worth understanding in full. Everything else in this report is downstream of getting this right.</p>
+
+    <div class="sotf-panels">
+      <div class="corr-panel bad">
+        <h4>Old code — corrected 3&times;</h4>
+        <p class="sub">Same physical correction, applied in three different forms</p>
+        <div class="mini-baseline">
+          <svg viewBox="0 0 280 54" preserveAspectRatio="none">
+            <line x1="14" y1="8" x2="14" y2="14" stroke="var(--ink-faint)" stroke-width="1"></line>
+            <line x1="266" y1="8" x2="266" y2="14" stroke="var(--ink-faint)" stroke-width="1"></line>
+            <line x1="14" y1="11" x2="266" y2="11" stroke="var(--ink-faint)" stroke-width="1"></line>
+            <circle cx="14" cy="30" r="4" fill="var(--ink-soft)"></circle>
+            <circle cx="266" cy="30" r="4" fill="var(--ink-soft)"></circle>
+            <line x1="14" y1="30" x2="266" y2="30" stroke="var(--line)" stroke-width="1.5"></line>
+            <text x="14" y="48" font-family="Consolas" font-size="10.5" fill="var(--ink-faint)">Turret</text>
+            <text x="266" y="48" text-anchor="end" font-family="Consolas" font-size="10.5" fill="var(--ink-faint)">Hub</text>
+            <text x="140" y="6" text-anchor="middle" font-family="Consolas" font-size="10" fill="var(--ink-faint)">4.0 m actual</text>
+          </svg>
+        </div>
+        <div class="corr-row"><span class="n">1</span><span>Predicts where the turret will be in <code>v&middot;tof</code> and aims there.</span></div>
+        <div class="corr-row"><span class="n">2</span><span>Also shifts the virtual target back by <code>v&middot;tof</code> &mdash; the same correction, counted again.</span></div>
+        <div class="corr-row"><span class="n">3</span><span>Subtracts robot velocity from the shot vector and scales RPS by the ratio &mdash; a third pass at a correction already applied twice.</span></div>
+        <div class="corr-results">
+          <div class="corr-result"><span>Distance used for lookup</span><b>&asymp;3.0 m of 4.0 m</b></div>
+          <div class="corr-result"><span>RPS commanded</span><b>&asymp;41</b></div>
+        </div>
+      </div>
+
+      <div class="corr-panel good">
+        <h4>This rewrite — corrected 1&times;</h4>
+        <p class="sub">One correction, because that's what the physics calls for</p>
+        <div class="mini-baseline">
+          <svg viewBox="0 0 280 54" preserveAspectRatio="none">
+            <line x1="14" y1="8" x2="14" y2="14" stroke="var(--ink-faint)" stroke-width="1"></line>
+            <line x1="266" y1="8" x2="266" y2="14" stroke="var(--ink-faint)" stroke-width="1"></line>
+            <line x1="14" y1="11" x2="266" y2="11" stroke="var(--ink-faint)" stroke-width="1"></line>
+            <circle cx="14" cy="30" r="4" fill="var(--ink-soft)"></circle>
+            <circle cx="266" cy="30" r="4" fill="var(--ink-soft)"></circle>
+            <line x1="14" y1="30" x2="266" y2="30" stroke="var(--line)" stroke-width="1.5"></line>
+            <text x="14" y="48" font-family="Consolas" font-size="10.5" fill="var(--ink-faint)">Turret</text>
+            <text x="266" y="48" text-anchor="end" font-family="Consolas" font-size="10.5" fill="var(--ink-faint)">Hub</text>
+            <text x="140" y="6" text-anchor="middle" font-family="Consolas" font-size="10" fill="var(--ink-faint)">4.0 m actual</text>
+          </svg>
+        </div>
+        <div class="corr-row"><span>Shifts the aim point back by <code>v&middot;tof</code> to a single virtual target. The ball inherits the robot's velocity on its own &mdash; nothing else needs to compensate for it twice more.</span></div>
+        <div class="corr-results">
+          <div class="corr-result"><span>Distance used for lookup</span><b>&asymp;3.5 m of 4.0 m</b></div>
+          <div class="corr-result"><span>RPS commanded</span><b>&asymp;51 (correct)</b></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-wrap">
+      <p class="chart-title">Commanded flywheel speed vs. closing speed toward the hub</p>
+      <svg viewBox="0 0 620 300" preserveAspectRatio="xMidYMid meet">
+        <line x1="60" y1="53" x2="600" y2="53" stroke="var(--line-soft)" stroke-width="1"></line>
+        <line x1="60" y1="119" x2="600" y2="119" stroke="var(--line-soft)" stroke-width="1"></line>
+        <line x1="60" y1="184" x2="600" y2="184" stroke="var(--line-soft)" stroke-width="1"></line>
+        <line x1="60" y1="250" x2="600" y2="250" stroke="var(--line)" stroke-width="1"></line>
+        <text x="52" y="57" text-anchor="end" font-family="Consolas" font-size="11" fill="var(--ink-faint)">50</text>
+        <text x="52" y="123" text-anchor="end" font-family="Consolas" font-size="11" fill="var(--ink-faint)">40</text>
+        <text x="52" y="188" text-anchor="end" font-family="Consolas" font-size="11" fill="var(--ink-faint)">30</text>
+        <text x="52" y="254" text-anchor="end" font-family="Consolas" font-size="11" fill="var(--ink-faint)">20</text>
+        <text x="30" y="30" font-family="Bahnschrift" font-size="11" fill="var(--ink-faint)">RPS</text>
+
+        <line x1="60" y1="250" x2="60" y2="258" stroke="var(--ink-faint)" stroke-width="1"></line>
+        <line x1="240" y1="250" x2="240" y2="258" stroke="var(--ink-faint)" stroke-width="1"></line>
+        <line x1="420" y1="250" x2="420" y2="258" stroke="var(--ink-faint)" stroke-width="1"></line>
+        <line x1="600" y1="250" x2="600" y2="258" stroke="var(--ink-faint)" stroke-width="1"></line>
+        <text x="60" y="272" text-anchor="middle" font-family="Consolas" font-size="11" fill="var(--ink-faint)">0</text>
+        <text x="240" y="272" text-anchor="middle" font-family="Consolas" font-size="11" fill="var(--ink-faint)">1</text>
+        <text x="420" y="272" text-anchor="middle" font-family="Consolas" font-size="11" fill="var(--ink-faint)">2</text>
+        <text x="600" y="272" text-anchor="middle" font-family="Consolas" font-size="11" fill="var(--ink-faint)">3</text>
+        <text x="330" y="292" text-anchor="middle" font-family="Bahnschrift" font-size="11" fill="var(--ink-faint)">Closing speed toward hub (m/s)</text>
+
+        <polyline fill="none" stroke="var(--good)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"
+          points="60,40 150,42 240,44 330,46 420,50 510,52 600,53"></polyline>
+        <polyline fill="none" stroke="var(--bad)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"
+          points="60,40 150,66 240,92 330,112 420,145 510,178 600,197"></polyline>
+
+        <circle cx="60" cy="40" r="3.5" fill="var(--ink-soft)"></circle>
+        <text x="75" y="22" text-anchor="start" font-family="Consolas" font-size="11" fill="var(--ink-soft)">52 &mdash; both agree at v=0</text>
+
+        <circle cx="600" cy="53" r="4" fill="var(--good)"></circle>
+        <text x="565" y="42" text-anchor="end" font-family="Consolas" font-size="12" fill="var(--good)" font-weight="700">50 rps</text>
+
+        <circle cx="600" cy="197" r="4" fill="var(--bad)"></circle>
+        <text x="565" y="212" text-anchor="end" font-family="Consolas" font-size="12" fill="var(--bad)" font-weight="700">28 rps</text>
+      </svg>
+      <div class="chart-legend">
+        <span><i style="background:var(--good)"></i>This rewrite &mdash; single correction</span>
+        <span><i style="background:var(--bad)"></i>Old code &mdash; triple-counted</span>
+      </div>
+      <p class="chart-caption">Illustrative, computed from the RPS_MAP / TOF_MAP lookup logic in both versions of <code>ShotCalc.java</code> for a robot starting 4.0&nbsp;m from the hub &mdash; not measured telemetry. The fix hasn't been run in sim yet; see &sect;04.</p>
+    </div>
+  </section>
+
+  <section id="changes">
+    <h2><span class="idx">03</span> What changed, subsystem by subsystem</h2>
+    <p class="lede">Summary only &mdash; see the branch diff for line-level detail. Every PID gain, shot-map entry, current limit, and motor ID was carried over unchanged.</p>
+    <div class="change-list">
+
+      <div class="change-item">
+        <span class="chip fixed">Fixed</span>
+        <div class="body"><b>Shoot-on-the-fly math &mdash; <code>ShotCalc.java</code></b><p>The undershoot-while-moving bug above. See &sect;02.</p></div>
+      </div>
+
+      <div class="change-item">
+        <span class="chip fixed">Fixed</span>
+        <div class="body"><b>Intake extension control &mdash; <code>Intake.java</code></b><p>Manual nudge and the homing crawl were silently overridden every 20&nbsp;ms by a leftover position command in the same loop &mdash; split into explicit position-vs-duty-cycle control modes. Also fixed a config mix-up where leaving the slow-squeeze (SCORE) state applied the roller's untuned config to the extension motor, wiping its PID gains.</p></div>
+      </div>
+
+      <div class="change-item">
+        <span class="chip fixed">Fixed</span>
+        <div class="body"><b>Shooter readiness &amp; homing &mdash; <code>Shooter.java</code></b><p>A static "is shooting" flag that was never updated made the feeder's ready-to-shoot check always read stale. The hood's current-based homing threshold defaulted to zero, which would have instantly re-zeroed the hood on every boot; now gated off until tuned.</p></div>
+      </div>
+
+      <div class="change-item">
+        <span class="chip fixed">Fixed</span>
+        <div class="body"><b>Turret aim trim &amp; limits &mdash; <code>Turret.java</code></b><p>The driver's aim-trim offset was applied after the soft-limit wrap, so repeated nudges could walk the target past the mechanical limit; now applied before, then clamped. A feedforward term that fed rad/s into a volts-only control input was removed rather than fixed &mdash; flagged as an open item, &sect;04.</p></div>
+      </div>
+
+      <div class="change-item">
+        <span class="chip fixed">Fixed</span>
+        <div class="body"><b>Autonomous pathfinding &mdash; <code>DriveToLocation.java</code></b><p>Acceleration and angular-speed pathfinding constraints were left at Java's default of <code>0.0</code>, and the "close enough" check computed a single unsigned error once at command creation instead of re-checking every loop &mdash; auto pathfind commands could cancel on the very first tick.</p></div>
+      </div>
+
+      <div class="change-item">
+        <span class="chip fixed">Fixed</span>
+        <div class="body"><b>Vision frame handling &mdash; <code>Vision.java</code></b><p>Camera frames were pulled with a "latest result" call that can hand back the same frame twice or skip one; switched to reading every unread frame exactly once, and ambiguity rejection is now only applied where it's statistically meaningful (single-tag solves).</p></div>
+      </div>
+
+      <div class="change-item">
+        <span class="chip behavior">Behavior change</span>
+        <div class="body"><b>Battery eco-mode &amp; match timer &mdash; <code>RobotContainer.java</code></b><p>The automatic low-battery trigger compared "now" to "now, four seconds from now" in the same instant and could never fire; fixed the debounce and wired it up. The match timer now restarts every time teleop is entered instead of never resetting. Both changes are correct in the common case; the code review surfaced edge cases worth a second look &mdash; &sect;04.</p></div>
+      </div>
+
+      <div class="change-item">
+        <span class="chip removed">Removed</span>
+        <div class="body"><b>Dead code &mdash; 10 files</b><p>Two abandoned rewrites of the shot-calc and vision code, an unbound test command that drove a motor at &minus;100% duty with no way to stop it, and five aiming/interpolation utility classes whose only callers were the code being deleted. All fully superseded by the tuned lookup tables already in <code>Constants.java</code>.</p></div>
+      </div>
+
+    </div>
+  </section>
+
+  <section id="next">
+    <h2><span class="idx">04</span> Before this goes on the robot</h2>
+    <p class="lede">The branch builds clean and hasn't been proven wrong &mdash; but it also hasn't been run yet. These are the open items, roughly in the order they'd bite.</p>
+    <div class="next-grid">
+      <div class="next-card">
+        <p class="why">Not yet verified</p>
+        <h3>Test the SOTF fix in sim</h3>
+        <p>Drive at the hub with driver2's trigger held and watch the commanded RPS on the dashboard hold steady instead of sagging as speed increases.</p>
+      </div>
+      <div class="next-card">
+        <p class="why">Data quality</p>
+        <h3>Validate the flight-time table</h3>
+        <p><code>TOF_MAP</code> implies ball speeds several times faster than the flywheel's own launch-speed model suggests. It feeds directly into the SOTF lead distance, so an error here re-introduces under- or over-shoot from a different direction.</p>
+      </div>
+      <div class="next-card">
+        <p class="why">Code review finding</p>
+        <h3>Re-check the automatic eco-mode trigger</h3>
+        <p>It now chains six blocking motor-config calls unattended, right as the battery is already sagging &mdash; likely during a high-current endgame push. Worth staggering the calls or keeping it manual-only.</p>
+      </div>
+      <div class="next-card">
+        <p class="why">Code review finding</p>
+        <h3>Confirm match-timer behavior on re-enable</h3>
+        <p>Restarting the timer on every teleop entry fixes stale elapsed time on a normal match, but zeroes it again on a mid-match disable/re-enable &mdash; trading one direction of error for the other.</p>
+      </div>
+      <div class="next-card">
+        <p class="why">Code review finding</p>
+        <h3>Restore turret rotation compensation</h3>
+        <p>The removed feedforward term likely contributed real tracking lag while turning during a shot. Worth reintroducing with the correct unit conversion rather than leaving it out.</p>
+      </div>
+      <div class="next-card">
+        <p class="why">Preserved, unchanged</p>
+        <h3>Intake re-zero workflow is still manual</h3>
+        <p>D-pad nudge into the hard stop, then the driver's back button &mdash; unchanged and confirmed intentional. The CANrange auto-zero path stays disabled until someone wants to wire it up.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span>Branch: Claudes-Code &middot; base bbbd413 &middot; not yet merged to main</span>
+    <span>Report generated by Claude &middot; 2026-07-13</span>
+  </footer>
+
+</div>

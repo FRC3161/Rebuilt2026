@@ -125,7 +125,7 @@ public class RobotContainer {
 
     /** The standard "release shoot button" state: flywheel stays warm. */
     private Command stopScoring() {
-        return scoringState(ShooterWantedState.WAIT, TurretWantedState.IDLE, FeederWantedState.IDLE);
+        return scoringState(ShooterWantedState.IDLE, TurretWantedState.IDLE, FeederWantedState.IDLE);
     }
 
     private Command setIntake(IntakeWantedState state) {
