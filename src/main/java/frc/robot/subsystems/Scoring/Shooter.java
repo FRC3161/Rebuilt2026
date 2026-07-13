@@ -6,8 +6,8 @@ import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.StatusCode;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.DutyCycleOut;
-import com.ctre.phoenix6.controls.MotionMagicVelocityVoltage;
 import com.ctre.phoenix6.controls.PositionVoltage;
+import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 
@@ -39,7 +39,10 @@ public class Shooter extends SubsystemBase {
     // for velocity control
     final DutyCycleOut t_request = new DutyCycleOut(0);
     private double motorspeed = 0.0;
-    final MotionMagicVelocityVoltage mm_request = new MotionMagicVelocityVoltage(0);
+    // plain velocity control, not motion-profiled: a flywheel should hit target
+    // speed as fast as the motor/battery allow, not follow a smoothed trapezoidal
+    // trajectory meant for mechanisms that need protecting from abrupt accel
+    final VelocityVoltage mm_request = new VelocityVoltage(0);
     // for position control
     private double position = 0.0;
     final PositionVoltage mmE_request = new PositionVoltage(0);
@@ -147,6 +150,13 @@ public class Shooter extends SubsystemBase {
             }
 
             hoodMotor.setPosition(0);
+
+            // stator current defaults to a slow CAN frame rate (unlike velocity,
+            // which is kept fresh for closed-loop control); bump it so current
+            // telemetry can actually resolve short transients like a game piece
+            // passing through the flywheel
+            shooterMotor1.getStatorCurrent().setUpdateFrequency(50);
+            shooterMotor2.getStatorCurrent().setUpdateFrequency(50);
         }
     }
 
@@ -156,6 +166,13 @@ public class Shooter extends SubsystemBase {
             return simShooterVelocity;
         }
         return shooterMotor1.getVelocity().getValueAsDouble();
+    }
+
+    private double getShooter2Velocity() {
+        if (Robot.isSimulation()) {
+            return simShooterVelocity;
+        }
+        return shooterMotor2.getVelocity().getValueAsDouble();
     }
 
     private double getHoodPosition() {
@@ -170,6 +187,20 @@ public class Shooter extends SubsystemBase {
             return 0.0; // never triggers homing in sim
         }
         return hoodMotor.getSupplyCurrent().getValueAsDouble();
+    }
+
+    private double getShooterCurrent() {
+        if (Robot.isSimulation()) {
+            return 0.0;
+        }
+        return shooterMotor1.getStatorCurrent().getValueAsDouble();
+    }
+
+    private double getShooter2Current() {
+        if (Robot.isSimulation()) {
+            return 0.0;
+        }
+        return shooterMotor2.getStatorCurrent().getValueAsDouble();
     }
 
     public void setWantedShooterState(ShooterWantedState desiredState) {
@@ -264,8 +295,8 @@ public class Shooter extends SubsystemBase {
                 }
                 break;
             case TESTING:
-                motorspeed = 95;
-                position = 7.5;
+                motorspeed = 50;
+                position = 0;
                 break;
             case RETRACTING_AUTO:
                 position = 0;
@@ -301,7 +332,7 @@ public class Shooter extends SubsystemBase {
     }
 
     public boolean shooterIsReady() {
-        return Math.abs(getShooterVelocity() - motorspeed) < 1.5;
+        return Math.abs(getShooterVelocity() - motorspeed) < 3.5;
     }
 
     public void enableEcoModeShooter() {
@@ -332,6 +363,7 @@ public class Shooter extends SubsystemBase {
 
     private void logValues() {
         SmartDashboard.putNumber("SHOOTER/Shooter Actual Speed", getShooterVelocity());
+        SmartDashboard.putNumber("SHOOTER/Shooter Actual Speed 2", getShooter2Velocity());
         SmartDashboard.putNumber("SHOOTER/Hood Actual Position", getHoodPosition());
         SmartDashboard.putNumber("SHOOTER/Shooter Wanted Speed", motorspeed);
         SmartDashboard.putNumber("SHOOTER/Hood Wanted Position", position);
@@ -341,6 +373,8 @@ public class Shooter extends SubsystemBase {
 
         if (!Robot.isSimulation()) {
             SmartDashboard.putNumber("Hood Motor Current", getHoodCurrent());
+            SmartDashboard.putNumber("SHOOTER/Shooter Motor Current", getShooterCurrent());
+            SmartDashboard.putNumber("SHOOTER/Shooter Motor 2 Current", getShooter2Current());
         }
     }
 

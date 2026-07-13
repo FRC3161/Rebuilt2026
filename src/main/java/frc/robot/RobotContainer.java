@@ -321,8 +321,17 @@ public class RobotContainer {
         operator.povLeft()
                 .onTrue(new InstantCommand(() -> turret.applyRightOffset()));
 
+        //test button
+operator.povDown()
+        .onTrue(new SequentialCommandGroup(
+                new InstantCommand(() -> shooter.setWantedShooterState(ShooterWantedState.TEST)),
+                new InstantCommand(() -> feeder.setWantedFeederState(FeederWantedState.SHOOT))))
+
+        .onFalse( new ParallelCommandGroup(
+                new InstantCommand(() -> shooter.setWantedShooterState(ShooterWantedState.IDLE)),
+                new InstantCommand(() -> feeder.setWantedFeederState(FeederWantedState.IDLE))));
         // passing
-        operator.rightBumper()
+operator.rightBumper()
                 .onTrue(new SequentialCommandGroup(
                         new InstantCommand(() -> shooter.setWantedShooterState(ShooterWantedState.PASS_SHOOT)),
                         new InstantCommand(() -> turret.setWantedTurretState(TurretWantedState.AIM_PASS)),

@@ -216,8 +216,8 @@ public final class Constants {
         public static double[] hoodPID = { 2.0, 0, 0 };
         public static double[] hoodSVA = { 0.0, 0, 0 };
 
-        public static double[] shooterPID = { 0.6, 0, 0 };
-        public static double[] shooterSVA = { 0.0, 0.117, 0 };
+        public static double[] shooterPID = { 1.5, 0, 0.02 };
+        public static double[] shooterSVA = { 0.5, 0.117, 0.02 };
 
         public enum ShooterWantedState {
             IDLE,
