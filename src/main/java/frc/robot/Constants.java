@@ -204,7 +204,14 @@ public final class Constants {
         public static final double intakeExtensionHomingThreshold = 0;
         public static final double retractingPos = 0;
         // Duty cycle used for manual nudging and homing crawl.
-        public static final double manualDutyCycle = 0.01;
+        // Must clear the extension TalonFX's DutyCycleNeutralDeadband
+        // (Phoenix6 default 0.04 / 4%, never overridden in Intake's config)
+        // or the motor outputs true zero and never moves. 0.01 (the original
+        // value) sits inside that deadband; this was never noticed because
+        // manual control was separately dead until the control-mode fix.
+        // TODO: field-tune — this is a guess at "clears the deadband,
+        // still gentle," not a validated crawl speed.
+        public static final double manualDutyCycle = 0.08;
 
         public static final double[] intakePID = { 0.3, 0, 0 };
         public static final double[] intakeSVA = { 0, 0.13, 0.01 };
