@@ -38,12 +38,13 @@ public final class Constants {
     }
 
     public static class AutoConstants {
-        // Pathfinding constraints. Drivetrain free speed is ~4.58 m/s
-        // (TunerConstants.kSpeedAt12Volts) — keep max speed below that.
-        public static final double kMaxSpeedMetersPerSecond = 4.0; // TODO: tune
-        public static final double kMaxAccelerationMetersPerSecondSquared = 3.0; // TODO: tune
-        public static final double kMaxAngularSpeedRadiansPerSecond = 2 * Math.PI; // TODO: tune
-        public static final double kMaxAngularSpeedRadiansPerSecondSquared = 4 * Math.PI; // TODO: tune
+        // Pathfinding constraints, deliberately set above the drivetrain's
+        // physical limits so the robot's own kinematics — not these caps —
+        // are what bounds pathfindToPose, validated at competition.
+        public static final double kMaxSpeedMetersPerSecond = 16;
+        public static final double kMaxAccelerationMetersPerSecondSquared = 100;
+        public static final double kMaxAngularSpeedRadiansPerSecond = 100;
+        public static final double kMaxAngularSpeedRadiansPerSecondSquared = 100;
 
         public static final double xTolerance = 0.05;
         public static final double yTolerance = 0.05;
@@ -53,61 +54,109 @@ public final class Constants {
     public static class ShooterConstants {
         public static final double hoodConversionRotToDeg = 360 / 129.6;
         public static final double MIN_RPS = 0;
-        public static final double MAX_RPS = 100;
+        public static final double MAX_RPS = 90;
 
         /*
-         * Tuned shot tables (distance to hub in meters -> value).
-         * These are the single source of truth for shot parameters; they were
-         * calibrated with the robot stationary.
+         * Tuned shot tables (distance to hub in meters -> value), as of
+         * Niagara — the later ONCMP-event revisions to these tables were
+         * attempts to compensate for a mechanical issue rather than genuine
+         * tuning improvements, so they're intentionally not used here.
          */
         public static final InterpolatingDoubleTreeMap RPS_MAP = new InterpolatingDoubleTreeMap();
         static {
-            RPS_MAP.put(2.0, 47d);
-            RPS_MAP.put(3.0, 50d);
+            RPS_MAP.put(2.0, 45.5d);
+            RPS_MAP.put(2.5, 47.5d);
+            RPS_MAP.put(3.0, 48d);
+            RPS_MAP.put(3.5, 50d);
             RPS_MAP.put(4.0, 52d);
-            RPS_MAP.put(5.0, 55d);
-            RPS_MAP.put(6.0, 62d);
-            RPS_MAP.put(10.0, 85d);
+            RPS_MAP.put(4.5, 54.5d);
+            RPS_MAP.put(5.0, 56d);
+            RPS_MAP.put(5.5, 60d);
+            RPS_MAP.put(6.0, 64d);
         }
 
         public static final InterpolatingDoubleTreeMap HOOD_MAP = new InterpolatingDoubleTreeMap();
         static {
             HOOD_MAP.put(2.0, 0d);
-            HOOD_MAP.put(3.0, 2.5d);
-            HOOD_MAP.put(4.0, 5d);
-            HOOD_MAP.put(5.0, 5.5d);
-            HOOD_MAP.put(6.0, 6.5d);
-            HOOD_MAP.put(10.0, 8d);
+            HOOD_MAP.put(2.5, 1d);
+            HOOD_MAP.put(3.0, 2.2d);
+            HOOD_MAP.put(3.5, 3d);
+            HOOD_MAP.put(4.0, 3.8d);
+            HOOD_MAP.put(4.5, 4.3d);
+            HOOD_MAP.put(5.0, 4.6d);
+            HOOD_MAP.put(5.5, 5d);
+            HOOD_MAP.put(6.0, 5.5d);
         }
 
         // Time of flight (seconds) by distance. Feeds the SOTF virtual-target
         // lead (v * tof), so errors here directly under/over-correct moving
-        // shots. TODO: validate against real footage — the ball-physics model
-        // in the sim visualization suggests real flight times may be ~3-4x
-        // longer than these values.
+        // shots.
         public static final InterpolatingDoubleTreeMap TOF_MAP = new InterpolatingDoubleTreeMap();
         static {
-            TOF_MAP.put(2.0, 0.2);
-            TOF_MAP.put(3.0, 0.25);
-            TOF_MAP.put(4.0, 0.3);
-            TOF_MAP.put(5.0, 0.35);
-            TOF_MAP.put(6.0, 0.4);
-            TOF_MAP.put(10.0, 0.7);
+            TOF_MAP.put(2.0, 0.5);
+            TOF_MAP.put(3.0, 0.5);
+            TOF_MAP.put(4.0, 0.5);
+            TOF_MAP.put(5.0, 0.5);
+            TOF_MAP.put(6.0, 0.5);
         }
 
-        /*
-         * Passing shot tables — NOT YET TUNED (all zeros). ShotCalc falls back
-         * to the hub tables until these contain real data.
-         */
+        // Passing shot tables, tuned on Programming-Points at ONCMP/Niagara.
         public static final InterpolatingDoubleTreeMap PASSING_TOF_MAP = new InterpolatingDoubleTreeMap();
+        static {
+            PASSING_TOF_MAP.put(2.0, 0.5d);
+            PASSING_TOF_MAP.put(2.5, 0.5d);
+            PASSING_TOF_MAP.put(3.0, 0.5d);
+            PASSING_TOF_MAP.put(3.5, 0.5d);
+            PASSING_TOF_MAP.put(4.0, 0.5d);
+            PASSING_TOF_MAP.put(4.5, 0.5d);
+            PASSING_TOF_MAP.put(5.0, 0.5d);
+            PASSING_TOF_MAP.put(5.5, 0.5d);
+            PASSING_TOF_MAP.put(6.0, 0.5d);
+            PASSING_TOF_MAP.put(7.0, 0.5d);
+            PASSING_TOF_MAP.put(8.0, 0.5d);
+            PASSING_TOF_MAP.put(9.0, 0.5d);
+            PASSING_TOF_MAP.put(10.0, 0.5d);
+            PASSING_TOF_MAP.put(11.0, 0.5d);
+            PASSING_TOF_MAP.put(12.0, 0.5d);
+            PASSING_TOF_MAP.put(13.0, 0.5d);
+        }
+
         public static final InterpolatingDoubleTreeMap PASSING_HOOD_MAP = new InterpolatingDoubleTreeMap();
+        static {
+            PASSING_HOOD_MAP.put(2.0, 7.5d);
+            PASSING_HOOD_MAP.put(2.5, 7.5d);
+            PASSING_HOOD_MAP.put(3.0, 7.5d);
+            PASSING_HOOD_MAP.put(3.5, 7.5d);
+            PASSING_HOOD_MAP.put(4.0, 7.5d);
+            PASSING_HOOD_MAP.put(4.5, 7.5d);
+            PASSING_HOOD_MAP.put(5.0, 7.5d);
+            PASSING_HOOD_MAP.put(5.5, 7.5d);
+            PASSING_HOOD_MAP.put(6.0, 7.5d);
+            PASSING_HOOD_MAP.put(7.0, 7.5d);
+            PASSING_HOOD_MAP.put(8.0, 8.0d);
+            PASSING_HOOD_MAP.put(9.0, 8.0d);
+            PASSING_HOOD_MAP.put(10.0, 8.0d);
+            PASSING_HOOD_MAP.put(11.0, 8.0d);
+            PASSING_HOOD_MAP.put(12.0, 8.0d);
+            PASSING_HOOD_MAP.put(13.0, 8.0d);
+        }
+
         public static final InterpolatingDoubleTreeMap PASSING_RPS_MAP = new InterpolatingDoubleTreeMap();
         static {
-            for (double d = 2.0; d <= 6.0; d += 0.5) {
-                PASSING_TOF_MAP.put(d, 0d);
-                PASSING_HOOD_MAP.put(d, 0d);
-                PASSING_RPS_MAP.put(d, 0d);
-            }
+            PASSING_RPS_MAP.put(2.0, 33d);
+            PASSING_RPS_MAP.put(2.5, 35d);
+            PASSING_RPS_MAP.put(3.0, 37d);
+            PASSING_RPS_MAP.put(3.5, 40d);
+            PASSING_RPS_MAP.put(4.0, 42d);
+            PASSING_RPS_MAP.put(5.0, 46d);
+            PASSING_RPS_MAP.put(6.0, 51d);
+            PASSING_RPS_MAP.put(7.0, 57d);
+            PASSING_RPS_MAP.put(8.0, 63d);
+            PASSING_RPS_MAP.put(9.0, 67d);
+            PASSING_RPS_MAP.put(10.0, 80d);
+            PASSING_RPS_MAP.put(11.0, 83d);
+            PASSING_RPS_MAP.put(12.0, 86d);
+            PASSING_RPS_MAP.put(13.0, 90d);
         }
 
         /*
@@ -135,7 +184,7 @@ public final class Constants {
         // Supply current (amps) above which hood homing considers itself
         // against the hard stop. 0 disables auto-zeroing during HOMING
         // (the state will hold gently against the stop but never re-zero).
-        public static final double homingThreshold = 0; // TODO: tune (amps)
+        public static final double homingThreshold = 13;
 
         // Flywheel is "ready" when actual speed is within this many RPS of
         // the setpoint.
@@ -188,6 +237,7 @@ public final class Constants {
         public static final int ExtensionStatorCurrentLimit = 50;
 
         public static final int intakeMotorID = 32;
+        public static final int intakeMotor2ID = 34;
         public static final int intakeExtensionMotorID = 31;
         public static final int canRangeID = 33;
 
@@ -245,7 +295,7 @@ public final class Constants {
 
     public static class TurretConstants {
         public static final int SupplyCurrentLimit = 40;
-        public static final int StatorCurrentLimit = 120;
+        public static final int StatorCurrentLimit = 100;
 
         public static final int turretMotorID = 50;
         public static final int encoderID = 54;
@@ -431,7 +481,7 @@ public final class Constants {
 
         /* standard deviations for vision calculations */
         public static final edu.wpi.first.math.Vector<N3> kSingleTagStdDevs = VecBuilder.fill(4, 4, 4);
-        public static final edu.wpi.first.math.Vector<N3> kMultiTagStdDevs = VecBuilder.fill(4, 4, 4);
+        public static final edu.wpi.first.math.Vector<N3> kMultiTagStdDevs = VecBuilder.fill(1, 1, 4);
         public static final edu.wpi.first.math.Vector<N3> odoStdDEvs = VecBuilder.fill(.2, .2, .05);
         public static final double odometryUpdateFrequency = 250;
     }

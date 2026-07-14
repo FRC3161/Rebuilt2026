@@ -222,13 +222,16 @@ public class RobotContainer {
                 .onTrue(setIntake(IntakeWantedState.MANUAL_CONTROL_NEG))
                 .onFalse(setIntake(IntakeWantedState.MANUAL_IDLE));
 
-        // manually zero intake extension
-        driver.back().onTrue(Commands.runOnce(intake::setZero));
+        // manually force intake extension to the CANrange-homing "out" reference
+        driver.back().onTrue(Commands.runOnce(intake::setOut));
 
         // brake
         driver.rightTrigger().whileTrue(drivetrain.applyRequest(() -> brake));
 
         /********* OPERATOR *********/
+
+        // manually zero intake extension
+        operator.start().onTrue(Commands.runOnce(intake::setZero));
 
         // spindexer reverse
         operator.a()
@@ -280,7 +283,7 @@ public class RobotContainer {
         // passing
         operator.rightBumper()
                 .onTrue(scoringState(ShooterWantedState.PASS_SHOOT, TurretWantedState.AIM_PASS,
-                        FeederWantedState.SHOOT))
+                        FeederWantedState.PASS))
                 .onFalse(stopScoring());
 
         /******* SIGNAL LIGHTS ***********/
@@ -343,6 +346,7 @@ public class RobotContainer {
 
     public void configureTestCommands() {
         SmartDashboard.putData("Intake RESET", Commands.runOnce(intake::setZero, intake));
+        SmartDashboard.putData("HOOD RESET", Commands.runOnce(shooter::hoodReset, shooter));
     }
 
     public Command getAutonomousCommand() {

@@ -81,7 +81,9 @@ public class Feeder extends SubsystemBase {
             case SHOOT -> (shooter.shooterIsReady() && turret.turretIsReady())
                     ? SystemState.SHOOTING
                     : SystemState.IDLING;
-            case PASS -> SystemState.PASSING;
+            case PASS -> (shooter.shooterIsReady() && turret.turretIsReady())
+                    ? SystemState.PASSING
+                    : SystemState.IDLING;
             case FEEDTEST -> SystemState.FEEDTESTING;
         };
     }

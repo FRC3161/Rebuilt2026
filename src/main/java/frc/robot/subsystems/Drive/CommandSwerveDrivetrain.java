@@ -93,9 +93,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     /**
      * Current target: the hub while inside our scoring zone, otherwise a
-     * passing spot. NOTE: the pass-spot selection is intentionally crossed
-     * (robot on the high-Y side passes to the low-Y spot and vice versa);
-     * change here if that is not the desired passing strategy.
+     * passing spot on the same side of the field the robot is currently on
+     * (a same-side pass is shorter and safer than throwing cross-field).
      */
     public Translation2d getScoringLocation() {
         Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Blue);
@@ -105,12 +104,12 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             if (0 < x && x < 4.6) {
                 return FieldConstants.BLUE_HUB_POSE;
             }
-            return y > 4.03 ? FieldConstants.BLUE_PASS_SPOT_1 : FieldConstants.BLUE_PASS_SPOT_2;
+            return y > 4.03 ? FieldConstants.BLUE_PASS_SPOT_2 : FieldConstants.BLUE_PASS_SPOT_1;
         } else {
             if (11.9 < x && x < 16.6) {
                 return FieldConstants.RED_HUB_POSE;
             }
-            return y > 4.03 ? FieldConstants.RED_PASS_SPOT_1 : FieldConstants.RED_PASS_SPOT_2;
+            return y > 4.03 ? FieldConstants.RED_PASS_SPOT_2 : FieldConstants.RED_PASS_SPOT_1;
         }
     }
 

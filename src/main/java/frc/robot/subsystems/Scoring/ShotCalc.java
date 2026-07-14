@@ -5,6 +5,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.ShooterConstants;
 
 /**
@@ -50,14 +51,22 @@ public final class ShotCalc {
         Translation2d toGoal = goalPosition.minus(turretPosition);
         double distance = toGoal.getNorm();
 
+        // Passing uses its own tables — flatter, faster shots than an arcing
+        // hub shot, tuned separately (values only meaningful at the actual
+        // pass spots, not general "far away" shots).
+        boolean isPassing = goalPosition.equals(FieldConstants.BLUE_PASS_SPOT_1)
+                || goalPosition.equals(FieldConstants.BLUE_PASS_SPOT_2)
+                || goalPosition.equals(FieldConstants.RED_PASS_SPOT_1)
+                || goalPosition.equals(FieldConstants.RED_PASS_SPOT_2);
+
         // Too close for the solver — fall back to a stationary shot straight
         // at the goal. Never returns 0 RPS, so the feeder can't dump a ball
         // into a dead flywheel.
         if (distance < MIN_SOLVE_DISTANCE) {
             return new ShooterCommand(
-                    ShooterConstants.RPS_MAP.get(distance),
+                    isPassing ? ShooterConstants.PASSING_RPS_MAP.get(distance) : ShooterConstants.RPS_MAP.get(distance),
                     toGoal.getAngle(),
-                    ShooterConstants.HOOD_MAP.get(distance));
+                    isPassing ? ShooterConstants.PASSING_HOOD_MAP.get(distance) : ShooterConstants.HOOD_MAP.get(distance));
         }
 
         // Converge the circular dependency: virtual target position depends
@@ -65,20 +74,26 @@ public final class ShotCalc {
         // Distance is always measured from the REAL turret position — the
         // turret is not predicted forward, because the virtual-target shift
         // is the same physical correction expressed in the field frame.
-        double timeOfFlight = ShooterConstants.TOF_MAP.get(distance);
+        double timeOfFlight = isPassing
+                ? ShooterConstants.PASSING_TOF_MAP.get(distance)
+                : ShooterConstants.TOF_MAP.get(distance);
         Translation2d virtualTarget = goalPosition;
         for (int i = 0; i < SOLVER_ITERATIONS; i++) {
             virtualTarget = goalPosition.minus(totalVelocity.times(timeOfFlight));
             distance = virtualTarget.minus(turretPosition).getNorm();
-            timeOfFlight = ShooterConstants.TOF_MAP.get(distance);
+            timeOfFlight = isPassing
+                    ? ShooterConstants.PASSING_TOF_MAP.get(distance)
+                    : ShooterConstants.TOF_MAP.get(distance);
         }
 
         Rotation2d turretAngle = virtualTarget.minus(turretPosition).getAngle();
         double rps = MathUtil.clamp(
-                ShooterConstants.RPS_MAP.get(distance),
+                isPassing ? ShooterConstants.PASSING_RPS_MAP.get(distance) : ShooterConstants.RPS_MAP.get(distance),
                 ShooterConstants.MIN_RPS,
                 ShooterConstants.MAX_RPS);
-        double hoodAngle = ShooterConstants.HOOD_MAP.get(distance);
+        double hoodAngle = isPassing
+                ? ShooterConstants.PASSING_HOOD_MAP.get(distance)
+                : ShooterConstants.HOOD_MAP.get(distance);
 
         SmartDashboard.putNumber("SOTF/Inherited Vel X", totalVelocity.getX());
         SmartDashboard.putNumber("SOTF/Inherited Vel Y", totalVelocity.getY());

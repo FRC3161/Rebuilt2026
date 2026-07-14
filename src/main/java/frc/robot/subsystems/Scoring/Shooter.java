@@ -9,6 +9,8 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Robot;
@@ -212,9 +214,35 @@ public class Shooter extends SubsystemBase {
                 position = 5.5;
                 break;
             case HUB_SHOOTING:
-            case PASS_SHOOTING:
                 motorspeed = drivetrain.currentShotCommand.RPS();
                 position = MathUtil.clamp(drivetrain.currentShotCommand.hoodAngle(), -0.5, 8);
+                break;
+            case PASS_SHOOTING:
+
+                // Predict future pose
+                double lookAheadSeconds = 0.2;
+
+                ChassisSpeeds fieldRelativeSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(
+                        drivetrain.getState().Speeds,
+                        drivetrain.getPose().getRotation());
+                Pose2d currentPose = drivetrain.getPose();
+
+                double predictedX = currentPose.getX() + fieldRelativeSpeeds.vxMetersPerSecond * lookAheadSeconds;
+                double predictedY = currentPose.getY() + fieldRelativeSpeeds.vyMetersPerSecond * lookAheadSeconds;
+
+                // Location Gate
+                boolean inZoneCurrent = (currentPose.getY() > 6.6 || currentPose.getY() < 1.25)
+                        && ((currentPose.getX() > 3.6 && currentPose.getX() < 5.45)
+                                || (currentPose.getX() > 11.05 && currentPose.getX() < 12.9));
+
+                boolean inZonePredicted = (predictedY > 6.6 || predictedY < 1.25)
+                        && ((predictedX > 3.6 && predictedX < 5.45)
+                                || (predictedX > 11.05 && predictedX < 12.9));
+
+                boolean restrictHood = inZonePredicted || inZoneCurrent;
+
+                motorspeed = drivetrain.currentShotCommand.RPS();
+                position = restrictHood ? 0.0 : MathUtil.clamp(drivetrain.currentShotCommand.hoodAngle(), -0.5, 8);
                 break;
             case HOMING:
                 position = -0.1;
@@ -259,9 +287,23 @@ public class Shooter extends SubsystemBase {
      * real shot (spinning) — never reports ready on a stopped flywheel, so
      * the feeder can't push a ball into it.
      */
+    /** Manual escape hatch for the current-triggered auto-homing above. */
+    public void hoodReset() {
+        if (Robot.isSimulation()) {
+            simHoodPosition = 0.0;
+        } else {
+            hoodMotor.setPosition(0);
+        }
+    }
+
     public boolean shooterIsReady() {
+        // Passing doesn't need hub-shot precision, and holding out for it just
+        // delays the pass — accept a wider RPS window for that state only.
+        double tolerance = systemState == SystemState.PASS_SHOOTING
+                ? ShooterConstants.readyToleranceRPS * 3
+                : ShooterConstants.readyToleranceRPS;
         return motorspeed > 1.0
-                && Math.abs(getShooterVelocity() - motorspeed) < ShooterConstants.readyToleranceRPS;
+                && Math.abs(getShooterVelocity() - motorspeed) < tolerance;
     }
 
     public void enableEcoModeShooter() {

@@ -19,8 +19,10 @@ import frc.util.Interpolation.LoggedTunableNumber;
 public class Intake extends SubsystemBase {
     /* MOTORS */
     private final TalonFX intakeMotor = new TalonFX(IntakeConstants.intakeMotorID, CANBus.roboRIO());
+    private final TalonFX intakeMotor2 = new TalonFX(IntakeConstants.intakeMotor2ID, CANBus.roboRIO());
     private final TalonFX intakeExtensionMotor = new TalonFX(IntakeConstants.intakeExtensionMotorID, CANBus.roboRIO());
     private final TalonFXConfiguration intakeMotorConfig = new TalonFXConfiguration();
+    private final TalonFXConfiguration intakeMotor2Config = new TalonFXConfiguration();
     private final TalonFXConfiguration intakeExtensionMotorConfig = new TalonFXConfiguration();
 
     /* SENSOR */
@@ -69,12 +71,15 @@ public class Intake extends SubsystemBase {
         intakeExtensionMotorConfig.CurrentLimits.SupplyCurrentLimit = IntakeConstants.ExtensionSupplyCurrentLimit;
         intakeExtensionMotorConfig.CurrentLimits.StatorCurrentLimit = IntakeConstants.ExtensionStatorCurrentLimit;
 
-        /* Roller motor: open loop, current limits only */
+        /* Roller motors: open loop, current limits only */
         intakeMotorConfig.CurrentLimits.SupplyCurrentLimit = IntakeConstants.SupplyCurrentLimit;
         intakeMotorConfig.CurrentLimits.StatorCurrentLimit = IntakeConstants.StatorCurrentLimit;
+        intakeMotor2Config.CurrentLimits.SupplyCurrentLimit = IntakeConstants.SupplyCurrentLimit;
+        intakeMotor2Config.CurrentLimits.StatorCurrentLimit = IntakeConstants.StatorCurrentLimit;
 
         if (!Robot.isSimulation()) {
             applyConfigWithRetry(intakeMotor, intakeMotorConfig, "intake roller");
+            applyConfigWithRetry(intakeMotor2, intakeMotor2Config, "intake roller 2");
             applyConfigWithRetry(intakeExtensionMotor, intakeExtensionMotorConfig, "intake extension");
         }
     }
@@ -219,10 +224,13 @@ public class Intake extends SubsystemBase {
         if (!Robot.isSimulation()) {
             intakeMotorConfig.CurrentLimits.StatorCurrentLimit = 50;
             intakeMotorConfig.CurrentLimits.SupplyCurrentLimit = 50;
+            intakeMotor2Config.CurrentLimits.StatorCurrentLimit = 50;
+            intakeMotor2Config.CurrentLimits.SupplyCurrentLimit = 50;
             intakeExtensionMotorConfig.CurrentLimits.StatorCurrentLimit = 30;
             intakeExtensionMotorConfig.CurrentLimits.SupplyCurrentLimit = 30;
             intakeExtensionMotor.getConfigurator().apply(intakeExtensionMotorConfig);
             intakeMotor.getConfigurator().apply(intakeMotorConfig);
+            intakeMotor2.getConfigurator().apply(intakeMotor2Config);
         }
     }
 
@@ -230,10 +238,13 @@ public class Intake extends SubsystemBase {
         if (!Robot.isSimulation()) {
             intakeMotorConfig.CurrentLimits.StatorCurrentLimit = IntakeConstants.StatorCurrentLimit;
             intakeMotorConfig.CurrentLimits.SupplyCurrentLimit = IntakeConstants.SupplyCurrentLimit;
+            intakeMotor2Config.CurrentLimits.StatorCurrentLimit = IntakeConstants.StatorCurrentLimit;
+            intakeMotor2Config.CurrentLimits.SupplyCurrentLimit = IntakeConstants.SupplyCurrentLimit;
             intakeExtensionMotorConfig.CurrentLimits.StatorCurrentLimit = IntakeConstants.ExtensionStatorCurrentLimit;
             intakeExtensionMotorConfig.CurrentLimits.SupplyCurrentLimit = IntakeConstants.ExtensionSupplyCurrentLimit;
             intakeExtensionMotor.getConfigurator().apply(intakeExtensionMotorConfig);
             intakeMotor.getConfigurator().apply(intakeMotorConfig);
+            intakeMotor2.getConfigurator().apply(intakeMotor2Config);
         }
     }
 
@@ -242,6 +253,15 @@ public class Intake extends SubsystemBase {
             simExtensionPosition = 0.0;
         } else {
             intakeExtensionMotor.setPosition(0);
+        }
+    }
+
+    /** Manual escape hatch matching the CANrange auto-recalibration target. */
+    public void setOut() {
+        if (Robot.isSimulation()) {
+            simExtensionPosition = 10.2;
+        } else {
+            intakeExtensionMotor.setPosition(10.2);
         }
     }
 
@@ -284,6 +304,7 @@ public class Intake extends SubsystemBase {
                 intakeExtensionMotor.set(extensionDuty);
             }
             intakeMotor.setControl(rollerRequest.withOutput(motorspeed));
+            intakeMotor2.setControl(rollerRequest.withOutput(-motorspeed));
         }
     }
 }
