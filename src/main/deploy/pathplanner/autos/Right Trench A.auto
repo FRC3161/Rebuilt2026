@@ -7,37 +7,55 @@
         {
           "type": "path",
           "data": {
-            "pathName": "RCircle1"
+            "pathName": "RTrenchMid1"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Aim Shoot"
           }
         },
         {
           "type": "named",
           "data": {
             "name": "FeederIdle"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Retract Hood"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "RCircle2"
+            "pathName": "RTrenchMid2"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Aim Shoot"
           }
         },
         {
           "type": "named",
           "data": {
             "name": "FeederIdle"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Retract Hood"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "RTrenchMid1_OLD"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "FeederIdle"
+            "pathName": "RTrenchMid2"
           }
         }
       ]

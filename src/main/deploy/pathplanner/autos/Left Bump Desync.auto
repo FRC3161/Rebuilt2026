@@ -7,31 +7,19 @@
         {
           "type": "path",
           "data": {
-            "pathName": "RTrenchMid1_OLD"
+            "pathName": "LeftBumpDesync"
           }
         },
         {
           "type": "named",
           "data": {
-            "name": "Auto Trench Shoot Right"
+            "name": "SOTF"
           }
         },
         {
-          "type": "named",
+          "type": "wait",
           "data": {
-            "name": "FeederIdle"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "RTrenchMid2_NEW"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "RTrenchOutpost"
+            "waitTime": 0
           }
         }
       ]

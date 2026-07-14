@@ -7,25 +7,19 @@
         {
           "type": "path",
           "data": {
-            "pathName": "RTrenchMid1_OLD.0"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "Rswipe pathFind"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "RTrenchMid1_OLD.2"
+            "pathName": "LTrenchMid1"
           }
         },
         {
           "type": "named",
           "data": {
             "name": "Aim Shoot"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Retract Hood"
           }
         },
         {
@@ -37,13 +31,31 @@
         {
           "type": "path",
           "data": {
-            "pathName": "RTrenchMid2_NEW"
+            "pathName": "LTrenchMid2B"
           }
         },
         {
           "type": "named",
           "data": {
             "name": "Aim Shoot"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Retract Hood"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "FeederIdle"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "LTrenchMid2"
           }
         }
       ]

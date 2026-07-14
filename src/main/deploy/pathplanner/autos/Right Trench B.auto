@@ -7,25 +7,13 @@
         {
           "type": "path",
           "data": {
-            "pathName": "LTrenchMid1.0"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "LTrenchMid1.1"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "LTrenchMid1.2"
+            "pathName": "RTrenchMid1"
           }
         },
         {
           "type": "named",
           "data": {
-            "name": "Auto Trench Shoot Left"
+            "name": "Aim Shoot"
           }
         },
         {
@@ -35,15 +23,39 @@
           }
         },
         {
+          "type": "named",
+          "data": {
+            "name": "Retract Hood"
+          }
+        },
+        {
           "type": "path",
           "data": {
-            "pathName": "LTrenchMid2"
+            "pathName": "RTrenchMid2B"
           }
         },
         {
           "type": "named",
           "data": {
             "name": "Aim Shoot"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "FeederIdle"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Retract Hood"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "RTrenchMid2"
           }
         }
       ]

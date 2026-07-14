@@ -186,7 +186,21 @@ public class Turret extends SubsystemBase {
     }
 
     public boolean turretIsReady() {
-        return Math.abs(getTurretPosition() - position) < TurretConstants.tolerance;
+        if (Robot.isSimulation())
+            return true;
+
+        // Passing involves fast chassis rotation that the turret can't mechanically
+        // track within the tight hub-shot tolerance, so widen the window while
+        // spinning fast. Stays tight when slow/stationary for accurate hub shots.
+        double dynamicTolerance = TurretConstants.tolerance;
+        double omega = Math.abs(drivetrain.getState().Speeds.omegaRadiansPerSecond);
+        if (omega > 0.5) {
+            dynamicTolerance = TurretConstants.tolerance * 3;
+        } else if (omega > 0.2) {
+            dynamicTolerance = TurretConstants.tolerance * 2;
+        }
+
+        return Math.abs(getTurretPosition() - position) < dynamicTolerance;
     }
 
     public void enableEcoModeTurret() {
