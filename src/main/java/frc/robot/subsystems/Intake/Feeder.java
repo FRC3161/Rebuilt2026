@@ -157,6 +157,19 @@ public class Feeder extends SubsystemBase {
         }
     }
 
+    // Exposed so RobotContainer can add these to the startup-jingle Orchestra individually.
+    public TalonFX getSpindexerMotor() {
+        return spindexerMotor;
+    }
+
+    public TalonFX getTowerMotor() {
+        return towerMotor;
+    }
+
+    public TalonFX getRollerMotor() {
+        return rollerMotor;
+    }
+
     @Override
     public void periodic() {
         SmartDashboard.putString("STATE/FEEDER WANTED STATE", wantedState.toString());

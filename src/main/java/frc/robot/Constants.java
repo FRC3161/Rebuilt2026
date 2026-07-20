@@ -37,6 +37,65 @@ public final class Constants {
         public static final int kOperatorControllerPort = 1;
     }
 
+    public static class DriveConstants {
+        // Mismatch between wheel-implied yaw rate and the gyro's measured
+        // yaw rate, in rad/s, above which we call it rotational slip.
+        // TODO: tune against real driving/defense contact.
+        public static final double rotationalSlipThresholdRadPerSec = 1.0;
+
+        // Position error, in meters, between wheel-implied displacement and
+        // vision-measured displacement over the same interval, above which
+        // we call it translational slip. TODO: tune.
+        public static final double translationalSlipThresholdMeters = 0.3;
+
+        // How often the accelerometer fallback compares accumulated
+        // wheel-implied displacement against accumulated IMU-integrated
+        // displacement. Comparing raw acceleration alone goes quiet the
+        // instant commanded velocity stops changing (both sides read ~0
+        // whether cruising or stuck) — comparing displacement over a short
+        // window instead keeps flagging a sustained mismatch, not just the
+        // initial transient.
+        public static final double accelFallbackWindowSeconds = 0.5;
+
+        // Position error, in meters, between wheel-implied and IMU-integrated
+        // displacement over one accelFallbackWindowSeconds window, above
+        // which the accelerometer fallback calls it slip. Looser than the
+        // vision threshold since double-integrated accelerometer data is
+        // much noisier. TODO: tune.
+        public static final double translationalAccelDriftThresholdMeters = 0.5;
+
+        // How long a vision fix stays "fresh" enough to drive the
+        // translational term before falling back to the accelerometer.
+        public static final double visionFreshnessWindowSeconds = 0.5;
+
+        // Combined slip score (0-1) above which the SLIP/Slipping indicator
+        // reports true.
+        public static final double slipDetectedThreshold = 0.5;
+
+        // Stall detection — a module commanded to move but physically
+        // blocked (e.g. driving into a wall with full wheel grip), distinct
+        // from slip: the wheel's own encoder agrees nothing is happening,
+        // which is why the slip terms above can't catch this case.
+        // TODO: tune all of these against real driving/wall contact.
+
+        // Below this commanded speed we don't check for stall at all —
+        // there's nothing meaningful to compare against near-zero commands.
+        public static final double stallMinCommandedVelocityMPS = 0.5;
+
+        // Drive motor stator current, in amps, above which a module is
+        // considered to be "pushing hard" rather than just idly ramping up.
+        // Drive motors are current-limited to 60A (TunerConstants) — this
+        // should sit comfortably below that.
+        public static final double stallCurrentThresholdAmps = 40.0;
+
+        // Fraction of commanded velocity a module is missing (0-1) before
+        // we call it fully stalled.
+        public static final double stallVelocityDeficitRatioThreshold = 0.7;
+
+        // Stall score (0-1) above which the STALL/Stalled indicator reports true.
+        public static final double stallDetectedThreshold = 0.5;
+    }
+
     public static class AutoConstants {
         // Pathfinding constraints, deliberately set above the drivetrain's
         // physical limits so the robot's own kinematics — not these caps —

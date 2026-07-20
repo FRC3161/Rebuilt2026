@@ -46,6 +46,7 @@ import frc.robot.subsystems.Scoring.ShotCalc;
 
 public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Subsystem {
     public final Vision vision = new Vision();
+    public final SlipDetection slipDetection = new SlipDetection();
     private final Field2d TheField = new Field2d();
 
     private static final double kSimLoopPeriod = 0.004;
@@ -249,6 +250,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     @Override
     public void periodic() {
         vision.updateVision(this);
+        slipDetection.update(this);
 
         if (DriverStation.getAlliance().isPresent() || Robot.isSimulation()) {
             shotCommandTimestamp = Timer.getFPGATimestamp();

@@ -95,6 +95,12 @@ public class Vision {
             Matrix<N3, N1> stdDevs = getEstimationStdDevs(result, visionPose);
 
             driveEstimator.addVisionMeasurement(visionPose, timestamp, stdDevs);
+
+            // Skip rejected/very-low-confidence fixes (huge std devs) — they'd
+            // just inject noise into the slip comparison rather than signal.
+            if (stdDevs.get(0, 0) != Double.MAX_VALUE) {
+                driveEstimator.slipDetection.reportVisionUpdate(visionPose.getTranslation());
+            }
         }
     }
 

@@ -53,11 +53,6 @@
       "/SmartDashboard/autos": "String Chooser"
     },
     "windows": {
-      "/SmartDashboard/Intake RESET": {
-        "window": {
-          "visible": true
-        }
-      },
       "/SmartDashboard/The field": {
         "Robot": {
           "color": [

@@ -30,12 +30,14 @@ public class Robot extends TimedRobot {
     public void robotInit() {
         PortForwarder.add(5800, "photonvision.local", 5800);
         CommandScheduler.getInstance().schedule(PathfindingCommand.warmupCommand());
+      //  m_robotContainer.playStartupJingle();
     }
 
     @Override
     public void robotPeriodic() {
         CommandScheduler.getInstance().run();
         SmartDashboard.putNumber("ROBOT/Battery Voltage", RobotController.getBatteryVoltage());
+       // m_robotContainer.logJingleStatus();
     }
 
     @Override
@@ -49,6 +51,7 @@ public class Robot extends TimedRobot {
 
     @Override
     public void autonomousInit() {
+      //  m_robotContainer.stopStartupJingle();
         m_autonomousCommand = m_robotContainer.getAutonomousCommand();
 
         if (m_autonomousCommand != null) {
@@ -62,6 +65,7 @@ public class Robot extends TimedRobot {
 
     @Override
     public void teleopInit() {
+    //    m_robotContainer.stopStartupJingle();
         if (m_autonomousCommand != null) {
             m_autonomousCommand.cancel();
         }

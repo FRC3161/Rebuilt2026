@@ -296,6 +296,19 @@ public class Shooter extends SubsystemBase {
         }
     }
 
+    // Exposed so RobotContainer can add these to the startup-jingle Orchestra individually.
+    public TalonFX getHoodMotor() {
+        return hoodMotor;
+    }
+
+    public TalonFX getShooterMotor1() {
+        return shooterMotor1;
+    }
+
+    public TalonFX getShooterMotor2() {
+        return shooterMotor2;
+    }
+
     public boolean shooterIsReady() {
         // Passing doesn't need hub-shot precision, and holding out for it just
         // delays the pass — accept a wider RPS window for that state only.

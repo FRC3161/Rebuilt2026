@@ -8,6 +8,9 @@ import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 
+import com.ctre.phoenix6.Orchestra;
+import com.ctre.phoenix6.configs.AudioConfigs;
+import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
@@ -55,6 +58,8 @@ public class RobotContainer {
     public final Feeder feeder = new Feeder(turret, shooter, drivetrain);
     public final MatchInformation matchInformation = new MatchInformation(matchTimer);
     private SendableChooser<Command> autoChooser = new SendableChooser<>();
+
+    private final Orchestra orchestra = new Orchestra();
 
     // Controllers
     private final CommandXboxController driver = new CommandXboxController(OperatorConstants.kDriverControllerPort);
@@ -111,6 +116,62 @@ public class RobotContainer {
             drivetrain.resetPose(new Pose2d(2, 4, Rotation2d.fromDegrees(0)));
         }
     }
+
+//     /**
+//      * Plays the startup jingle across every subsystem's motors. Requires
+//      * sirius.chrp in src/main/deploy (converted from a MIDI file via the
+//      * CHRP Converter tool in Phoenix Tuner X — there's no code-side way to
+//      * do that conversion). Call once, not periodically.
+//      */
+//     /** Applies the disabled-play audio config to one motor and adds it as the next Orchestra track. */
+//     private void addJingleInstrument(TalonFX motor) {
+//         if (!Robot.isSimulation()) {
+//             motor.getConfigurator().apply(new AudioConfigs().withAllowMusicDurDisable(true));
+//         }
+//         orchestra.addInstrument(motor);
+//     }
+
+//     public void playStartupJingle() {
+//         // Every motor added individually and explicitly, in the order we
+//         // most want to hear them — instruments beyond however many tracks
+//         // the chrp actually has get no track assigned at all (silent, no
+//         // CAN data), so whoever's added last is most at risk of going quiet.
+        
+//         addJingleInstrument(intake.getExtensionMotor());
+//         addJingleInstrument(turret.getTurretMotor());
+//        addJingleInstrument(shooter.getShooterMotor1());
+//         addJingleInstrument(shooter.getShooterMotor2());
+//         addJingleInstrument(shooter.getHoodMotor());
+//         addJingleInstrument(feeder.getTowerMotor());
+//         addJingleInstrument(feeder.getRollerMotor());
+//          addJingleInstrument(feeder.getSpindexerMotor());
+        
+
+        
+
+//         var status = orchestra.loadMusic("sirius.chrp");
+//         if (status.isOK()) {
+//             orchestra.play();
+//         } else {
+//             System.out.println("Could not load startup jingle, error code: " + status.toString());
+//         }
+//     }
+
+//     /** Reports whether the jingle is still playing and how far into it we are. */
+//     public void logJingleStatus() {
+//         SmartDashboard.putBoolean("JINGLE/Playing", orchestra.isPlaying());
+//         SmartDashboard.putNumber("JINGLE/Current Time", orchestra.getCurrentTime());
+//     }
+
+//     /**
+//      * Releases the instrument motors back to normal control. Devices playing
+//      * in an Orchestra ignore every other control request until this (or
+//      * pause()) is called, so this must run before any subsystem needs real
+//      * control — call on first enable regardless of mode.
+//      */
+//     public void stopStartupJingle() {
+//         orchestra.stop();
+//     }
 
     /* ---------------- Command helpers ---------------- */
 

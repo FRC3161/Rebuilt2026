@@ -219,6 +219,11 @@ public class Turret extends SubsystemBase {
         }
     }
 
+    // Exposed so RobotContainer can add this to the startup-jingle Orchestra individually.
+    public TalonFX getTurretMotor() {
+        return turretMotor;
+    }
+
     public void checkTunableValues() {
         if (!Robot.isSimulation()) {
             if (k_S.hasChanged() || k_V.hasChanged() || k_A.hasChanged()

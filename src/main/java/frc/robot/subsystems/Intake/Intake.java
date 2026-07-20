@@ -180,17 +180,22 @@ public class Intake extends SubsystemBase {
                 extensionMode = ExtensionControlMode.POSITION;
                 break;
             case RESETING:
+                // CANrange-based auto-homing disabled — the sensor isn't
+                // mechanically reliable right now. Re-enable once it's
+                // fixed; until then this just holds position like IDLING.
+                //
                 // Crawl inward until the CANrange sees the intake at home,
                 // then zero. Threshold of 0 disables auto-zeroing.
-                if (IntakeConstants.intakeExtensionHomingThreshold > 0
-                        && getCanRangeDistance() > IntakeConstants.intakeExtensionHomingThreshold) {
-                    setZero();
-                    position = 0;
-                    extensionMode = ExtensionControlMode.POSITION;
-                } else {
-                    extensionDuty = -IntakeConstants.manualDutyCycle;
-                    extensionMode = ExtensionControlMode.DUTY_CYCLE;
-                }
+                // if (IntakeConstants.intakeExtensionHomingThreshold > 0
+                //         && getCanRangeDistance() > IntakeConstants.intakeExtensionHomingThreshold) {
+                //     setZero();
+                //     position = 0;
+                //     extensionMode = ExtensionControlMode.POSITION;
+                // } else {
+                //     extensionDuty = -IntakeConstants.manualDutyCycle;
+                //     extensionMode = ExtensionControlMode.DUTY_CYCLE;
+                // }
+                extensionMode = ExtensionControlMode.POSITION;
                 break;
             case SCORING:
                 position = 0;
@@ -246,6 +251,12 @@ public class Intake extends SubsystemBase {
             intakeMotor.getConfigurator().apply(intakeMotorConfig);
             intakeMotor2.getConfigurator().apply(intakeMotor2Config);
         }
+    }
+
+    // Exposed so RobotContainer can add this to the startup-jingle Orchestra individually.
+    // Deliberately no getter for intakeMotor/intakeMotor2 — the rollers are excluded.
+    public TalonFX getExtensionMotor() {
+        return intakeExtensionMotor;
     }
 
     public void setZero() {
