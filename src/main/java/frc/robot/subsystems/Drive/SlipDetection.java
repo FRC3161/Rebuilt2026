@@ -222,13 +222,13 @@ public class SlipDetection {
         return stallScore > DriveConstants.stallDetectedThreshold;
     }
 
-    private boolean visionIsFresh() {
+    public boolean isVisionFresh() {
         return lastVisionUpdateTimestamp > 0
                 && (Timer.getFPGATimestamp() - lastVisionUpdateTimestamp) < DriveConstants.visionFreshnessWindowSeconds;
     }
 
     private double getTranslationalSlip() {
-        return visionIsFresh() ? translationalSlipVision : translationalSlipAccel;
+        return isVisionFresh() ? translationalSlipVision : translationalSlipAccel;
     }
 
     public double getSlipScore() {
@@ -250,6 +250,6 @@ public class SlipDetection {
         SmartDashboard.putNumber("SLIP/Debug/Rotational", rotationalSlip);
         SmartDashboard.putNumber("SLIP/Debug/TranslationalVision", translationalSlipVision);
         SmartDashboard.putNumber("SLIP/Debug/TranslationalAccel", translationalSlipAccel);
-        SmartDashboard.putBoolean("SLIP/Debug/VisionFresh", visionIsFresh());
+        SmartDashboard.putBoolean("SLIP/Debug/VisionFresh", isVisionFresh());
     }
 }

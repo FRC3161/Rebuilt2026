@@ -87,6 +87,10 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         return this.getState().Pose;
     }
 
+    public boolean isVisionPoseFresh() {
+        return slipDetection.isVisionFresh();
+    }
+
     /** Field-relative chassis speeds. */
     public ChassisSpeeds getFieldSpeeds() {
         return ChassisSpeeds.fromRobotRelativeSpeeds(getState().Speeds, getPose().getRotation());

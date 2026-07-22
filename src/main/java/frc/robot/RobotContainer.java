@@ -16,8 +16,14 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
@@ -414,9 +420,97 @@ public class RobotContainer {
         return autoChooser.getSelected();
     }
 
+    /** Pairs an Auto-Detect family with its already-built chooser Command, so telemetry can report which concrete auto that Command will resolve to without re-parsing anything. */
+    private record AutoDetectEntry(AutoSelector.AutoFamily family, Command chooserCommand) {
+    }
+
+    /** Dashboard-selectable override for AutoSelector.Side -- lets the driver force a side if vision ever picks wrong. */
+    private enum SideOverride {
+        AUTO_DETECT, FORCE_LEFT, FORCE_RIGHT
+    }
+
+    private final List<AutoDetectEntry> autoDetectEntries = new ArrayList<>();
+    private final SendableChooser<SideOverride> sideOverrideChooser = new SendableChooser<>();
+    private AutoSelector.Side detectedSide = AutoSelector.Side.RIGHT;
+    private int detectedSideStableCount = 0;
+    private static final int kSideDebounceCycles = 25; // ~0.5s at 50Hz
+
     public void configureAutoCommands() {
-        autoChooser = AutoBuilder.buildAutoChooser();
+        sideOverrideChooser.setDefaultOption("Auto-Detect (Recommended)", SideOverride.AUTO_DETECT);
+        sideOverrideChooser.addOption("Force Left", SideOverride.FORCE_LEFT);
+        sideOverrideChooser.addOption("Force Right", SideOverride.FORCE_RIGHT);
+        SmartDashboard.putData("AUTO/Side Override", sideOverrideChooser);
+
+        // Individual per-side .auto files covered by an AUTO_DETECT_FAMILIES pair are
+        // filtered out of the raw chooser options -- only the single combined family entry
+        // below is shown, so the dashboard doesn't list both "Theory Dance L" and
+        // "Theory Dance R" alongside the combined "Theory Dance" entry.
+        Set<String> coveredAutoNames = AutoSelector.coveredAutoNames();
+        autoChooser = AutoBuilder.buildAutoChooserWithOptionsModifier(
+                options -> options.filter(auto -> !coveredAutoNames.contains(auto.getName())));
+
+        for (AutoSelector.AutoFamily family : AutoSelector.AUTO_DETECT_FAMILIES) {
+            // Both sides are built once, right here, rather than lazily at auto start --
+            // avoids any JSON/trajectory parsing delay between enabling and the robot
+            // moving. Only the pick between these two already-built Commands happens at
+            // autonomousInit(), which is just a boolean check.
+            Command left = family.leftBuilder().get();
+            Command right = family.rightBuilder().get();
+            Command autoDetect = Commands.either(left, right, () -> resolveSide() == AutoSelector.Side.LEFT);
+            autoDetectEntries.add(new AutoDetectEntry(family, autoDetect));
+            autoChooser.addOption(family.label(), autoDetect);
+        }
+
         SmartDashboard.putData("autos", autoChooser);
+    }
+
+    /** The side that will actually be used: the dashboard override if one is set, otherwise the vision-detected side. */
+    private AutoSelector.Side resolveSide() {
+        SideOverride override = sideOverrideChooser.getSelected();
+        if (override == SideOverride.FORCE_LEFT) {
+            return AutoSelector.Side.LEFT;
+        }
+        if (override == SideOverride.FORCE_RIGHT) {
+            return AutoSelector.Side.RIGHT;
+        }
+        return detectedSide;
+    }
+
+    /**
+     * Called every disabledPeriodic tick: debounces the vision-derived starting side and
+     * surfaces it, plus the actually-resolved side/auto, on the dashboard so the driver sees
+     * it settle before enabling. detectedSide is finalized here too -- autonomousInit() just
+     * hands the already-decided side (or the dashboard override) to Commands.either, so
+     * nothing is decided or built at auto start.
+     */
+    public void updateAutoSideDetection() {
+        Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Blue);
+        AutoSelector.Side rawSide = AutoSelector.sideFromPose(drivetrain.getPose(), alliance);
+        if (rawSide == detectedSide) {
+            detectedSideStableCount = 0;
+        } else if (++detectedSideStableCount >= kSideDebounceCycles) {
+            detectedSide = rawSide;
+            detectedSideStableCount = 0;
+        }
+
+        SmartDashboard.putString("AUTO/Detected Side", detectedSide.toString());
+        SmartDashboard.putBoolean("AUTO/Vision Fix Fresh", drivetrain.isVisionPoseFresh());
+        SmartDashboard.putString("AUTO/Will Run", resolveWillRun());
+    }
+
+    /** What auto will actually run if enabled right now, given the current chooser selection and the resolved (possibly overridden) side. */
+    private String resolveWillRun() {
+        Command selected = autoChooser.getSelected();
+        if (selected == null) {
+            return "None";
+        }
+        AutoSelector.Side side = resolveSide();
+        for (AutoDetectEntry entry : autoDetectEntries) {
+            if (entry.chooserCommand() == selected) {
+                return side == AutoSelector.Side.LEFT ? entry.family().leftName() : entry.family().rightName();
+            }
+        }
+        return selected.getName();
     }
 
     public void configureNamedCommands() {
