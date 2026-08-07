@@ -325,6 +325,24 @@ public final class Constants {
         public static final double[] intakePID = { 0.3, 0, 0 };
         public static final double[] intakeSVA = { 0, 0.13, 0.01 };
 
+        // Jam-clearing: starting from intakingPosition (assumed already open when
+        // AGITATE is pressed), the extension jogs back and forth while the rollers
+        // keep spinning normally. Each close moves in by agitateCloseAmplitude, each
+        // reopen only recovers agitateReopenAmplitude (less than the close amount),
+        // so the whole oscillation band drifts toward closed over time instead of
+        // just buzzing in place. First field test at period=0.25/close=3/reopen=2.5
+        // came back "too big and too slow" -- reopen was too close to close (a slow
+        // walk-down with big swings), not a fast buzz. Shrunk the swing size and
+        // period, and shrunk reopen much further below close (not just slightly)
+        // so it still drives to fully closed quickly despite the smaller steps:
+        // 10 -> 9 -> 9.25 -> 8.25 -> 8.5 -> ... reaching closed in ~1.6s, then
+        // settling into a small steady buzz right at the clamp (0 to
+        // agitateReopenAmplitude) for as long as the button stays held.
+        // TODO: field-tune all three -- still just a guess, not validated.
+        public static final double agitatePeriodSeconds = 0.06;
+        public static final double agitateCloseAmplitude = 1.0;
+        public static final double agitateReopenAmplitude = 0.25;
+
         public enum IntakeWantedState {
             IDLE,
             INTAKE,
@@ -332,6 +350,7 @@ public final class Constants {
             RESET,
             SCORE,
             OUTTAKE,
+            AGITATE,
             MANUAL_CONTROL_POS,
             MANUAL_CONTROL_NEG,
             MANUAL_IDLE,
@@ -345,6 +364,7 @@ public final class Constants {
             RESETING,
             SCORING,
             OUTTAKING,
+            AGITATING,
             IN_MANUAL_CONTROL_POS,
             IN_MANUAL_CONTROL_NEG,
             IN_MANUAL_IDLE,

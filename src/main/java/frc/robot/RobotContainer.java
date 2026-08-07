@@ -16,9 +16,12 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+
+import org.json.simple.parser.ParseException;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -322,9 +325,9 @@ public class RobotContainer {
                         FeederWantedState.SHOOT))
                 .onFalse(stopScoring());
 
-        // agitation manual
+        // agitation manual -- jog the intake to try to shake a hopper jam loose
         operator.leftTrigger()
-                .onTrue(setIntake(IntakeWantedState.RETRACT))
+                .onTrue(setIntake(IntakeWantedState.AGITATE))
                 .onFalse(setIntake(IntakeWantedState.INTAKE));
 
         // slow squeeze
@@ -441,15 +444,20 @@ public class RobotContainer {
         sideOverrideChooser.addOption("Force Right", SideOverride.FORCE_RIGHT);
         SmartDashboard.putData("AUTO/Side Override", sideOverrideChooser);
 
-        // Individual per-side .auto files covered by an AUTO_DETECT_FAMILIES pair are
-        // filtered out of the raw chooser options -- only the single combined family entry
-        // below is shown, so the dashboard doesn't list both "Theory Dance L" and
-        // "Theory Dance R" alongside the combined "Theory Dance" entry.
-        Set<String> coveredAutoNames = AutoSelector.coveredAutoNames();
+        // AUTO_DETECT_FAMILIES is the manually-curated list; discoverPrefixedFamilies() finds
+        // any "Left:<Name>" auto with no registration needed at all (see AutoSelector's class
+        // doc). Individual per-side .auto files covered by either are filtered out of the raw
+        // chooser options -- only the single combined family entry below is shown, so the
+        // dashboard doesn't list both "Theory Dance L" and "Theory Dance R" alongside the
+        // combined "Theory Dance" entry.
+        List<AutoSelector.AutoFamily> families = new ArrayList<>(AutoSelector.AUTO_DETECT_FAMILIES);
+        families.addAll(AutoSelector.discoverPrefixedFamilies());
+
+        Set<String> coveredAutoNames = AutoSelector.coveredAutoNames(families);
         autoChooser = AutoBuilder.buildAutoChooserWithOptionsModifier(
                 options -> options.filter(auto -> !coveredAutoNames.contains(auto.getName())));
 
-        for (AutoSelector.AutoFamily family : AutoSelector.AUTO_DETECT_FAMILIES) {
+        for (AutoSelector.AutoFamily family : families) {
             // Both sides are built once, right here, rather than lazily at auto start --
             // avoids any JSON/trajectory parsing delay between enabling and the robot
             // moving. Only the pick between these two already-built Commands happens at
@@ -496,6 +504,7 @@ public class RobotContainer {
         SmartDashboard.putString("AUTO/Detected Side", detectedSide.toString());
         SmartDashboard.putBoolean("AUTO/Vision Fix Fresh", drivetrain.isVisionPoseFresh());
         SmartDashboard.putString("AUTO/Will Run", resolveWillRun());
+        updateSelectedAutoPreview();
     }
 
     /** What auto will actually run if enabled right now, given the current chooser selection and the resolved (possibly overridden) side. */
@@ -511,6 +520,46 @@ public class RobotContainer {
             }
         }
         return selected.getName();
+    }
+
+    private Command previewedCommand = null;
+    private AutoSelector.Side previewedSide = null;
+    private Alliance previewedAlliance = null;
+
+    /**
+     * Redraws the "Selected Auto" path on the drivetrain's Field2d widget whenever the chooser
+     * selection, the resolved side, or the alliance actually changes -- getPathGroupFromAutoFile
+     * re-parses the .auto file from disk each call, so this is cached rather than re-run every
+     * disabledPeriodic tick regardless of whether anything changed.
+     */
+    private void updateSelectedAutoPreview() {
+        Command selected = autoChooser.getSelected();
+        AutoSelector.Side side = resolveSide();
+        Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Blue);
+        if (selected == previewedCommand && side == previewedSide && alliance == previewedAlliance) {
+            return;
+        }
+        previewedCommand = selected;
+        previewedSide = side;
+        previewedAlliance = alliance;
+
+        if (selected == null) {
+            drivetrain.setFieldTrajectory("Selected Auto", List.of());
+            return;
+        }
+        try {
+            for (AutoDetectEntry entry : autoDetectEntries) {
+                if (entry.chooserCommand() == selected) {
+                    drivetrain.setFieldTrajectory("Selected Auto",
+                            AutoSelector.previewFamilySide(entry.family(), side, alliance));
+                    return;
+                }
+            }
+            drivetrain.setFieldTrajectory("Selected Auto",
+                    AutoSelector.previewPoses(selected.getName(), false, alliance));
+        } catch (IOException | ParseException e) {
+            DriverStation.reportWarning("Failed to build auto preview path: " + e.getMessage(), false);
+        }
     }
 
     public void configureNamedCommands() {

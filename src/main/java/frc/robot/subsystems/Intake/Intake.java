@@ -8,6 +8,8 @@ import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
 import com.ctre.phoenix6.hardware.CANrange;
 import com.ctre.phoenix6.hardware.TalonFX;
 
+import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Robot;
@@ -62,6 +64,16 @@ public class Intake extends SubsystemBase {
     /* STATES */
     private IntakeWantedState wantedState = IntakeWantedState.IDLE;
     private SystemState systemState = SystemState.IDLING;
+
+    // AGITATING toggle state -- must be persistent instance fields updated once per
+    // loop from Timer.getFPGATimestamp(), not a Timer recreated inside applyState().
+    // (An earlier oscillation attempt in git history did exactly that and never
+    // actually toggled -- see commit dc7f908.) agitateTarget is the drifting
+    // position command; agitateExtended tracks whether the *next* toggle should
+    // close (true, i.e. currently at an open step) or reopen (false).
+    private double agitateToggleTime = 0.0;
+    private double agitateTarget = 0.0;
+    private boolean agitateExtended = true;
 
     public Intake() {
         /* Extension motor: closed-loop gains + Motion Magic profile */
@@ -142,6 +154,7 @@ public class Intake extends SubsystemBase {
             case RESET -> SystemState.RESETING;
             case SCORE -> SystemState.SCORING;
             case OUTTAKE -> SystemState.OUTTAKING;
+            case AGITATE -> SystemState.AGITATING;
             case MANUAL_CONTROL_POS -> SystemState.IN_MANUAL_CONTROL_POS;
             case MANUAL_CONTROL_NEG -> SystemState.IN_MANUAL_CONTROL_NEG;
             case MANUAL_IDLE -> SystemState.IN_MANUAL_IDLE;
@@ -203,6 +216,25 @@ public class Intake extends SubsystemBase {
                 break;
             case OUTTAKING:
                 motorspeed = -IntakeConstants.intakingSpeed;
+                extensionMode = ExtensionControlMode.POSITION;
+                break;
+            case AGITATING:
+                // Jam-clearing: rollers keep spinning normally while the extension
+                // jogs back and forth, each reopen recovering less than the
+                // previous close so the band drifts toward closed over time (see
+                // the Constants comment for the target sequence). Persistent timer,
+                // not a Timer recreated in this method -- see the fields' comment.
+                if (Timer.getFPGATimestamp() - agitateToggleTime > IntakeConstants.agitatePeriodSeconds) {
+                    double delta = agitateExtended
+                            ? -IntakeConstants.agitateCloseAmplitude
+                            : IntakeConstants.agitateReopenAmplitude;
+                    agitateTarget = MathUtil.clamp(
+                            agitateTarget + delta, IntakeConstants.retractingPos, IntakeConstants.intakingPosition);
+                    agitateExtended = !agitateExtended;
+                    agitateToggleTime = Timer.getFPGATimestamp();
+                }
+                position = agitateTarget;
+                motorspeed = IntakeConstants.intakingSpeed;
                 extensionMode = ExtensionControlMode.POSITION;
                 break;
             case IN_MANUAL_CONTROL_POS:
@@ -298,6 +330,15 @@ public class Intake extends SubsystemBase {
             setExtensionProfileSlow(true);
         } else if (nextState != SystemState.SCORING && systemState == SystemState.SCORING) {
             setExtensionProfileSlow(false);
+        }
+        // Restart the jog fresh on every new AGITATING entry -- assumes the intake
+        // is already open (matches the driver binding, which only reaches AGITATE
+        // from INTAKE), so the drift starts from intakingPosition rather than
+        // carrying stale state from a previous agitation.
+        if (nextState == SystemState.AGITATING && systemState != SystemState.AGITATING) {
+            agitateToggleTime = Timer.getFPGATimestamp();
+            agitateTarget = IntakeConstants.intakingPosition;
+            agitateExtended = true;
         }
         systemState = nextState;
 

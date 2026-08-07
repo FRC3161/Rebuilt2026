@@ -161,6 +161,18 @@ public class SlipDetection {
         wheelDriftAccelX += robotSpeeds.vxMetersPerSecond * dt;
         wheelDriftAccelY += robotSpeeds.vyMetersPerSecond * dt;
 
+        // Wheels reporting ~0 actual velocity is a trustworthy zero
+        // regardless of the current slip score -- slip can't exist without
+        // wheel motion. This has to be unconditional: the resync below only
+        // fires when NOT currently slipping, so a drifted imuVx that's
+        // pinning the score above threshold could otherwise never be
+        // corrected (the fix it needs requires the state it's blocking).
+        if (Math.abs(robotSpeeds.vxMetersPerSecond) < DriveConstants.stallMinCommandedVelocityMPS
+                && Math.abs(robotSpeeds.vyMetersPerSecond) < DriveConstants.stallMinCommandedVelocityMPS) {
+            imuVx = 0.0;
+            imuVy = 0.0;
+        }
+
         double now = Timer.getFPGATimestamp();
         if (accelWindowStartTime < 0) {
             accelWindowStartTime = now;

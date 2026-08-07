@@ -2,6 +2,7 @@ package frc.robot.subsystems.Drive;
 
 import static edu.wpi.first.units.Units.*;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -48,6 +49,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     public final Vision vision = new Vision();
     public final SlipDetection slipDetection = new SlipDetection();
     private final Field2d TheField = new Field2d();
+    // Separate from TheField deliberately -- keeps the sim-facing robot/target/turret
+    // view uncluttered, and lets auto-selection preview live on its own widget.
+    private final Field2d autoPreviewField = new Field2d();
 
     private static final double kSimLoopPeriod = 0.004;
     private Notifier m_simNotifier = null;
@@ -89,6 +93,11 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     public boolean isVisionPoseFresh() {
         return slipDetection.isVisionFresh();
+    }
+
+    /** Draws an arbitrary named pose list on the dedicated auto-preview widget (separate from "DRIVE/The field") -- e.g. a preview of the currently selected auto's route. */
+    public void setFieldTrajectory(String name, List<Pose2d> poses) {
+        autoPreviewField.getObject(name).setPoses(poses);
     }
 
     /** Field-relative chassis speeds. */
@@ -236,6 +245,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             startSimThread();
         }
         SmartDashboard.putData("DRIVE/The field", TheField);
+        SmartDashboard.putData("AUTO/Selected Auto Field", autoPreviewField);
         configureAutoBuilder();
     }
 
@@ -278,6 +288,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         TheField.getObject("robot").setPose(getPose());
         TheField.getObject("target").setPose(new Pose2d(getScoringLocation(), new Rotation2d()));
         TheField.getObject("turret").setPose(getCurrentTurretPose());
+        autoPreviewField.getObject("robot").setPose(getPose());
 
         ChassisSpeeds fieldSpeeds = getFieldSpeeds();
         SmartDashboard.putNumber("DRIVE/Pose X", getPose().getX());

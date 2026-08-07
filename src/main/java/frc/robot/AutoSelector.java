@@ -1,11 +1,17 @@
 package frc.robot;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
 
+import org.json.simple.parser.ParseException;
+
+import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.commands.PathPlannerAuto;
+import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.util.FlippingUtil;
 
 import edu.wpi.first.math.geometry.Pose2d;
@@ -26,10 +32,19 @@ import edu.wpi.first.wpilibj2.command.Command;
  *
  * Each family collapses its two hand-authored/generated .auto files into a single dashboard
  * chooser entry (RobotContainer filters the raw per-side options out of the chooser using
- * coveredAutoNames() below) — adding an entry here is the only step needed to both stop
- * hand-mirroring a new path in Choreo/PathPlanner AND declutter the dashboard; do not add
- * a pair here without verifying the underlying .traj Y-values actually mirror around
- * FlippingUtil.fieldSizeY / 2.
+ * coveredAutoNames() below) — adding an entry to AUTO_DETECT_FAMILIES is the only step needed
+ * to combine two already-validated hand-authored autos, or to generate one side via mirror
+ * from the other; do not add a pair there without verifying the underlying .traj Y-values
+ * actually mirror around FlippingUtil.fieldSizeY / 2.
+ *
+ * For a brand new auto that just needs a generated mirror and nothing else, no registration
+ * is needed at all: name the file "Left:<Name>" and discoverPrefixedFamilies() below will
+ * find it, generate the mirror, and combine it into the chooser as "<Name>" automatically.
+ * The colon is deliberate -- no existing hand-authored auto uses one, so this convention can
+ * never collide with the manually-curated list above. This still generates the mirror
+ * unconditionally with no human review of whether the path is actually safe to mirror, so it
+ * is only appropriate for genuinely one-off, low-stakes autos -- anything that needs a real
+ * "is this a valid mirror" judgment call belongs in AUTO_DETECT_FAMILIES instead.
  */
 public final class AutoSelector {
     private AutoSelector() {}
@@ -105,13 +120,78 @@ public final class AutoSelector {
                     "LBumpSW", () -> new PathPlannerAuto("LBumpSW"),
                     "RBumpSW (Auto-Mirrored)", () -> new PathPlannerAuto("LBumpSW", true)));
 
-    /** Every leftName/rightName across AUTO_DETECT_FAMILIES, so the raw per-side .auto options can be filtered out of the chooser in favor of the combined family entry. */
-    public static Set<String> coveredAutoNames() {
+    private static final String MIRROR_PREFIX = "Left:";
+
+    /**
+     * Scans every deployed .auto file for the "Left:<Name>" naming convention and builds a
+     * generated-mirror AutoFamily for each one found, with no manual registration required.
+     * Unlike AUTO_DETECT_FAMILIES, the Right side is always generated via mirror=true here --
+     * there is no way to point this at an existing hand-authored file, since the whole point
+     * is skipping registration entirely for simple cases.
+     */
+    public static List<AutoFamily> discoverPrefixedFamilies() {
+        List<AutoFamily> discovered = new ArrayList<>();
+        for (String autoName : AutoBuilder.getAllAutoNames()) {
+            if (!autoName.startsWith(MIRROR_PREFIX)) {
+                continue;
+            }
+            String displayName = autoName.substring(MIRROR_PREFIX.length());
+            discovered.add(new AutoFamily(
+                    displayName,
+                    autoName, () -> new PathPlannerAuto(autoName),
+                    displayName + " (Auto-Mirrored)", () -> new PathPlannerAuto(autoName, true)));
+        }
+        return discovered;
+    }
+
+    /** Every leftName/rightName across the given families, so the raw per-side .auto options can be filtered out of the chooser in favor of the combined family entry. */
+    public static Set<String> coveredAutoNames(List<AutoFamily> families) {
         Set<String> names = new HashSet<>();
-        for (AutoFamily family : AUTO_DETECT_FAMILIES) {
+        for (AutoFamily family : families) {
             names.add(family.leftName());
             names.add(family.rightName());
         }
         return names;
+    }
+
+    /**
+     * Poses for every point of every path in the named auto, for a pre-match preview on a
+     * Field2d widget -- re-parses the .auto file directly (PathPlannerAuto.getPathGroupFromAutoFile),
+     * the same API PathPlannerLib documents for this exact use, so it works while just sitting
+     * disabled and doesn't require actually scheduling/running the auto.
+     *
+     * Applies FlippingUtil.flipFieldPose on Red, the exact same transform AutoBuilder.resetOdom
+     * applies at execution time (see CommandSwerveDrivetrain's shouldFlipPath config) -- without
+     * this, the preview would only be correct on Blue, since getPathGroupFromAutoFile and
+     * mirrorPath() both work in raw, unflipped field coordinates.
+     */
+    public static List<Pose2d> previewPoses(String autoName, boolean mirror, Alliance alliance)
+            throws IOException, ParseException {
+        List<Pose2d> poses = new ArrayList<>();
+        for (PathPlannerPath path : PathPlannerAuto.getPathGroupFromAutoFile(autoName)) {
+            for (Pose2d pose : (mirror ? path.mirrorPath() : path).getPathPoses()) {
+                poses.add(alliance == Alliance.Red ? FlippingUtil.flipFieldPose(pose) : pose);
+            }
+        }
+        return poses;
+    }
+
+    /**
+     * Preview poses for whichever side of a family is currently in play. leftName is always a
+     * real hand-authored file (true across every AUTO_DETECT_FAMILIES entry and everything
+     * discoverPrefixedFamilies() finds). rightName is either a real hand-authored file too, or
+     * a synthetic "(Auto-Mirrored)" label with no file on disk -- checked directly against
+     * AutoBuilder.getAllAutoNames() rather than inferred from the label text, since a fragile
+     * naming guess is exactly the kind of risk this class avoids elsewhere.
+     */
+    public static List<Pose2d> previewFamilySide(AutoFamily family, Side side, Alliance alliance)
+            throws IOException, ParseException {
+        if (side == Side.LEFT) {
+            return previewPoses(family.leftName(), false, alliance);
+        }
+        boolean rightIsRealFile = AutoBuilder.getAllAutoNames().contains(family.rightName());
+        return rightIsRealFile
+                ? previewPoses(family.rightName(), false, alliance)
+                : previewPoses(family.leftName(), true, alliance);
     }
 }
