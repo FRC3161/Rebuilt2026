@@ -256,8 +256,11 @@ public final class Constants {
         public static final double[] hoodPID = { 2.0, 0, 0 };
         public static final double[] hoodSVA = { 0.0, 0, 0 };
 
-        public static final double[] shooterPID = { 1.5, 0, 0.02 };
-        public static final double[] shooterSVA = { 0.5, 0.117, 0.02 };
+        // kP 1.5/kS 0.5 dated back to a July 13 baseline snapshot of main with no
+        // recorded tuning session; bench-retuned via Tuner (Velocity Voltage, Slot 0)
+        // after it was chattering/oscillating around target -- kP 0.2/kS 0.1 held flat.
+        public static final double[] shooterPID = { 0.2, 0, 0.02 };
+        public static final double[] shooterSVA = { 0.15, 0.117, 0.02 };
 
         public enum ShooterWantedState {
             IDLE,
