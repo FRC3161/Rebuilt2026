@@ -8,9 +8,19 @@ import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.wpilibj.Filesystem;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Robot;
@@ -44,6 +54,16 @@ public class Shooter extends SubsystemBase {
     // sim state
     private double simShooterVelocity = 0.0;
     private double simHoodPosition = 0.0;
+
+    // Manual debug-mode setpoints, driven by nudgeManualSetpoints(). Persist
+    // across DEBUG activations so the operator doesn't lose their place.
+    private double manualHoodPosition = 0.0;
+    private double manualRPS = 0.0;
+    private double lastDebugLoopTimestamp = -1;
+
+    // Session-only log of shot-table marks (see markCurrentAsShotTablePoint), for the dashboard readout.
+    private final List<String> markedPointsLog = new ArrayList<>();
+    private static final Path shotMarkLogPath = Path.of(Filesystem.getOperatingDirectory().getPath(), "shot_table_marks.txt");
 
     /* PIDFF CONTROL */
     private final LoggedTunableNumber k_S = new LoggedTunableNumber("shooter_s", ShooterConstants.shooterSVA[0]);
@@ -192,6 +212,7 @@ public class Shooter extends SubsystemBase {
             case TEST -> SystemState.TESTING;
             case RETRACT_AUTO -> SystemState.RETRACTING_AUTO;
             case TURN_ON_AUTO -> SystemState.TURNING_ON_AUTO;
+            case DEBUG -> SystemState.DEBUGGING;
         };
     }
 
@@ -215,7 +236,8 @@ public class Shooter extends SubsystemBase {
                 break;
             case HUB_SHOOTING:
                 motorspeed = drivetrain.currentShotCommand.RPS();
-                position = MathUtil.clamp(drivetrain.currentShotCommand.hoodAngle(), -0.5, 8);
+                position = MathUtil.clamp(drivetrain.currentShotCommand.hoodAngle(),
+                        ShooterConstants.hoodMinPosition, ShooterConstants.hoodMaxPosition);
                 break;
             case PASS_SHOOTING:
 
@@ -242,7 +264,9 @@ public class Shooter extends SubsystemBase {
                 boolean restrictHood = inZonePredicted || inZoneCurrent;
 
                 motorspeed = drivetrain.currentShotCommand.RPS();
-                position = restrictHood ? 0.0 : MathUtil.clamp(drivetrain.currentShotCommand.hoodAngle(), -0.5, 8);
+                position = restrictHood ? 0.0
+                        : MathUtil.clamp(drivetrain.currentShotCommand.hoodAngle(),
+                                ShooterConstants.hoodMinPosition, ShooterConstants.hoodMaxPosition);
                 break;
             case HOMING:
                 position = -0.1;
@@ -268,6 +292,84 @@ public class Shooter extends SubsystemBase {
             case TURNING_ON_AUTO:
                 motorspeed = 50;
                 break;
+            case DEBUGGING:
+                motorspeed = manualRPS;
+                position = manualHoodPosition;
+                break;
+        }
+    }
+
+    /**
+     * Nudges the manual DEBUG-mode hood/flywheel setpoints by joystick
+     * deflection, scaled by elapsed time and the tunable debug rates, and
+     * clamped to the same safe limits as every other hood/RPS setpoint. Only
+     * meaningful while the wanted state is DEBUG -- call once per loop from
+     * whoever is driving debug mode.
+     */
+    public void nudgeManualSetpoints(double hoodStickInput, double rpsStickInput) {
+        double now = Timer.getFPGATimestamp();
+        double dt = (lastDebugLoopTimestamp < 0) ? 0.02 : now - lastDebugLoopTimestamp;
+        lastDebugLoopTimestamp = now;
+
+        manualHoodPosition = MathUtil.clamp(
+                manualHoodPosition + hoodStickInput * ShooterConstants.debugHoodRateRotPerSec * dt,
+                ShooterConstants.hoodMinPosition, ShooterConstants.hoodMaxPosition);
+        manualRPS = MathUtil.clamp(
+                manualRPS + rpsStickInput * ShooterConstants.debugRPSRatePerSec * dt,
+                ShooterConstants.MIN_RPS, ShooterConstants.MAX_RPS);
+    }
+
+    /** Resets the debug nudge loop timer so re-entering DEBUG after a gap doesn't apply a huge dt jump. */
+    public void resetManualDebugTimer() {
+        lastDebugLoopTimestamp = -1;
+    }
+
+    /**
+     * Snaps the manual DEBUG-mode hood/RPS setpoints to whatever ShotCalc is
+     * currently recommending, as a tuning starting point -- so tuning can
+     * start from a real number and adjust from there instead of hunting for
+     * it by hand every time.
+     */
+    public void setManualToShotCalc() {
+        manualRPS = MathUtil.clamp(drivetrain.currentShotCommand.RPS(),
+                ShooterConstants.MIN_RPS, ShooterConstants.MAX_RPS);
+        manualHoodPosition = MathUtil.clamp(drivetrain.currentShotCommand.hoodAngle(),
+                ShooterConstants.hoodMinPosition, ShooterConstants.hoodMaxPosition);
+    }
+
+    /**
+     * Marks the current manual DEBUG-mode hood/RPS setpoints as a new point
+     * in the live RPS_MAP/HOOD_MAP tables, keyed to the robot's current real
+     * distance from the hub. The table mutation itself is in-memory only --
+     * lost on the next reboot/redeploy -- but every mark is also appended to
+     * a session dashboard list and to a plain-text file on the RIO
+     * (shotMarkLogPath), formatted as ready-to-paste RPS_MAP/HOOD_MAP.put()
+     * lines, so good values are easy to carry into Constants.java afterward
+     * even across a power cycle.
+     */
+    public void markCurrentAsShotTablePoint() {
+        double distance = drivetrain.getDistanceFromHub();
+        ShooterConstants.RPS_MAP.put(distance, manualRPS);
+        ShooterConstants.HOOD_MAP.put(distance, manualHoodPosition);
+
+        String summary = String.format("dist=%.2fm rps=%.1f hood=%.2f", distance, manualRPS, manualHoodPosition);
+        SmartDashboard.putString("DEBUG/Last Marked Shot Point", summary);
+
+        markedPointsLog.add(String.format("#%d %s", markedPointsLog.size() + 1, summary));
+        SmartDashboard.putStringArray("DEBUG/Marked Shot Points", markedPointsLog.toArray(new String[0]));
+
+        appendMarkToLogFile(distance);
+    }
+
+    /** Appends one mark to shotMarkLogPath as a timestamped, ready-to-paste RPS_MAP/HOOD_MAP.put() snippet. */
+    private void appendMarkToLogFile(double distance) {
+        String entry = String.format(
+                "// %s -- marked during debug tuning%nRPS_MAP.put(%.2f, %.1fd);%nHOOD_MAP.put(%.2f, %.2fd);%n%n",
+                LocalDateTime.now(), distance, manualRPS, distance, manualHoodPosition);
+        try {
+            Files.writeString(shotMarkLogPath, entry, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+        } catch (IOException e) {
+            System.out.println("Could not write shot table mark log: " + e.getMessage());
         }
     }
 
@@ -348,6 +450,7 @@ public class Shooter extends SubsystemBase {
         SmartDashboard.putNumber("SHOOTER/Shooter Wanted Speed", motorspeed);
         SmartDashboard.putNumber("SHOOTER/Hood Wanted Position", position);
         SmartDashboard.putBoolean("SHOOTER/Shooter Is Ready", shooterIsReady());
+        SmartDashboard.putBoolean("DEBUG/Manual Control Active", systemState == SystemState.DEBUGGING);
         SmartDashboard.putString("STATE/SHOOTER WANTED STATE", wantedState.toString());
         SmartDashboard.putString("STATE/SHOOTER SYSTEM STATE", systemState.toString());
 

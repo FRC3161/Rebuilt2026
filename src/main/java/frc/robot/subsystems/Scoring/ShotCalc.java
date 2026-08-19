@@ -64,9 +64,11 @@ public final class ShotCalc {
         // into a dead flywheel.
         if (distance < MIN_SOLVE_DISTANCE) {
             return new ShooterCommand(
-                    isPassing ? ShooterConstants.PASSING_RPS_MAP.get(distance) : ShooterConstants.RPS_MAP.get(distance),
+                    isPassing ? ShooterConstants.PASSING_RPS_MAP.get(distance)
+                            : ShooterConstants.activeRpsMap().get(distance),
                     toGoal.getAngle(),
-                    isPassing ? ShooterConstants.PASSING_HOOD_MAP.get(distance) : ShooterConstants.HOOD_MAP.get(distance));
+                    isPassing ? ShooterConstants.PASSING_HOOD_MAP.get(distance)
+                            : ShooterConstants.activeHoodMap().get(distance));
         }
 
         // Converge the circular dependency: virtual target position depends
@@ -88,12 +90,13 @@ public final class ShotCalc {
 
         Rotation2d turretAngle = virtualTarget.minus(turretPosition).getAngle();
         double rps = MathUtil.clamp(
-                isPassing ? ShooterConstants.PASSING_RPS_MAP.get(distance) : ShooterConstants.RPS_MAP.get(distance),
+                isPassing ? ShooterConstants.PASSING_RPS_MAP.get(distance)
+                        : ShooterConstants.activeRpsMap().get(distance),
                 ShooterConstants.MIN_RPS,
                 ShooterConstants.MAX_RPS);
         double hoodAngle = isPassing
                 ? ShooterConstants.PASSING_HOOD_MAP.get(distance)
-                : ShooterConstants.HOOD_MAP.get(distance);
+                : ShooterConstants.activeHoodMap().get(distance);
 
         SmartDashboard.putNumber("SOTF/Inherited Vel X", totalVelocity.getX());
         SmartDashboard.putNumber("SOTF/Inherited Vel Y", totalVelocity.getY());

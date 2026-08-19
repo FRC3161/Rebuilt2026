@@ -219,12 +219,138 @@ public final class Constants {
         }
 
         /*
+         * Mid-match shot-profile quick-fix. Switches which pre-baked RPS/HOOD
+         * table ShotCalc reads from, to compensate for a suspected external
+         * calibration bias (e.g. field lighting throwing off vision-based
+         * distance) that isn't a mechanical or tuning problem -- without
+         * touching the validated NORMAL tables above.
+         *
+         * LONG_SHOT/SHORT_SHOT are meant to be independently practice-tuned,
+         * the same way NORMAL was: NORMAL swishes center goal, LONG_SHOT is
+         * tuned to land on the back edge, SHORT_SHOT on the front edge. That
+         * anchors each profile's correction to the goal's own real tolerance
+         * instead of a guessed percentage, and lets the correction's size
+         * vary by distance instead of being a flat scalar. PLACEHOLDER: not
+         * yet re-tuned -- currently just a copy of NORMAL below. Needs real
+         * practice-field edge-shot passes before this is trustworthy at a
+         * competition; edit each .put() line directly with the real value
+         * once measured, same as NORMAL's tables were built.
+         */
+        public enum ShotProfile {
+            SHORT_SHOT, NORMAL, LONG_SHOT
+        }
+
+        public static ShotProfile activeShotProfile = ShotProfile.NORMAL;
+
+        public static final InterpolatingDoubleTreeMap RPS_MAP_LONG_SHOT = new InterpolatingDoubleTreeMap();
+        static {
+            RPS_MAP_LONG_SHOT.put(2.0, 45.5d);
+            RPS_MAP_LONG_SHOT.put(2.5, 47.5d);
+            RPS_MAP_LONG_SHOT.put(3.0, 48d);
+            RPS_MAP_LONG_SHOT.put(3.5, 50d);
+            RPS_MAP_LONG_SHOT.put(4.0, 52d);
+            RPS_MAP_LONG_SHOT.put(4.5, 54.5d);
+            RPS_MAP_LONG_SHOT.put(5.0, 56d);
+            RPS_MAP_LONG_SHOT.put(5.5, 60d);
+            RPS_MAP_LONG_SHOT.put(6.0, 64d);
+        }
+
+        public static final InterpolatingDoubleTreeMap HOOD_MAP_LONG_SHOT = new InterpolatingDoubleTreeMap();
+        static {
+            HOOD_MAP_LONG_SHOT.put(2.0, 0d);
+            HOOD_MAP_LONG_SHOT.put(2.5, 1d);
+            HOOD_MAP_LONG_SHOT.put(3.0, 2.2d);
+            HOOD_MAP_LONG_SHOT.put(3.5, 3d);
+            HOOD_MAP_LONG_SHOT.put(4.0, 3.8d);
+            HOOD_MAP_LONG_SHOT.put(4.5, 4.3d);
+            HOOD_MAP_LONG_SHOT.put(5.0, 4.6d);
+            HOOD_MAP_LONG_SHOT.put(5.5, 5d);
+            HOOD_MAP_LONG_SHOT.put(6.0, 5.5d);
+        }
+
+        public static final InterpolatingDoubleTreeMap RPS_MAP_SHORT_SHOT = new InterpolatingDoubleTreeMap();
+        static {
+            RPS_MAP_SHORT_SHOT.put(2.0, 45.5d);
+            RPS_MAP_SHORT_SHOT.put(2.5, 47.5d);
+            RPS_MAP_SHORT_SHOT.put(3.0, 48d);
+            RPS_MAP_SHORT_SHOT.put(3.5, 50d);
+            RPS_MAP_SHORT_SHOT.put(4.0, 52d);
+            RPS_MAP_SHORT_SHOT.put(4.5, 54.5d);
+            RPS_MAP_SHORT_SHOT.put(5.0, 56d);
+            RPS_MAP_SHORT_SHOT.put(5.5, 60d);
+            RPS_MAP_SHORT_SHOT.put(6.0, 64d);
+        }
+
+        public static final InterpolatingDoubleTreeMap HOOD_MAP_SHORT_SHOT = new InterpolatingDoubleTreeMap();
+        static {
+            HOOD_MAP_SHORT_SHOT.put(2.0, 0d);
+            HOOD_MAP_SHORT_SHOT.put(2.5, 1d);
+            HOOD_MAP_SHORT_SHOT.put(3.0, 2.2d);
+            HOOD_MAP_SHORT_SHOT.put(3.5, 3d);
+            HOOD_MAP_SHORT_SHOT.put(4.0, 3.8d);
+            HOOD_MAP_SHORT_SHOT.put(4.5, 4.3d);
+            HOOD_MAP_SHORT_SHOT.put(5.0, 4.6d);
+            HOOD_MAP_SHORT_SHOT.put(5.5, 5d);
+            HOOD_MAP_SHORT_SHOT.put(6.0, 5.5d);
+        }
+
+        /** The RPS table ShotCalc should read for a stationary (non-passing) hub shot, per the active profile. */
+        public static InterpolatingDoubleTreeMap activeRpsMap() {
+            return switch (activeShotProfile) {
+                case NORMAL -> RPS_MAP;
+                case LONG_SHOT -> RPS_MAP_LONG_SHOT;
+                case SHORT_SHOT -> RPS_MAP_SHORT_SHOT;
+            };
+        }
+
+        /** The hood table ShotCalc should read for a stationary (non-passing) hub shot, per the active profile. */
+        public static InterpolatingDoubleTreeMap activeHoodMap() {
+            return switch (activeShotProfile) {
+                case NORMAL -> HOOD_MAP;
+                case LONG_SHOT -> HOOD_MAP_LONG_SHOT;
+                case SHORT_SHOT -> HOOD_MAP_SHORT_SHOT;
+            };
+        }
+
+        private static final ShotProfile[] SHOT_PROFILE_STEPS = { ShotProfile.SHORT_SHOT, ShotProfile.NORMAL,
+                ShotProfile.LONG_SHOT };
+
+        /** Steps the active profile one notch toward LONG_SHOT (no-op if already there). */
+        public static void stepShotProfileTowardLong() {
+            int index = java.util.Arrays.asList(SHOT_PROFILE_STEPS).indexOf(activeShotProfile);
+            activeShotProfile = SHOT_PROFILE_STEPS[Math.min(index + 1, SHOT_PROFILE_STEPS.length - 1)];
+        }
+
+        /** Steps the active profile one notch toward SHORT_SHOT (no-op if already there). */
+        public static void stepShotProfileTowardShort() {
+            int index = java.util.Arrays.asList(SHOT_PROFILE_STEPS).indexOf(activeShotProfile);
+            activeShotProfile = SHOT_PROFILE_STEPS[Math.max(index - 1, 0)];
+        }
+
+        /** Resets the quick-fix profile to NORMAL -- called on every disable so a correction from a prior match/field doesn't carry over. */
+        public static void resetShotProfile() {
+            activeShotProfile = ShotProfile.NORMAL;
+        }
+
+        /*
          * Historical polynomial-regression tuning data, superseded by the maps
          * above. Kept for reference:
          * hood:    (2,0), (3,2.5), (4,5), (5,5.5), (6,6.5), (10,8)     [deg 2]
          * rps:     (2,47), (3,50), (4,50), (5,55), (6,62), (10,85)     [deg 2]
          * tof:     (2,0.25), (3,0.30), (4,0.35), (5,0.40), (6,0.45)    [deg 2]
          */
+
+        // Hood position clamp (mechanism rotations) -- the physical safe range
+        // enforced on every hood setpoint, including manual debug control.
+        public static final double hoodMinPosition = -0.5;
+        public static final double hoodMaxPosition = 8;
+
+        // Manual debug control: how far the manual hood/flywheel setpoints
+        // move per second of full joystick deflection, and the deadband
+        // applied to the stick before nudging either one.
+        public static final double debugHoodRateRotPerSec = 3.0;
+        public static final double debugRPSRatePerSec = 20.0;
+        public static final double debugStickDeadband = 0.15;
 
         public static final double activeWaitingSpeed = 30;
         public static final double inactiveWaitingSpeed = 0;
@@ -271,7 +397,8 @@ public final class Constants {
             HOME,
             TEST,
             RETRACT_AUTO,
-            TURN_ON_AUTO
+            TURN_ON_AUTO,
+            DEBUG
         }
 
         public enum SystemState {
@@ -284,7 +411,8 @@ public final class Constants {
             HOMING,
             TESTING,
             RETRACTING_AUTO,
-            TURNING_ON_AUTO
+            TURNING_ON_AUTO,
+            DEBUGGING
         }
     }
 
@@ -396,6 +524,11 @@ public final class Constants {
         public static final double cwLimit = -0.85;
         public static final double gearRatio = 38.8888888889;
 
+        // Manual debug control: how far the manual turret setpoint moves per
+        // second of full joystick deflection. Unvalidated -- tune once on
+        // real hardware, including checking the stick's sign convention.
+        public static final double debugTurretRateRotPerSec = 0.5;
+
         public static final double[] turretPID = { 51, 0, 0 };
         public static final double[] turretSVA = { 0, 0, 0 };
 
@@ -407,7 +540,8 @@ public final class Constants {
             TRENCH_PRESETL,
             TRENCH_PRESETR,
             HUB_PRESET,
-            TEST
+            TEST,
+            DEBUG
         }
 
         public enum SystemState {
@@ -418,7 +552,8 @@ public final class Constants {
             TRENCH_PRESETTINGL,
             TRENCH_PRESETTINGR,
             HUB_PRESETTING,
-            TESTING
+            TESTING,
+            DEBUGGING
         }
     }
 

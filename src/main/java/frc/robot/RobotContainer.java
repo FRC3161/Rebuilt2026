@@ -23,6 +23,7 @@ import java.util.Set;
 
 import org.json.simple.parser.ParseException;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -40,6 +41,7 @@ import frc.robot.Constants.OperatorConstants;
 import frc.robot.Constants.FeederConstants.FeederWantedState;
 import frc.robot.Constants.IntakeConstants.IntakeWantedState;
 import frc.robot.Constants.IntakeConstants.SystemState;
+import frc.robot.Constants.ShooterConstants;
 import frc.robot.Constants.ShooterConstants.ShooterWantedState;
 import frc.robot.Constants.TurretConstants.TurretWantedState;
 import frc.robot.commands.Drive.DriveToLocation;
@@ -114,6 +116,23 @@ public class RobotContainer {
     private final Trigger lowBattery = new Trigger(this::batteryIsLow);
     private final Trigger readyToShoot = new Trigger(
             () -> shooter.shooterIsReady() && turret.turretIsReady());
+
+    // Manual hood/flywheel/turret debug mode: toggled by the operator
+    // holding Start for 3 continuous seconds. While active, shooter hood/RPS
+    // are always driven by the operator's sticks instead of ShotCalc, turret
+    // either auto-tracks the target or takes manual nudges depending on the
+    // Y-button tracking toggle, and every non-debug operator control is
+    // locked out.
+    private boolean debugMode = false;
+    // Whether turret auto-tracks the target (IDLE_AIM) or takes manual
+    // left-stick-X nudges while debugging. Starts (and resets to) manual
+    // control every time debug mode is (re-)entered; toggled by Y.
+    private boolean turretTrackingEnabled = false;
+    private final Trigger debugModeHold = operator.start().debounce(3.0);
+    private final Trigger debugging = new Trigger(() -> debugMode);
+    // Hold X for 2s while debugging to mark the current manual hood/RPS as a
+    // live SOTF table point at the current hub distance.
+    private final Trigger markShotTablePoint = operator.x().and(debugging).debounce(2.0);
 
     public RobotContainer() {
         configureBindings();
@@ -216,6 +235,31 @@ public class RobotContainer {
         });
     }
 
+    /**
+     * Drives one loop of debug mode: shooter takes manual hood/RPS setpoints
+     * nudged by the operator's sticks (left Y = hood, right Y = flywheel),
+     * deadbanded so a centered stick holds the setpoint still. Turret either
+     * auto-tracks the target (IDLE_AIM) or takes manual left-stick-X nudges,
+     * depending on the Y-button tracking toggle.
+     */
+    private void applyDebugControls() {
+        shooter.setWantedShooterState(ShooterWantedState.DEBUG);
+
+        double hoodStick = -MathUtil.applyDeadband(operator.getLeftY(), ShooterConstants.debugStickDeadband);
+        double rpsStick = -MathUtil.applyDeadband(operator.getRightY(), ShooterConstants.debugStickDeadband);
+        shooter.nudgeManualSetpoints(hoodStick, rpsStick);
+
+        if (turretTrackingEnabled) {
+            turret.setWantedTurretState(TurretWantedState.IDLE_AIM);
+        } else {
+            turret.setWantedTurretState(TurretWantedState.DEBUG);
+            double turretStick = MathUtil.applyDeadband(operator.getLeftX(), ShooterConstants.debugStickDeadband);
+            turret.nudgeManualPosition(turretStick);
+        }
+
+        SmartDashboard.putBoolean("DEBUG/Turret Live Tracking", turretTrackingEnabled);
+    }
+
     public Command waitToShoot() {
         return Commands.waitUntil(() -> shooter.shooterIsReady() && turret.turretIsReady());
     }
@@ -300,58 +344,94 @@ public class RobotContainer {
 
         /********* OPERATOR *********/
 
-        // manually zero intake extension
-        operator.start().onTrue(Commands.runOnce(intake::setZero));
+        // manually zero intake extension (locked out while debugging)
+        operator.start().and(debugging.negate()).onTrue(Commands.runOnce(intake::setZero));
 
-        // spindexer reverse
-        operator.a()
+        // hold Start 3s to toggle manual hood/flywheel/turret debug mode
+        debugModeHold.onTrue(Commands.runOnce(() -> debugMode = !debugMode));
+
+        debugging.onTrue(Commands.runOnce(() -> {
+            shooter.resetManualDebugTimer();
+            turret.resetManualDebugTimer();
+            // Debug mode always starts in manual turret control -- seed it from
+            // wherever the turret was already aimed so entry doesn't snap it.
+            turret.seedManualPosition(turret.getCurrentSetpoint());
+        }));
+        debugging.whileTrue(Commands.run(this::applyDebugControls));
+        debugging.onFalse(stopScoring().andThen(Commands.runOnce(() -> turretTrackingEnabled = false)));
+
+        markShotTablePoint.onTrue(Commands.runOnce(shooter::markCurrentAsShotTablePoint));
+
+        // spindexer reverse (normal) / hold to shoot (while debugging)
+        operator.a().and(debugging.negate())
                 .onTrue(Commands.runOnce(() -> feeder.setWantedFeederState(FeederWantedState.FEEDTEST)))
                 .onFalse(Commands.runOnce(() -> feeder.setWantedFeederState(FeederWantedState.IDLE)));
+        operator.a().and(debugging)
+                .onTrue(Commands.runOnce(() -> feeder.setWantedFeederState(FeederWantedState.SHOOT)))
+                .onFalse(Commands.runOnce(() -> feeder.setWantedFeederState(FeederWantedState.IDLE)));
 
-        // high pass
-        operator.y()
+        // high pass (normal) / toggle turret live tracking (while debugging)
+        operator.y().and(debugging.negate())
                 .onTrue(scoringState(ShooterWantedState.TEST, TurretWantedState.AIM_PASS, FeederWantedState.SHOOT))
                 .onFalse(stopScoring());
+        operator.y().and(debugging)
+                .onTrue(Commands.runOnce(() -> {
+                    if (turretTrackingEnabled) {
+                        // Leaving live tracking for manual control -- start the manual
+                        // setpoint from wherever the turret was already aimed, not
+                        // wherever it was last left, so this doesn't snap the turret
+                        // across its range the instant manual control takes over.
+                        turret.seedManualPosition(turret.getCurrentSetpoint());
+                    }
+                    turretTrackingEnabled = !turretTrackingEnabled;
+                }));
 
-        // right trench shot
-        operator.b()
+        // right trench shot (normal) / snap manual hood+RPS to ShotCalc's current pick (while debugging)
+        operator.b().and(debugging.negate())
                 .onTrue(scoringState(ShooterWantedState.TRENCH_SHOOT, TurretWantedState.TRENCH_PRESETR,
                         FeederWantedState.SHOOT))
                 .onFalse(stopScoring());
+        operator.b().and(debugging)
+                .onTrue(Commands.runOnce(shooter::setManualToShotCalc));
 
-        // left trench shot
-        operator.x()
+        // left trench shot (locked out while debugging)
+        operator.x().and(debugging.negate())
                 .onTrue(scoringState(ShooterWantedState.TRENCH_SHOOT, TurretWantedState.TRENCH_PRESETL,
                         FeederWantedState.SHOOT))
                 .onFalse(stopScoring());
 
-        // agitation manual -- jog the intake to try to shake a hopper jam loose
-        operator.leftTrigger()
+        // agitation manual -- jog the intake to try to shake a hopper jam loose (locked out while debugging)
+        operator.leftTrigger().and(debugging.negate())
                 .onTrue(setIntake(IntakeWantedState.AGITATE))
                 .onFalse(setIntake(IntakeWantedState.INTAKE));
 
-        // slow squeeze
-        operator.leftBumper()
+        // slow squeeze (locked out while debugging)
+        operator.leftBumper().and(debugging.negate())
                 .onTrue(setIntake(IntakeWantedState.SCORE))
                 .onFalse(setIntake(IntakeWantedState.INTAKE));
 
         // hub shot (SOTF)
-        operator.rightTrigger()
+        operator.rightTrigger().and(debugging.negate())
                 .onTrue(scoringState(ShooterWantedState.HUB_SHOOT, TurretWantedState.AIM_HUB,
                         FeederWantedState.SHOOT))
                 .onFalse(stopScoring());
 
         // aiming offset trim
-        operator.povRight().onTrue(Commands.runOnce(turret::applyLeftOffset));
-        operator.povLeft().onTrue(Commands.runOnce(turret::applyRightOffset));
+        operator.povRight().and(debugging.negate()).onTrue(Commands.runOnce(turret::applyLeftOffset));
+        operator.povLeft().and(debugging.negate()).onTrue(Commands.runOnce(turret::applyRightOffset));
 
-        // test button
-        operator.povDown()
-                .onTrue(scoringState(ShooterWantedState.TEST, TurretWantedState.IDLE, FeederWantedState.SHOOT))
-                .onFalse(scoringState(ShooterWantedState.IDLE, TurretWantedState.IDLE, FeederWantedState.IDLE));
+        // mid-match shot-profile quick-fix: steps which pre-baked RPS/HOOD
+        // table ShotCalc reads (NORMAL <-> LONG_SHOT / SHORT_SHOT), to
+        // compensate for a suspected external calibration bias without
+        // touching the validated NORMAL tuning. Resets to NORMAL on every
+        // disable (see disabledActions()).
+        operator.povUp().and(debugging.negate())
+                .onTrue(Commands.runOnce(ShooterConstants::stepShotProfileTowardLong));
+        operator.povDown().and(debugging.negate())
+                .onTrue(Commands.runOnce(ShooterConstants::stepShotProfileTowardShort));
 
         // passing
-        operator.rightBumper()
+        operator.rightBumper().and(debugging.negate())
                 .onTrue(scoringState(ShooterWantedState.PASS_SHOOT, TurretWantedState.AIM_PASS,
                         FeederWantedState.PASS))
                 .onFalse(stopScoring());
@@ -393,6 +473,7 @@ public class RobotContainer {
         shooter.setWantedShooterState(ShooterWantedState.IDLE);
         turret.setWantedTurretState(TurretWantedState.IDLE);
         intake.setWantedIntakeState(IntakeWantedState.IDLE);
+        ShooterConstants.resetShotProfile();
 
         normalLights.LED_Twinkle(
                 LEDTarget.SIDES,

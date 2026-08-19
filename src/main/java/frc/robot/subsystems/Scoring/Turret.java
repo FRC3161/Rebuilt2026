@@ -15,6 +15,7 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Robot;
+import frc.robot.Constants.ShooterConstants;
 import frc.robot.Constants.TurretConstants;
 import frc.robot.Constants.TurretConstants.SystemState;
 import frc.robot.Constants.TurretConstants.TurretWantedState;
@@ -37,6 +38,11 @@ public class Turret extends SubsystemBase {
     // Driver aim trim, in mechanism rotations. Applied before the soft-limit
     // normalization so trimming can never push the target past a limit.
     private double offset = 0.0;
+
+    // Manual debug-mode setpoint, driven by nudgeManualPosition(). Persists
+    // across DEBUG activations so the operator doesn't lose their place.
+    private double manualPosition = 0.0;
+    private double lastDebugLoopTimestamp = -1;
 
     private final PositionVoltage positionRequest = new PositionVoltage(0);
 
@@ -119,6 +125,7 @@ public class Turret extends SubsystemBase {
             case TRENCH_PRESETR -> SystemState.TRENCH_PRESETTINGR;
             case HUB_PRESET -> SystemState.HUB_PRESETTING;
             case TEST -> SystemState.TESTING;
+            case DEBUG -> SystemState.DEBUGGING;
         };
     }
 
@@ -182,7 +189,53 @@ public class Turret extends SubsystemBase {
             case TESTING:
                 position = .75;
                 break;
+            case DEBUGGING:
+                position = manualPosition;
+                break;
         }
+    }
+
+    /**
+     * Nudges the manual DEBUG-mode turret setpoint by joystick deflection,
+     * scaled by elapsed time and the tunable debug rate, and clamped to the
+     * same soft limits as every other turret target. Only meaningful while
+     * the wanted state is DEBUG -- call once per loop from whoever is
+     * driving debug mode.
+     *
+     * Deliberately a plain clamp, unlike calculateAimTarget()'s wrap-around
+     * math -- manual control must saturate hard at cwLimit/ccwLimit and
+     * never unwrap past them, since an unwrap could otherwise send this
+     * fast-moving mechanism most of the way around in one commanded jump.
+     */
+    public void nudgeManualPosition(double stickInput) {
+        double now = Timer.getFPGATimestamp();
+        double dt = (lastDebugLoopTimestamp < 0) ? 0.02 : now - lastDebugLoopTimestamp;
+        lastDebugLoopTimestamp = now;
+
+        manualPosition = MathUtil.clamp(
+                manualPosition + stickInput * TurretConstants.debugTurretRateRotPerSec * dt,
+                TurretConstants.cwLimit, TurretConstants.ccwLimit);
+    }
+
+    /**
+     * Seeds the manual DEBUG-mode setpoint to a given position (clamped to
+     * the soft limits), so switching from live tracking into manual control
+     * continues from wherever the turret already was instead of snapping to
+     * whatever manualPosition was last left at. Call once, right before
+     * switching into DEBUG.
+     */
+    public void seedManualPosition(double seed) {
+        manualPosition = MathUtil.clamp(seed, TurretConstants.cwLimit, TurretConstants.ccwLimit);
+    }
+
+    /** The position currently being commanded, whatever state produced it -- used to seed manual control continuously off live tracking. */
+    public double getCurrentSetpoint() {
+        return position;
+    }
+
+    /** Resets the debug nudge loop timer so re-entering DEBUG after a gap doesn't apply a huge dt jump. */
+    public void resetManualDebugTimer() {
+        lastDebugLoopTimestamp = -1;
     }
 
     public boolean turretIsReady() {
@@ -248,6 +301,7 @@ public class Turret extends SubsystemBase {
         SmartDashboard.putNumber("SOTF/Shot Command Angle", drivetrain.currentShotCommand.turretAngle().getDegrees());
         SmartDashboard.putNumber("SOTF/Shot Command RPS", drivetrain.currentShotCommand.RPS());
         SmartDashboard.putNumber("SOTF/Shot Command Hood", drivetrain.currentShotCommand.hoodAngle());
+        SmartDashboard.putString("SOTF/Active Shot Profile", ShooterConstants.activeShotProfile.toString());
         SmartDashboard.putNumber("SOTF/Robot Angle Deg", drivetrain.getPose().getRotation().getDegrees());
         SmartDashboard.putNumber("SOTF/Turret Field X", drivetrain.getCurrentTurretPose().getX());
         SmartDashboard.putNumber("SOTF/Turret Field Y", drivetrain.getCurrentTurretPose().getY());
