@@ -417,9 +417,6 @@ public final class Constants {
     }
 
     public static class IntakeConstants {
-        public static final double intakeMotionMagicExpoK_V = 0.13;
-        public static final double intakeMotionMagicExpoK_A = 0.1;
-
         public static final int SupplyCurrentLimit = 40;
         public static final int StatorCurrentLimit = 100;
 
@@ -431,19 +428,31 @@ public final class Constants {
         public static final int intakeExtensionMotorID = 31;
         public static final int canRangeID = 33;
 
-        public static final double intakingPosition = 10;
         public static final double intakingSpeed = -0.9;
-        // Slower Motion Magic kA applied to the extension while SCORING
-        // (slow squeeze), restored on leaving the state.
-        public static final double slowerIntakeKa = 1.0;
-        // CANrange distance (meters) beyond which the extension is considered
-        // at home, used only by the (currently unbound) RESET auto-zero state.
-        // 0 disables it. The intended re-zero workflow after a big impact is
-        // manual: D-pad nudge the intake into the hard stop, then press the
-        // driver's back button (setZero).
-        public static final double intakeExtensionHomingThreshold = 0;
-        public static final double retractingPos = 0;
-        // Duty cycle used for manual nudging and homing crawl.
+
+        // Friction-wheel extension: no position control (the wheel slips by
+        // design, so the encoder can't be trusted). INTAKE/RETRACT push toward
+        // the hard stop at a fixed duty cycle (same as the rollers/feeder), then
+        // drop to 0 (Brake) once the motor stalls there or the timeout expires.
+        // Positive = outward.
+        // ExtensionStatorCurrentLimit above is what caps the push force -- keep
+        // it low enough that the motor stalls before the wheel scrubs.
+        // TODO: field-tune everything below. Extend is validated as working
+        // (full output) but felt slow -- see ExtensionStatorCurrentLimit.
+        // Watch INTAKE/Last Push End: it should mostly say "stall"; "timeout" every time means the wheel slips at the stop
+        // instead of stalling (then just shorten the timeout to fit the travel).
+        public static final double extendDutyCycle = 1.0;
+        public static final double extensionPushTimeoutSeconds = 0.75;
+        // Stall = slower than this (motor rot/s) while drawing more than this
+        // (stator amps), checked only after the ignore window so the startup
+        // current spike doesn't count.
+        public static final double extensionStallVelocity = 0.5;
+        public static final double extensionStallCurrent = 35.0;
+        public static final double extensionStallIgnoreSeconds = 0.15;
+        // SCORE (slow squeeze): gentler inward push, more time to get there.
+        public static final double squeezeDutyCycle = 0.12;
+        public static final double squeezeTimeoutSeconds = 2.0;
+        // Duty cycle used for manual nudging.
         // Must clear the extension TalonFX's DutyCycleNeutralDeadband
         // (Phoenix6 default 0.04 / 4%, never overridden in Intake's config)
         // or the motor outputs true zero and never moves. 0.01 (the original
@@ -453,53 +462,39 @@ public final class Constants {
         // still gentle," not a validated crawl speed.
         public static final double manualDutyCycle = 0.08;
 
-        public static final double[] intakePID = { 0.3, 0, 0 };
-        public static final double[] intakeSVA = { 0, 0.13, 0.01 };
-
-        // Jam-clearing: starting from intakingPosition (assumed already open when
-        // AGITATE is pressed), the extension jogs back and forth while the rollers
-        // keep spinning normally. Each close moves in by agitateCloseAmplitude, each
-        // reopen only recovers agitateReopenAmplitude (less than the close amount),
-        // so the whole oscillation band drifts toward closed over time instead of
-        // just buzzing in place. First field test at period=0.25/close=3/reopen=2.5
-        // came back "too big and too slow" -- reopen was too close to close (a slow
-        // walk-down with big swings), not a fast buzz. Shrunk the swing size and
-        // period, and shrunk reopen much further below close (not just slightly)
-        // so it still drives to fully closed quickly despite the smaller steps:
-        // 10 -> 9 -> 9.25 -> 8.25 -> 8.5 -> ... reaching closed in ~1.6s, then
-        // settling into a small steady buzz right at the clamp (0 to
-        // agitateReopenAmplitude) for as long as the button stays held.
-        // TODO: field-tune all three -- still just a guess, not validated.
-        public static final double agitatePeriodSeconds = 0.06;
-        public static final double agitateCloseAmplitude = 1.0;
-        public static final double agitateReopenAmplitude = 0.25;
+        // Jam-clearing: the extension is pulsed in and out while the rollers keep
+        // spinning. In-pulses run longer than out-pulses so the intake walks
+        // toward closed instead of buzzing in place, then keeps buzzing against
+        // the closed stop while held. Carries over the lesson from the old
+        // position-based version's first field test ("too big and too slow"):
+        // keep pulses short and the in/out imbalance clear.
+        // TODO: field-tune all three -- guesses, not validated.
+        public static final double agitateDutyCycle = 0.33;
+        public static final double agitateInPulseSeconds = 0.08;
+        public static final double agitateOutPulseSeconds = 0.04;
 
         public enum IntakeWantedState {
             IDLE,
             INTAKE,
             RETRACT,
-            RESET,
             SCORE,
             OUTTAKE,
             AGITATE,
             MANUAL_CONTROL_POS,
             MANUAL_CONTROL_NEG,
-            MANUAL_IDLE,
-            MANUAL_RESET
+            MANUAL_IDLE
         }
 
         public enum SystemState {
             IDLING,
             INTAKING,
             RETRACTING,
-            RESETING,
             SCORING,
             OUTTAKING,
             AGITATING,
             IN_MANUAL_CONTROL_POS,
             IN_MANUAL_CONTROL_NEG,
-            IN_MANUAL_IDLE,
-            IN_MANUAL_RESET
+            IN_MANUAL_IDLE
         }
     }
 
