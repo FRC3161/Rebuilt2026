@@ -102,7 +102,7 @@ public class Feeder extends SubsystemBase {
                 break;
             case SHOOTING:
                 spindexerMotorSpeed = FeederConstants.feederShootSpeed;
-                towerMotorSpeed = FeederConstants.feederShootSpeed;
+                towerMotorSpeed = FeederConstants.towerShootSpeed;
                 rollerMotorSpeed = 0.0;
                 break;
             case PASSING:
@@ -117,7 +117,7 @@ public class Feeder extends SubsystemBase {
                     rollerMotorSpeed = 0;
                 } else {
                     spindexerMotorSpeed = FeederConstants.feederShootSpeed;
-                    towerMotorSpeed = FeederConstants.feederShootSpeed;
+                    towerMotorSpeed = FeederConstants.towerShootSpeed;
                     rollerMotorSpeed = 0.0;
                 }
                 break;

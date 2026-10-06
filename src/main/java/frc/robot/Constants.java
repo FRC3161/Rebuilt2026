@@ -566,7 +566,8 @@ public final class Constants {
         public static final int rollerMotorID = 42;
 
         public static final double feederIntakeSpeed = 0;
-        public static final double feederShootSpeed = 0.8;
+        public static final double feederShootSpeed = 0.45;
+        public static final double towerShootSpeed = 0.8;
         public static final double feederReverseSpeed = -0.7;
 
         // While PASSING, hold fire inside this field-Y band (the hub shadow)
