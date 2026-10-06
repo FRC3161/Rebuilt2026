@@ -115,6 +115,14 @@ public final class Constants {
         public static final double MIN_RPS = 0;
         public static final double MAX_RPS = 90;
 
+        // How much of the robot's velocity SOTF uses when picking hub-shot
+        // hood/RPS (1.0 = full Programming-Points behavior, 0 = ignore motion
+        // and shoot as if stationary). Turret aim always uses full velocity.
+        // Set to 0.5 because full compensation seemed to overcorrect shots
+        // driving straight toward/away from the hub. Passing shots are not
+        // affected. TODO: validate on the real robot.
+        public static final double SOTF_RANGE_VELOCITY_SCALE = 0.5;
+
         /*
          * Tuned shot tables (distance to hub in meters -> value), as of
          * Niagara — the later ONCMP-event revisions to these tables were
@@ -152,7 +160,7 @@ public final class Constants {
         // shots.
         public static final InterpolatingDoubleTreeMap TOF_MAP = new InterpolatingDoubleTreeMap();
         static {
-            TOF_MAP.put(2.0, 0.5);
+            TOF_MAP.put(2.0, 0.3); // Programming-Points ONCMP Day 2/3 value
             TOF_MAP.put(3.0, 0.5);
             TOF_MAP.put(4.0, 0.5);
             TOF_MAP.put(5.0, 0.5);
