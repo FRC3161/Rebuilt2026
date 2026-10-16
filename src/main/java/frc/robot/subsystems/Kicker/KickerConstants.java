@@ -48,10 +48,6 @@ public final class KickerConstants {
     /* ---------------- State targets, in rotations, measured from the 0 set by withZeroAt ---------------- */
 
     public static final double STOW_POSITION = Units.degreesToRotations(0.0);
-    public static final double DEPLOY_POSITION = Units.degreesToRotations(70.0); // test position; 130 = resting on the bumper
+    public static final double DEPLOY_POSITION = Units.degreesToRotations(70.0); // test position; will be 130 (against the bumper)
 
-    /* ---------------- Resting on the bumper (only when DEPLOY_POSITION is the top limit) ---------------- */
-
-    /** Within this of DEPLOY the kicker counts as on the bumper: motor output off, it rests there. */
-    public static final double BUMPER_ZONE = Units.degreesToRotations(5.0);
 }
