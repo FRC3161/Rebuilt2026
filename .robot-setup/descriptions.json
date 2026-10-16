@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "buttons": {
+    "operator.povDown": [
+      {
+        "text": "mid-match shot-profile quick-fix: Step Down",
+        "code": "operator.povDown().and(debugging.negate()) .onTrue(Commands.runOnce(ShooterConstants::stepShotProfileTowardShort));"
+      }
+    ],
+    "driver.y": [
+      {
+        "text": "Snap buttons Forward",
+        "code": "driver.y().whileTrue(snapTo(Rotation2d.kZero));"
+      }
+    ],
+    "driver.x": [
+      {
+        "text": "Snap buttons Right",
+        "code": "driver.x().whileTrue(snapTo(Rotation2d.kCCW_90deg));"
+      }
+    ],
+    "driver.b": [
+      {
+        "text": "Snap buttons Left",
+        "code": "driver.b().whileTrue(snapTo(Rotation2d.kCW_90deg));"
+      }
+    ],
+    "driver.a": [
+      {
+        "text": "Snap buttons Backwards",
+        "code": "driver.a().whileTrue(snapTo(Rotation2d.k180deg));"
+      }
+    ],
+    "operator.povUp": [
+      {
+        "text": "mid-match shot-profile quick-fix: Step Up",
+        "code": "operator.povUp().and(debugging.negate()) .onTrue(Commands.runOnce(ShooterConstants::stepShotProfileTowardLong));"
+      }
+    ]
+  }
+}

@@ -53,6 +53,7 @@ import frc.robot.subsystems.Lights.LEDSubsystem_WPIlib;
 import frc.robot.subsystems.Lights.LEDSubsystem_WPIlib.LEDTarget;
 import frc.robot.subsystems.Scoring.Shooter;
 import frc.robot.subsystems.Scoring.Turret;
+import frc.robot.subsystems.Kicker.Kicker;
 
 /**
  * Declares subsystems, button bindings, and autonomous configuration.
@@ -64,6 +65,7 @@ public class RobotContainer {
     public final LEDSubsystem_WPIlib normalLights = new LEDSubsystem_WPIlib();
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
     public final Intake intake = new Intake();
+    public final Kicker kicker = new Kicker();
     public final Turret turret = new Turret(drivetrain);
     public final Shooter shooter = new Shooter(drivetrain);
     public final Feeder feeder = new Feeder(turret, shooter, drivetrain);
@@ -265,6 +267,9 @@ public class RobotContainer {
     }
 
     private void configureBindings() {
+        // Buttons set up in the 3161 Robot Setup app
+        ControllerBindings.configure(driver, operator, this);
+
         drivetrain.registerTelemetry(logger::telemeterize);
 
         /*********** DRIVER ************/

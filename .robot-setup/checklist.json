@@ -1,0 +1,5 @@
+{
+  "cameras": true,
+  "pathplanner": true,
+  "bumpers": true
+}

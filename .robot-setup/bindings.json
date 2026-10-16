@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "bindings": [
+    {
+      "controller": "operator",
+      "button": "back",
+      "mode": "press",
+      "subsystem": "Kicker",
+      "state": "DEPLOY"
+    }
+  ]
+}
