@@ -12,13 +12,8 @@ public final class KickerConstants {
     private KickerConstants() {
     }
 
-    // DISABLED 2026-10-15: on enable it drove toward deploy and buzzed. To check
-    // before turning it back on: motor direction (positive output should raise
-    // it -- else withInverted(true)), travel limits covering DEPLOY_POSITION
-    // (currently -45 deg vs limits 0..60), starting position, and gains
-    // (kP 0.01 / kD 1.0 makes the D term buzz). While false the motor gets no
-    // output at all (brakes), and operator Back does nothing.
-    public static final boolean ENABLED = false;
+    // Master switch: false = the kicker motor gets no output (brakes) and operator Back does nothing.
+    public static final boolean ENABLED = true;
 
     public enum WantedState {
         STOW,
@@ -38,19 +33,25 @@ public final class KickerConstants {
             .withLeader(43)
             .withMotor(MechanismConfig.Motor.KRAKEN_X44)
             .withGearRatio(2.0)
-            .withCurrentLimits(40.0, 40.0)
+            .withCurrentLimits(60.0, 120.0)
             .withArm(Units.inchesToMeters(8.0), Units.lbsToKilograms(1.0))
             .withZeroAt(Units.degreesToRotations(130.0)) // a direction, not a position: 0 points up and to the left, 40° past straight up (side view)
             .withPositiveDirection(MechanismConfig.Direction.CLOCKWISE) // positions count up turning clockwise (side view)
             .withLimits(Units.degreesToRotations(0.0), Units.degreesToRotations(130.0)) // positions: degrees from 0, + = clockwise
             .withStartingPosition(Units.degreesToRotations(0.0))
-            .withPID(20.0, 0.0, 0.05)
-            .withFeedforward(0.0, 0.1843, 0.0)
-            .withMotionMagic(Units.degreesToRotations(13964.4), Units.degreesToRotations(55857.6), 0.0)
+            .withPID(60.0, 0.0, 1.5)
+            .withFeedforward(0.0, 0.1843, 0.057)
+            .withGravity(0.66)
+            .withMotionMagic(Units.degreesToRotations(1500.0), Units.degreesToRotations(10000.0), 0.0)
             .withTolerance(Units.degreesToRotations(1.0));
 
     /* ---------------- State targets, in rotations, measured from the 0 set by withZeroAt ---------------- */
 
     public static final double STOW_POSITION = Units.degreesToRotations(0.0);
-    public static final double DEPLOY_POSITION = Units.degreesToRotations(70.0);
+    public static final double DEPLOY_POSITION = Units.degreesToRotations(70.0); // test position; 130 = resting on the bumper
+
+    /* ---------------- Resting on the bumper (only when DEPLOY_POSITION is the top limit) ---------------- */
+
+    /** Within this of DEPLOY the kicker counts as on the bumper: motor output off, it rests there. */
+    public static final double BUMPER_ZONE = Units.degreesToRotations(5.0);
 }

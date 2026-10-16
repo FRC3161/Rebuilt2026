@@ -18,6 +18,7 @@ public class Kicker extends StateMachineSubsystem<WantedState, SystemState> {
 
     @Override
     protected SystemState handleStateTransition(WantedState wanted, SystemState current) {
+        if (wanted == WantedState.DEPLOY && onBumper()) return SystemState.DEPLOY;
         return kicker.isNear(targetFor(wanted)) ? arrivedState(wanted) : SystemState.MOVING;
     }
 
@@ -27,8 +28,24 @@ public class Kicker extends StateMachineSubsystem<WantedState, SystemState> {
             kicker.stop();
             return;
         }
+        // Deployed onto the bumper: no output, it just rests there (gravity holds
+        // it down), so nothing fights a hit and it draws no power.
+        if (getWantedState() == WantedState.DEPLOY && onBumper()) {
+            kicker.stop();
+            return;
+        }
         // Always head for the wanted state's target; the system state just reports arrival.
         kicker.setPosition(targetFor(getWantedState()));
+    }
+
+    /**
+     * True when DEPLOY is the bumper (DEPLOY_POSITION at the top of travel) and
+     * the kicker is within BUMPER_ZONE of it. False while DEPLOY is a mid-air
+     * test position.
+     */
+    private boolean onBumper() {
+        boolean deployIsBumper = KickerConstants.DEPLOY_POSITION >= KickerConstants.KICKER.maxPosition - KickerConstants.KICKER.tolerance;
+        return deployIsBumper && kicker.getPosition() >= KickerConstants.DEPLOY_POSITION - KickerConstants.BUMPER_ZONE;
     }
 
     /** Where each wanted state sends the kicker. */
