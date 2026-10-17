@@ -54,6 +54,7 @@ import frc.robot.subsystems.Lights.LEDSubsystem_WPIlib.LEDTarget;
 import frc.robot.subsystems.Scoring.Shooter;
 import frc.robot.subsystems.Scoring.Turret;
 import frc.robot.subsystems.Kicker.Kicker;
+import frc.robot.subsystems.Kicker.KickerConstants;
 
 /**
  * Declares subsystems, button bindings, and autonomous configuration.
@@ -137,6 +138,9 @@ public class RobotContainer {
     private final Trigger markShotTablePoint = operator.x().and(debugging).debounce(2.0);
 
     public RobotContainer() {
+        // Moving parts for the 3D robot view in AdvantageScope (3161 Robot Setup, CAD tab)
+        RobotComponents.start(this);
+
         configureBindings();
         configureNamedCommands();
         configureAutoCommands();
@@ -463,6 +467,16 @@ public class RobotContainer {
                     .onTrue(scoringState(ShooterWantedState.HUB_SHOOT, TurretWantedState.AIM_HUB,
                             FeederWantedState.SHOOT))
                     .onFalse(stopScoring());
+
+            // driver2 right bumper: intake toggle like the driver's, with the
+            // kicker following it -- deploys with the intake, stows when it stops.
+            driver2.rightBumper().onTrue(
+                    Commands.either(
+                            setIntake(IntakeWantedState.IDLE)
+                                    .andThen(kicker.setWantedStateCommand(KickerConstants.WantedState.STOW)),
+                            setIntake(IntakeWantedState.INTAKE)
+                                    .andThen(kicker.setWantedStateCommand(KickerConstants.WantedState.DEPLOY)),
+                            () -> intake.getState() == SystemState.INTAKING));
         }
     }
 

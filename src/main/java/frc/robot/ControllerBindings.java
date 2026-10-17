@@ -15,9 +15,9 @@ final class ControllerBindings {
     }
 
     static void configure(CommandXboxController driver, CommandXboxController operator, RobotContainer robot) {
-        // Operator back: Kicker -- press for STOW
-        operator.back().onTrue(robot.kicker.setWantedStateCommand(KickerConstants.WantedState.STOW));
-        operator.back() .onFalse(robot.kicker.setWantedStateCommand(KickerConstants.WantedState.DEPLOY));
-
+        // Operator back: Kicker -- hold for DEPLOY, release for STOW
+        operator.back()
+                .onTrue(robot.kicker.setWantedStateCommand(KickerConstants.WantedState.DEPLOY))
+                .onFalse(robot.kicker.setWantedStateCommand(KickerConstants.WantedState.STOW));
     }
 }

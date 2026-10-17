@@ -2,6 +2,8 @@ package frc.lib.mechanisms;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
@@ -94,6 +96,15 @@ public abstract class Mechanism implements AutoCloseable {
     // Dashboard drawing
     private final Mechanism2d visual = new Mechanism2d(3, 3);
 
+    // Every live mechanism by name, so robot-wide code (like the 3D robot
+    // view's RobotComponents) can read positions without reaching into subsystems.
+    private static final Map<String, Mechanism> BY_NAME = new ConcurrentHashMap<>();
+
+    /** The live mechanism with this name ("Subsystem/Part"), or null if none was created. */
+    public static Mechanism find(String name) {
+        return BY_NAME.get(name);
+    }
+
     protected Mechanism(MechanismConfig config) {
         config.require(config.leaderId >= 0, "needs withLeader(canId)");
         this.config = config;
@@ -102,6 +113,7 @@ public abstract class Mechanism implements AutoCloseable {
         // Claim the ID before creating the device, so a duplicate fails without touching the bus.
         CanIdRegistry.claim(config.canBus.getName(), config.leaderId, name);
         leader = new TalonFX(config.leaderId, config.canBus);
+        BY_NAME.put(name, this);
         for (MechanismConfig.FollowerSpec spec : config.followers) {
             CanIdRegistry.claim(config.canBus.getName(), spec.id(), name + " (follower)");
             followers.add(new TalonFX(spec.id(), config.canBus));
@@ -472,6 +484,7 @@ public abstract class Mechanism implements AutoCloseable {
 
     @Override
     public void close() {
+        BY_NAME.remove(name, this);
         leader.close();
         CanIdRegistry.release(config.canBus.getName(), config.leaderId);
         for (int i = 0; i < followers.size(); i++) {

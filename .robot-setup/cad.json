@@ -1,0 +1,93 @@
+{
+  "version": 1,
+  "glb": "../cad/3161-26-A-0000closed.glb",
+  "robotName": "3161 Rebuilt2026 FIXED",
+  "front": "-Y",
+  "center": [
+    -0.3371,
+    -0.057
+  ],
+  "floorZ": 0.063,
+  "dropFasteners": true,
+  "detail": 1,
+  "components": [
+    {
+      "key": "legacy:Turret/Turret",
+      "name": "3161-26-A-0700 <1>",
+      "parts": [
+        {
+          "node": 205,
+          "id": "MVS2kLkHvmBZ8BtJS",
+          "name": "3161-26-A-0700 <1>"
+        }
+      ],
+      "motion": "pivot",
+      "point": [
+        -0.4834,
+        0.1104,
+        0.542
+      ],
+      "axis": [
+        0,
+        0,
+        1
+      ],
+      "flip": false,
+      "cadReading": 0,
+      "scale": 1,
+      "parent": -1
+    },
+    {
+      "key": "lib:Kicker/Kicker",
+      "name": "Kicker <1>",
+      "parts": [
+        {
+          "node": 570,
+          "id": "MiISc7NLZmiPal5ig",
+          "name": "Kicker <1>"
+        }
+      ],
+      "motion": "pivot",
+      "point": [
+        -0.46835,
+        -0.37589,
+        0.21002
+      ],
+      "axis": [
+        1,
+        0,
+        0
+      ],
+      "flip": false,
+      "cadReading": 0,
+      "scale": 1,
+      "parent": -1
+    },
+    {
+      "key": "legacy:Intake/Intake Extension",
+      "name": "Frame Subssembly <1>",
+      "parts": [
+        {
+          "node": 2255,
+          "id": "M1YhuWmO7vVazBMAQ/MTfXJjdM0KSwYzmLL",
+          "name": "Frame Subssembly <1>"
+        }
+      ],
+      "motion": "slide",
+      "point": [
+        -0.3371,
+        -0.1189,
+        0.399
+      ],
+      "axis": [
+        0,
+        -0.994522,
+        -0.104528
+      ],
+      "flip": false,
+      "cadReading": 0,
+      "scale": 0.0254,
+      "parent": -1
+    }
+  ]
+}

@@ -12,7 +12,7 @@ public final class KickerConstants {
     private KickerConstants() {
     }
 
-    // Master switch: false = the kicker motor gets no output (brakes) and operator Back does nothing.
+    //While false the motor gets no output at all (brakes), and operator Back does nothing.
     public static final boolean ENABLED = true;
 
     public enum WantedState {
@@ -35,9 +35,9 @@ public final class KickerConstants {
             .withGearRatio(2.0)
             .withCurrentLimits(60.0, 120.0)
             .withArm(Units.inchesToMeters(8.0), Units.lbsToKilograms(1.0))
-            .withZeroAt(Units.degreesToRotations(130.0)) // a direction, not a position: 0 points up and to the left, 40° past straight up (side view)
-            .withPositiveDirection(MechanismConfig.Direction.CLOCKWISE) // positions count up turning clockwise (side view)
-            .withLimits(Units.degreesToRotations(0.0), Units.degreesToRotations(130.0)) // positions: degrees from 0, + = clockwise
+            .withZeroAt(Units.degreesToRotations(130.0))
+            .withPositiveDirection(MechanismConfig.Direction.CLOCKWISE)
+            .withLimits(Units.degreesToRotations(0.0), Units.degreesToRotations(130.0))
             .withStartingPosition(Units.degreesToRotations(0.0))
             .withPID(60.0, 0.0, 1.5)
             .withFeedforward(0.0, 0.1843, 0.057)
@@ -48,6 +48,5 @@ public final class KickerConstants {
     /* ---------------- State targets, in rotations, measured from the 0 set by withZeroAt ---------------- */
 
     public static final double STOW_POSITION = Units.degreesToRotations(0.0);
-    public static final double DEPLOY_POSITION = Units.degreesToRotations(70.0); // test position; will be 130 (against the bumper)
-
+    public static final double DEPLOY_POSITION = Units.degreesToRotations(130.0);
 }

@@ -35,6 +35,8 @@ public class Turret extends SubsystemBase {
     // for position control (mechanism rotations)
     private double position = 0.0;
     private double simTurretPosition = 0.0;
+    // Simulated top speed, mechanism rotations per second (Kraken X44 through 38.9:1).
+    private static final double SIM_MAX_SPEED = 2.0;
     // Driver aim trim, in mechanism rotations. Applied before the soft-limit
     // normalization so trimming can never push the target past a limit.
     private double offset = 0.0;
@@ -322,10 +324,17 @@ public class Turret extends SubsystemBase {
         applyState();
 
         if (Robot.isSimulation()) {
-            // In simulation, turret instantly reaches setpoint
-            simTurretPosition = position;
+            // In simulation, the turret heads for its setpoint at about its real
+            // top speed (so the 3D robot view moves like the real thing).
+            double step = SIM_MAX_SPEED * 0.02;
+            simTurretPosition += MathUtil.clamp(position - simTurretPosition, -step, step);
         } else {
             turretMotor.setControl(positionRequest.withPosition(position));
         }
+    }
+
+    /** Turret position in mechanism rotations (simulated in sim), for the 3D robot view (3161 Robot Setup). */
+    public double getTurretModelPosition() {
+        return getTurretPosition();
     }
 }

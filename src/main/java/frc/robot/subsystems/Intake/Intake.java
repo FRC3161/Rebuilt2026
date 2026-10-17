@@ -52,6 +52,9 @@ public class Intake extends SubsystemBase {
 
     // sim state
     private double simExtensionPosition = 0.0;
+    // Simulated top speed of the extension, motor rotations per second (out to
+    // intakingPosition in about a quarter second).
+    private static final double SIM_MAX_SPEED = 40.0;
     private double simCanRangeDistance = 999.0; // default far away, won't trigger homing
 
     private final LoggedTunableNumber k_S = new LoggedTunableNumber("intake_s", IntakeConstants.intakeSVA[0]);
@@ -345,9 +348,13 @@ public class Intake extends SubsystemBase {
         applyState();
 
         if (Robot.isSimulation()) {
-            // In simulation, extension instantly reaches setpoint
+            // In simulation, the extension moves at about its real speed: toward
+            // the setpoint in POSITION mode, or at the manual duty cycle.
+            double step = SIM_MAX_SPEED * 0.02;
             if (extensionMode == ExtensionControlMode.POSITION) {
-                simExtensionPosition = position;
+                simExtensionPosition += MathUtil.clamp(position - simExtensionPosition, -step, step);
+            } else {
+                simExtensionPosition += extensionDuty * step;
             }
         } else {
             if (extensionMode == ExtensionControlMode.POSITION) {
@@ -358,5 +365,10 @@ public class Intake extends SubsystemBase {
             intakeMotor.setControl(rollerRequest.withOutput(motorspeed));
             intakeMotor2.setControl(rollerRequest.withOutput(-motorspeed));
         }
+    }
+
+    /** Intake Extension position in motor rotations (simulated in sim), for the 3D robot view (3161 Robot Setup). */
+    public double getIntakeExtensionPosition() {
+        return getExtensionPosition();
     }
 }
