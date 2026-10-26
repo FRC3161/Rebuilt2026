@@ -35,11 +35,11 @@ public final class KickerConstants {
             .withGearRatio(2.0)
             .withCurrentLimits(60.0, 120.0)
             .withArm(Units.inchesToMeters(8.0), Units.lbsToKilograms(1.0))
-            .withZeroAt(Units.degreesToRotations(130.0))
-            .withPositiveDirection(MechanismConfig.Direction.CLOCKWISE)
+            .withZeroAt(Units.degreesToRotations(0.0))
+            .withPositiveDirection(MechanismConfig.Direction.COUNTERCLOCKWISE)
             .withLimits(Units.degreesToRotations(0.0), Units.degreesToRotations(130.0))
             .withStartingPosition(Units.degreesToRotations(0.0))
-            .withPID(60.0, 0.0, 1.5)
+            .withPID(50.0, 0.0, 0)
             .withFeedforward(0.0, 0.1843, 0.057)
             .withGravity(0.66)
             .withMotionMagic(Units.degreesToRotations(1500.0), Units.degreesToRotations(10000.0), 0.0)
@@ -48,5 +48,5 @@ public final class KickerConstants {
     /* ---------------- State targets, in rotations, measured from the 0 set by withZeroAt ---------------- */
 
     public static final double STOW_POSITION = Units.degreesToRotations(0.0);
-    public static final double DEPLOY_POSITION = Units.degreesToRotations(130.0);
+    public static final double DEPLOY_POSITION = Units.degreesToRotations(100.0);
 }
