@@ -60,664 +60,715 @@ import frc.robot.subsystems.Kicker.KickerConstants;
  * Declares subsystems, button bindings, and autonomous configuration.
  */
 public class RobotContainer {
-    public final Timer matchTimer = new Timer();
-
-    // Subsystems
-    public final LEDSubsystem_WPIlib normalLights = new LEDSubsystem_WPIlib();
-    public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
-    public final Intake intake = new Intake();
-    public final Kicker kicker = new Kicker();
-    public final Turret turret = new Turret(drivetrain);
-    public final Shooter shooter = new Shooter(drivetrain);
-    public final Feeder feeder = new Feeder(turret, shooter, drivetrain);
-    public final MatchInformation matchInformation = new MatchInformation(matchTimer);
-    private SendableChooser<Command> autoChooser = new SendableChooser<>();
-
-    private final Orchestra orchestra = new Orchestra();
-
-    // Controllers
-    private final CommandXboxController driver = new CommandXboxController(OperatorConstants.kDriverControllerPort);
-    private final CommandXboxController operator = new CommandXboxController(OperatorConstants.kOperatorControllerPort);
-    // Simulation only - second driver controller for testing SOTF
-    private final CommandXboxController driver2 = Robot.isSimulation() ? new CommandXboxController(2) : null;
-
-    // Drive requests
-    private final double MaxSpeed = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
-    private final double MaxAngularRate = RotationsPerSecond.of(0.75).in(RadiansPerSecond);
-    private final Telemetry logger = new Telemetry(MaxSpeed);
-
-    private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
-            .withDeadband(MaxSpeed * 0.1).withRotationalDeadband(MaxAngularRate * 0.1)
-            .withDriveRequestType(DriveRequestType.OpenLoopVoltage);
-
-    private final SwerveRequest.FieldCentricFacingAngle facingAngle = new SwerveRequest.FieldCentricFacingAngle()
-            .withDeadband(MaxSpeed * 0.1)
-            .withRotationalDeadband(MaxAngularRate * 0.1)
-            .withDriveRequestType(DriveRequestType.OpenLoopVoltage)
-            .withHeadingPID(5, 0, 0);
-
-    private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
-
-    /* ---------------- Triggers ---------------- */
-
-    // Battery has been below 10V continuously for 4 seconds.
-    private static final double kLowBatteryVolts = 10;
-    private static final double kLowBatteryDebounceSeconds = 4;
-    private double lowBatteryStartTime = -1;
-
-    private boolean batteryIsLow() {
-        if (RobotController.getBatteryVoltage() < kLowBatteryVolts) {
-            if (lowBatteryStartTime < 0) {
-                lowBatteryStartTime = Timer.getFPGATimestamp();
-            }
-            return Timer.getFPGATimestamp() - lowBatteryStartTime > kLowBatteryDebounceSeconds;
-        }
-        lowBatteryStartTime = -1;
-        return false;
-    }
-
-    private final Trigger lowBattery = new Trigger(this::batteryIsLow);
-    private final Trigger readyToShoot = new Trigger(
-            () -> shooter.shooterIsReady() && turret.turretIsReady());
-
-    // Manual hood/flywheel/turret debug mode: toggled by the operator
-    // holding Start for 3 continuous seconds. While active, shooter hood/RPS
-    // are always driven by the operator's sticks instead of ShotCalc, turret
-    // either auto-tracks the target or takes manual nudges depending on the
-    // Y-button tracking toggle, and every non-debug operator control is
-    // locked out.
-    private boolean debugMode = false;
-    // Whether turret auto-tracks the target (IDLE_AIM) or takes manual
-    // left-stick-X nudges while debugging. Starts (and resets to) manual
-    // control every time debug mode is (re-)entered; toggled by Y.
-    private boolean turretTrackingEnabled = false;
-    private final Trigger debugModeHold = operator.start().debounce(3.0);
-    private final Trigger debugging = new Trigger(() -> debugMode);
-    // Hold X for 2s while debugging to mark the current manual hood/RPS as a
-    // live SOTF table point at the current hub distance.
-    private final Trigger markShotTablePoint = operator.x().and(debugging).debounce(2.0);
-
-    public RobotContainer() {
-        // Moving parts for the 3D robot view in AdvantageScope (3161 Robot Setup, CAD tab)
-        RobotComponents.start(this);
-
-        configureBindings();
-        configureNamedCommands();
-        configureAutoCommands();
-        configureTestCommands();
-
-        if (Robot.isSimulation()) {
-            drivetrain.resetPose(new Pose2d(2, 4, Rotation2d.fromDegrees(0)));
-        }
-    }
-
-//     /**
-//      * Plays the startup jingle across every subsystem's motors. Requires
-//      * sirius.chrp in src/main/deploy (converted from a MIDI file via the
-//      * CHRP Converter tool in Phoenix Tuner X — there's no code-side way to
-//      * do that conversion). Call once, not periodically.
-//      */
-//     /** Applies the disabled-play audio config to one motor and adds it as the next Orchestra track. */
-//     private void addJingleInstrument(TalonFX motor) {
-//         if (!Robot.isSimulation()) {
-//             motor.getConfigurator().apply(new AudioConfigs().withAllowMusicDurDisable(true));
-//         }
-//         orchestra.addInstrument(motor);
-//     }
-
-//     public void playStartupJingle() {
-//         // Every motor added individually and explicitly, in the order we
-//         // most want to hear them — instruments beyond however many tracks
-//         // the chrp actually has get no track assigned at all (silent, no
-//         // CAN data), so whoever's added last is most at risk of going quiet.
-        
-//         addJingleInstrument(intake.getExtensionMotor());
-//         addJingleInstrument(turret.getTurretMotor());
-//        addJingleInstrument(shooter.getShooterMotor1());
-//         addJingleInstrument(shooter.getShooterMotor2());
-//         addJingleInstrument(shooter.getHoodMotor());
-//         addJingleInstrument(feeder.getTowerMotor());
-//         addJingleInstrument(feeder.getRollerMotor());
-//          addJingleInstrument(feeder.getSpindexerMotor());
-        
-
-        
-
-//         var status = orchestra.loadMusic("sirius.chrp");
-//         if (status.isOK()) {
-//             orchestra.play();
-//         } else {
-//             System.out.println("Could not load startup jingle, error code: " + status.toString());
-//         }
-//     }
-
-//     /** Reports whether the jingle is still playing and how far into it we are. */
-//     public void logJingleStatus() {
-//         SmartDashboard.putBoolean("JINGLE/Playing", orchestra.isPlaying());
-//         SmartDashboard.putNumber("JINGLE/Current Time", orchestra.getCurrentTime());
-//     }
-
-//     /**
-//      * Releases the instrument motors back to normal control. Devices playing
-//      * in an Orchestra ignore every other control request until this (or
-//      * pause()) is called, so this must run before any subsystem needs real
-//      * control — call on first enable regardless of mode.
-//      */
-//     public void stopStartupJingle() {
-//         orchestra.stop();
-//     }
-
-    /* ---------------- Command helpers ---------------- */
-
-    /** Sets shooter + turret + feeder states together. */
-    private Command scoringState(ShooterWantedState s, TurretWantedState t, FeederWantedState f) {
-        return Commands.runOnce(() -> {
-            shooter.setWantedShooterState(s);
-            turret.setWantedTurretState(t);
-            feeder.setWantedFeederState(f);
-        });
-    }
-
-    /** The standard "release shoot button" state: flywheel stays warm. */
-    private Command stopScoring() {
-        return scoringState(ShooterWantedState.IDLE, TurretWantedState.IDLE, FeederWantedState.IDLE);
-    }
-
-    private Command setIntake(IntakeWantedState state) {
-        return Commands.runOnce(() -> intake.setWantedIntakeState(state));
-    }
-
-    private Command setEcoMode(boolean enabled) {
-        return Commands.runOnce(() -> {
-            if (enabled) {
-                intake.enableEcoModeIntake();
-                turret.enableEcoModeTurret();
-                feeder.enableEcoModeFeeder();
-            } else {
-                intake.disableEcoModeIntake();
-                turret.disableEcoModeTurret();
-                feeder.disableEcoModeFeeder();
-            }
-        });
-    }
-
-    /**
-     * Drives one loop of debug mode: shooter takes manual hood/RPS setpoints
-     * nudged by the operator's sticks (left Y = hood, right Y = flywheel),
-     * deadbanded so a centered stick holds the setpoint still. Turret either
-     * auto-tracks the target (IDLE_AIM) or takes manual left-stick-X nudges,
-     * depending on the Y-button tracking toggle.
-     */
-    private void applyDebugControls() {
-        shooter.setWantedShooterState(ShooterWantedState.DEBUG);
-
-        double hoodStick = -MathUtil.applyDeadband(operator.getLeftY(), ShooterConstants.debugStickDeadband);
-        double rpsStick = -MathUtil.applyDeadband(operator.getRightY(), ShooterConstants.debugStickDeadband);
-        shooter.nudgeManualSetpoints(hoodStick, rpsStick);
-
-        if (turretTrackingEnabled) {
-            turret.setWantedTurretState(TurretWantedState.IDLE_AIM);
-        } else {
-            turret.setWantedTurretState(TurretWantedState.DEBUG);
-            double turretStick = MathUtil.applyDeadband(operator.getLeftX(), ShooterConstants.debugStickDeadband);
-            turret.nudgeManualPosition(turretStick);
-        }
-
-        SmartDashboard.putBoolean("DEBUG/Turret Live Tracking", turretTrackingEnabled);
-    }
-
-    public Command waitToShoot() {
-        return Commands.waitUntil(() -> shooter.shooterIsReady() && turret.turretIsReady());
-    }
-
-    private void configureBindings() {
-        // Buttons set up in the 3161 Robot Setup app
-        ControllerBindings.configure(driver, operator, this);
-
-        drivetrain.registerTelemetry(logger::telemeterize);
-
-        /*********** DRIVER ************/
-        drivetrain.setDefaultCommand(
-                drivetrain.applyRequest(() -> {
-                    double leftY = driver.getLeftY();
-                    double leftX = driver.getLeftX();
-                    double rightX = driver.getRightX();
-                    double slowFactor = operator.rightTrigger().getAsBoolean() ? .3 : 1.0;
-
-                    // Simulation only - driver2 overrides if active
-                    if (Robot.isSimulation() && driver2 != null) {
-                        if (Math.abs(driver2.getLeftY()) > 0.1)
-                            leftY = driver2.getLeftY();
-                        if (Math.abs(driver2.getLeftX()) > 0.1)
-                            leftX = driver2.getLeftX();
-                        if (Math.abs(driver2.getRightX()) > 0.1)
-                            rightX = driver2.getRightX();
-                        if (driver2.rightTrigger().getAsBoolean())
-                            slowFactor = 0.5;
-                    }
-
-                    double simTranslationFactor = Robot.isSimulation() ? 0.3 : 1.0;
-
-                    return drive
-                            .withVelocityX(-leftY * MaxSpeed * slowFactor * simTranslationFactor)
-                            .withVelocityY(-leftX * MaxSpeed * slowFactor * simTranslationFactor)
-                            .withRotationalRate(-rightX * MaxAngularRate * slowFactor);
-                }));
-
-        // gyro reset
-        driver.start().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
-
-        // Snap buttons
-        driver.y().whileTrue(snapTo(Rotation2d.kZero));
-        driver.x().whileTrue(snapTo(Rotation2d.kCCW_90deg));
-        driver.b().whileTrue(snapTo(Rotation2d.kCW_90deg));
-        driver.a().whileTrue(snapTo(Rotation2d.k180deg));
-
-        // intake toggle
-        driver.rightBumper().onTrue(
-                Commands.either(
-                        setIntake(IntakeWantedState.IDLE),
-                        setIntake(IntakeWantedState.INTAKE),
-                        () -> intake.getState() == SystemState.INTAKING));
-
-        // retract
-        driver.leftBumper()
-                .onTrue(setIntake(IntakeWantedState.RETRACT))
-                .onFalse(setIntake(IntakeWantedState.IDLE));
-
-        // outtake
-        driver.leftTrigger()
-                .onTrue(setIntake(IntakeWantedState.OUTTAKE))
-                .onFalse(setIntake(IntakeWantedState.IDLE));
-
-        // eco mode (manual)
-        driver.povUp().onTrue(setEcoMode(true));
-        driver.povDown().onTrue(setEcoMode(false));
-
-        // eco mode (automatic on sustained low battery)
-        lowBattery.onTrue(setEcoMode(true));
-
-        // manual intake nudge
-        driver.povLeft()
-                .onTrue(setIntake(IntakeWantedState.MANUAL_CONTROL_POS))
-                .onFalse(setIntake(IntakeWantedState.MANUAL_IDLE));
-        driver.povRight()
-                .onTrue(setIntake(IntakeWantedState.MANUAL_CONTROL_NEG))
-                .onFalse(setIntake(IntakeWantedState.MANUAL_IDLE));
-
-        // manually force intake extension to the CANrange-homing "out" reference
-        driver.back().onTrue(Commands.runOnce(intake::setOut));
-
-        // brake
-        driver.rightTrigger().whileTrue(drivetrain.applyRequest(() -> brake));
-
-        /********* OPERATOR *********/
-
-        // manually zero intake extension (locked out while debugging)
-        operator.start().and(debugging.negate()).onTrue(Commands.runOnce(intake::setZero));
-
-        // hold Start 3s to toggle manual hood/flywheel/turret debug mode
-        debugModeHold.onTrue(Commands.runOnce(() -> debugMode = !debugMode));
-
-        debugging.onTrue(Commands.runOnce(() -> {
-            shooter.resetManualDebugTimer();
-            turret.resetManualDebugTimer();
-            // Debug mode always starts in manual turret control -- seed it from
-            // wherever the turret was already aimed so entry doesn't snap it.
-            turret.seedManualPosition(turret.getCurrentSetpoint());
-        }));
-        debugging.whileTrue(Commands.run(this::applyDebugControls));
-        debugging.onFalse(stopScoring().andThen(Commands.runOnce(() -> turretTrackingEnabled = false)));
-
-        markShotTablePoint.onTrue(Commands.runOnce(shooter::markCurrentAsShotTablePoint));
-
-        // spindexer reverse (normal) / hold to shoot (while debugging)
-        operator.a().and(debugging.negate())
-                .onTrue(Commands.runOnce(() -> feeder.setWantedFeederState(FeederWantedState.FEEDTEST)))
-                .onFalse(Commands.runOnce(() -> feeder.setWantedFeederState(FeederWantedState.IDLE)));
-        operator.a().and(debugging)
-                .onTrue(Commands.runOnce(() -> feeder.setWantedFeederState(FeederWantedState.SHOOT)))
-                .onFalse(Commands.runOnce(() -> feeder.setWantedFeederState(FeederWantedState.IDLE)));
-
-        // high pass (normal) / toggle turret live tracking (while debugging)
-        operator.y().and(debugging.negate())
-                .onTrue(scoringState(ShooterWantedState.TEST, TurretWantedState.AIM_PASS, FeederWantedState.SHOOT))
-                .onFalse(stopScoring());
-        operator.y().and(debugging)
-                .onTrue(Commands.runOnce(() -> {
-                    if (turretTrackingEnabled) {
-                        // Leaving live tracking for manual control -- start the manual
-                        // setpoint from wherever the turret was already aimed, not
-                        // wherever it was last left, so this doesn't snap the turret
-                        // across its range the instant manual control takes over.
-                        turret.seedManualPosition(turret.getCurrentSetpoint());
-                    }
-                    turretTrackingEnabled = !turretTrackingEnabled;
-                }));
-
-        // right trench shot (normal) / snap manual hood+RPS to ShotCalc's current pick (while debugging)
-        operator.b().and(debugging.negate())
-                .onTrue(scoringState(ShooterWantedState.TRENCH_SHOOT, TurretWantedState.TRENCH_PRESETR,
-                        FeederWantedState.SHOOT))
-                .onFalse(stopScoring());
-        operator.b().and(debugging)
-                .onTrue(Commands.runOnce(shooter::setManualToShotCalc));
-
-        // left trench shot (locked out while debugging)
-        operator.x().and(debugging.negate())
-                .onTrue(scoringState(ShooterWantedState.TRENCH_SHOOT, TurretWantedState.TRENCH_PRESETL,
-                        FeederWantedState.SHOOT))
-                .onFalse(stopScoring());
-
-        // agitation manual -- jog the intake to try to shake a hopper jam loose (locked out while debugging)
-        operator.leftTrigger().and(debugging.negate())
-                .onTrue(setIntake(IntakeWantedState.AGITATE))
-                .onFalse(setIntake(IntakeWantedState.INTAKE));
-
-        // slow squeeze (locked out while debugging)
-        operator.leftBumper().and(debugging.negate())
-                .onTrue(setIntake(IntakeWantedState.SCORE))
-                .onFalse(setIntake(IntakeWantedState.INTAKE));
-
-        // hub shot (SOTF)
-        operator.rightTrigger().and(debugging.negate())
-                .onTrue(scoringState(ShooterWantedState.HUB_SHOOT, TurretWantedState.AIM_HUB,
-                        FeederWantedState.SHOOT))
-                .onFalse(stopScoring());
-
-        // aiming offset trim
-        operator.povRight().and(debugging.negate()).onTrue(Commands.runOnce(turret::applyLeftOffset));
-        operator.povLeft().and(debugging.negate()).onTrue(Commands.runOnce(turret::applyRightOffset));
-
-        // mid-match shot-profile quick-fix: steps which pre-baked RPS/HOOD
-        // table ShotCalc reads (NORMAL <-> LONG_SHOT / SHORT_SHOT), to
-        // compensate for a suspected external calibration bias without
-        // touching the validated NORMAL tuning. Resets to NORMAL on every
-        // disable (see disabledActions()).
-        operator.povUp().and(debugging.negate())
-                .onTrue(Commands.runOnce(ShooterConstants::stepShotProfileTowardLong));
-        operator.povDown().and(debugging.negate())
-                .onTrue(Commands.runOnce(ShooterConstants::stepShotProfileTowardShort));
-
-        // passing
-        operator.rightBumper().and(debugging.negate())
-                .onTrue(scoringState(ShooterWantedState.PASS_SHOOT, TurretWantedState.AIM_PASS,
-                        FeederWantedState.PASS))
-                .onFalse(stopScoring());
-
-        /******* SIGNAL LIGHTS ***********/
-
-        // Shooter-mounted signal LEDs: green when flywheel + turret are ready
-        // to shoot, red otherwise.
-        readyToShoot
-                .onTrue(Commands.runOnce(
-                        () -> normalLights.LED_SolidColor(LEDTarget.SIGNAL,
-                                LightsConstants.RBGColors.get("green")),
-                        normalLights))
-                .onFalse(Commands.runOnce(
-                        () -> normalLights.LED_SolidColor(LEDTarget.SIGNAL,
-                                LightsConstants.RBGColors.get("red")),
-                        normalLights));
-
-        /******* SIMULATION ***********/
-
-        // driver2 right trigger triggers shooting like operator
-        if (Robot.isSimulation() && driver2 != null) {
-            driver2.rightTrigger()
-                    .onTrue(scoringState(ShooterWantedState.HUB_SHOOT, TurretWantedState.AIM_HUB,
-                            FeederWantedState.SHOOT))
-                    .onFalse(stopScoring());
-
-            // driver2 right bumper: intake toggle like the driver's, with the
-            // kicker following it -- deploys with the intake, stows when it stops.
-            driver2.rightBumper().onTrue(
-                    Commands.either(
-                            setIntake(IntakeWantedState.IDLE)
-                                    .andThen(kicker.setWantedStateCommand(KickerConstants.WantedState.STOW)),
-                            setIntake(IntakeWantedState.INTAKE)
-                                    .andThen(kicker.setWantedStateCommand(KickerConstants.WantedState.DEPLOY)),
-                            () -> intake.getState() == SystemState.INTAKING));
-        }
-    }
-
-    private Command snapTo(Rotation2d direction) {
-        return drivetrain.applyRequest(() -> facingAngle
-                .withVelocityX(-driver.getLeftY() * MaxSpeed)
-                .withVelocityY(-driver.getLeftX() * MaxSpeed)
-                .withTargetDirection(direction));
-    }
-
-    public void disabledActions() {
-        feeder.setWantedFeederState(FeederWantedState.IDLE);
-        shooter.setWantedShooterState(ShooterWantedState.IDLE);
-        turret.setWantedTurretState(TurretWantedState.IDLE);
-        intake.setWantedIntakeState(IntakeWantedState.IDLE);
-        ShooterConstants.resetShotProfile();
-
-        normalLights.LED_Twinkle(
-                LEDTarget.SIDES,
-                LightsConstants.RBGColors.get("black"),
-                LightsConstants.RBGColors.get("gold"),
-                2.5);
-    }
-
-    public void teleopActions() {
-        // Match timer drives MatchInformation's hub-shift logic; restart (not
-        // just start) so re-enables don't inherit stale elapsed time.
-        matchTimer.restart();
-
-        feeder.setWantedFeederState(FeederWantedState.IDLE);
-        shooter.setWantedShooterState(ShooterWantedState.IDLE);
-        turret.setWantedTurretState(TurretWantedState.IDLE);
-        intake.setWantedIntakeState(IntakeWantedState.IDLE);
-
-        normalLights.LED_Reset(LEDTarget.SIDES);
-    }
-
-    public void configureTestCommands() {
-        SmartDashboard.putData("Intake RESET", Commands.runOnce(intake::setZero, intake));
-        SmartDashboard.putData("HOOD RESET", Commands.runOnce(shooter::hoodReset, shooter));
-    }
-
-    public Command getAutonomousCommand() {
-        return autoChooser.getSelected();
-    }
-
-    /** Pairs an Auto-Detect family with its already-built chooser Command, so telemetry can report which concrete auto that Command will resolve to without re-parsing anything. */
-    private record AutoDetectEntry(AutoSelector.AutoFamily family, Command chooserCommand) {
-    }
-
-    /** Dashboard-selectable override for AutoSelector.Side -- lets the driver force a side if vision ever picks wrong. */
-    private enum SideOverride {
-        AUTO_DETECT, FORCE_LEFT, FORCE_RIGHT
-    }
-
-    private final List<AutoDetectEntry> autoDetectEntries = new ArrayList<>();
-    private final SendableChooser<SideOverride> sideOverrideChooser = new SendableChooser<>();
-    private AutoSelector.Side detectedSide = AutoSelector.Side.RIGHT;
-    private int detectedSideStableCount = 0;
-    private static final int kSideDebounceCycles = 25; // ~0.5s at 50Hz
-
-    public void configureAutoCommands() {
-        sideOverrideChooser.setDefaultOption("Auto-Detect (Recommended)", SideOverride.AUTO_DETECT);
-        sideOverrideChooser.addOption("Force Left", SideOverride.FORCE_LEFT);
-        sideOverrideChooser.addOption("Force Right", SideOverride.FORCE_RIGHT);
-        SmartDashboard.putData("AUTO/Side Override", sideOverrideChooser);
-
-        // AUTO_DETECT_FAMILIES is the manually-curated list; discoverPrefixedFamilies() finds
-        // any "Left:<Name>" auto with no registration needed at all (see AutoSelector's class
-        // doc). Individual per-side .auto files covered by either are filtered out of the raw
-        // chooser options -- only the single combined family entry below is shown, so the
-        // dashboard doesn't list both "Theory Dance L" and "Theory Dance R" alongside the
-        // combined "Theory Dance" entry.
-        List<AutoSelector.AutoFamily> families = new ArrayList<>(AutoSelector.AUTO_DETECT_FAMILIES);
-        families.addAll(AutoSelector.discoverPrefixedFamilies());
-
-        Set<String> coveredAutoNames = AutoSelector.coveredAutoNames(families);
-        autoChooser = AutoBuilder.buildAutoChooserWithOptionsModifier(
-                options -> options.filter(auto -> !coveredAutoNames.contains(auto.getName())));
-
-        for (AutoSelector.AutoFamily family : families) {
-            // Both sides are built once, right here, rather than lazily at auto start --
-            // avoids any JSON/trajectory parsing delay between enabling and the robot
-            // moving. Only the pick between these two already-built Commands happens at
-            // autonomousInit(), which is just a boolean check.
-            Command left = family.leftBuilder().get();
-            Command right = family.rightBuilder().get();
-            Command autoDetect = Commands.either(left, right, () -> resolveSide() == AutoSelector.Side.LEFT);
-            autoDetectEntries.add(new AutoDetectEntry(family, autoDetect));
-            autoChooser.addOption(family.label(), autoDetect);
-        }
-
-        SmartDashboard.putData("autos", autoChooser);
-    }
-
-    /** The side that will actually be used: the dashboard override if one is set, otherwise the vision-detected side. */
-    private AutoSelector.Side resolveSide() {
-        SideOverride override = sideOverrideChooser.getSelected();
-        if (override == SideOverride.FORCE_LEFT) {
-            return AutoSelector.Side.LEFT;
-        }
-        if (override == SideOverride.FORCE_RIGHT) {
-            return AutoSelector.Side.RIGHT;
-        }
-        return detectedSide;
-    }
-
-    /**
-     * Called every disabledPeriodic tick: debounces the vision-derived starting side and
-     * surfaces it, plus the actually-resolved side/auto, on the dashboard so the driver sees
-     * it settle before enabling. detectedSide is finalized here too -- autonomousInit() just
-     * hands the already-decided side (or the dashboard override) to Commands.either, so
-     * nothing is decided or built at auto start.
-     */
-    public void updateAutoSideDetection() {
-        Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Blue);
-        AutoSelector.Side rawSide = AutoSelector.sideFromPose(drivetrain.getPose(), alliance);
-        if (rawSide == detectedSide) {
-            detectedSideStableCount = 0;
-        } else if (++detectedSideStableCount >= kSideDebounceCycles) {
-            detectedSide = rawSide;
-            detectedSideStableCount = 0;
-        }
-
-        SmartDashboard.putString("AUTO/Detected Side", detectedSide.toString());
-        SmartDashboard.putBoolean("AUTO/Vision Fix Fresh", drivetrain.isVisionPoseFresh());
-        SmartDashboard.putString("AUTO/Will Run", resolveWillRun());
-        updateSelectedAutoPreview();
-    }
-
-    /** What auto will actually run if enabled right now, given the current chooser selection and the resolved (possibly overridden) side. */
-    private String resolveWillRun() {
-        Command selected = autoChooser.getSelected();
-        if (selected == null) {
-            return "None";
-        }
-        AutoSelector.Side side = resolveSide();
-        for (AutoDetectEntry entry : autoDetectEntries) {
-            if (entry.chooserCommand() == selected) {
-                return side == AutoSelector.Side.LEFT ? entry.family().leftName() : entry.family().rightName();
-            }
-        }
-        return selected.getName();
-    }
-
-    private Command previewedCommand = null;
-    private AutoSelector.Side previewedSide = null;
-    private Alliance previewedAlliance = null;
-
-    /**
-     * Redraws the "Selected Auto" path on the drivetrain's Field2d widget whenever the chooser
-     * selection, the resolved side, or the alliance actually changes -- getPathGroupFromAutoFile
-     * re-parses the .auto file from disk each call, so this is cached rather than re-run every
-     * disabledPeriodic tick regardless of whether anything changed.
-     */
-    private void updateSelectedAutoPreview() {
-        Command selected = autoChooser.getSelected();
-        AutoSelector.Side side = resolveSide();
-        Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Blue);
-        if (selected == previewedCommand && side == previewedSide && alliance == previewedAlliance) {
-            return;
-        }
-        previewedCommand = selected;
-        previewedSide = side;
-        previewedAlliance = alliance;
-
-        if (selected == null) {
-            drivetrain.setFieldTrajectory("Selected Auto", List.of());
-            return;
-        }
-        try {
-            for (AutoDetectEntry entry : autoDetectEntries) {
-                if (entry.chooserCommand() == selected) {
-                    drivetrain.setFieldTrajectory("Selected Auto",
-                            AutoSelector.previewFamilySide(entry.family(), side, alliance));
-                    return;
+        public final Timer matchTimer = new Timer();
+
+        // Subsystems
+        public final LEDSubsystem_WPIlib normalLights = new LEDSubsystem_WPIlib();
+        public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
+        public final Intake intake = new Intake();
+        public final Kicker kicker = new Kicker();
+        public final Turret turret = new Turret(drivetrain);
+        public final Shooter shooter = new Shooter(drivetrain);
+        public final Feeder feeder = new Feeder(turret, shooter, drivetrain);
+        public final MatchInformation matchInformation = new MatchInformation(matchTimer);
+        private SendableChooser<Command> autoChooser = new SendableChooser<>();
+
+        private final Orchestra orchestra = new Orchestra();
+
+        // Controllers
+        private final CommandXboxController driver = new CommandXboxController(OperatorConstants.kDriverControllerPort);
+        private final CommandXboxController operator = new CommandXboxController(
+                        OperatorConstants.kOperatorControllerPort);
+        // Simulation only - second driver controller for testing SOTF
+        private final CommandXboxController driver2 = Robot.isSimulation() ? new CommandXboxController(2) : null;
+
+        // Drive requests
+        private final double MaxSpeed = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
+        private final double MaxAngularRate = RotationsPerSecond.of(0.75).in(RadiansPerSecond);
+        private final Telemetry logger = new Telemetry(MaxSpeed);
+
+        private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
+                        .withDeadband(MaxSpeed * 0.1).withRotationalDeadband(MaxAngularRate * 0.1)
+                        .withDriveRequestType(DriveRequestType.OpenLoopVoltage);
+
+        private final SwerveRequest.FieldCentricFacingAngle facingAngle = new SwerveRequest.FieldCentricFacingAngle()
+                        .withDeadband(MaxSpeed * 0.1)
+                        .withRotationalDeadband(MaxAngularRate * 0.1)
+                        .withDriveRequestType(DriveRequestType.OpenLoopVoltage)
+                        .withHeadingPID(5, 0, 0);
+
+        private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
+
+        /* ---------------- Triggers ---------------- */
+
+        // Battery has been below 10V continuously for 4 seconds.
+        private static final double kLowBatteryVolts = 10;
+        private static final double kLowBatteryDebounceSeconds = 4;
+        private double lowBatteryStartTime = -1;
+
+        private boolean batteryIsLow() {
+                if (RobotController.getBatteryVoltage() < kLowBatteryVolts) {
+                        if (lowBatteryStartTime < 0) {
+                                lowBatteryStartTime = Timer.getFPGATimestamp();
+                        }
+                        return Timer.getFPGATimestamp() - lowBatteryStartTime > kLowBatteryDebounceSeconds;
                 }
-            }
-            drivetrain.setFieldTrajectory("Selected Auto",
-                    AutoSelector.previewPoses(selected.getName(), false, alliance));
-        } catch (IOException | ParseException e) {
-            DriverStation.reportWarning("Failed to build auto preview path: " + e.getMessage(), false);
+                lowBatteryStartTime = -1;
+                return false;
         }
-    }
 
-    public void configureNamedCommands() {
-        NamedCommands.registerCommand("Shooter On",
-                Commands.runOnce(() -> shooter.setWantedShooterState(ShooterWantedState.TURN_ON_AUTO)));
+        private final Trigger lowBattery = new Trigger(this::batteryIsLow);
+        private final Trigger readyToShoot = new Trigger(
+                        () -> shooter.shooterIsReady() && turret.turretIsReady());
 
-        NamedCommands.registerCommand("Retract Hood",
-                Commands.runOnce(() -> shooter.setWantedShooterState(ShooterWantedState.RETRACT_AUTO)));
+        // Manual hood/flywheel/turret debug mode: toggled by the operator
+        // holding Start for 3 continuous seconds. While active, shooter hood/RPS
+        // are always driven by the operator's sticks instead of ShotCalc, turret
+        // either auto-tracks the target or takes manual nudges depending on the
+        // Y-button tracking toggle, and every non-debug operator control is
+        // locked out.
+        private boolean debugMode = false;
+        // Whether turret auto-tracks the target (IDLE_AIM) or takes manual
+        // left-stick-X nudges while debugging. Starts (and resets to) manual
+        // control every time debug mode is (re-)entered; toggled by Y.
+        private boolean turretTrackingEnabled = false;
+        private final Trigger debugModeHold = operator.start().debounce(3.0);
+        private final Trigger debugging = new Trigger(() -> debugMode);
+        // Hold X for 2s while debugging to mark the current manual hood/RPS as a
+        // live SOTF table point at the current hub distance.
+        private final Trigger markShotTablePoint = operator.x().and(debugging).debounce(2.0);
 
-        NamedCommands.registerCommand("FeederIdle",
-                Commands.runOnce(() -> feeder.setWantedFeederState(FeederWantedState.IDLE)));
+        public RobotContainer() {
+                // Moving parts for the 3D robot view in AdvantageScope (3161 Robot Setup, CAD
+                // tab)
+                RobotComponents.start(this);
 
-        NamedCommands.registerCommand("Auto Trench Shoot Left",
-                Commands.sequence(
-                        scoringState(ShooterWantedState.TRENCH_SHOOT, TurretWantedState.TRENCH_PRESETL,
-                                FeederWantedState.SHOOT),
-                        Commands.waitSeconds(1.5),
-                        setIntake(IntakeWantedState.RETRACT))
-                        .alongWith(Commands.waitSeconds(4.5)));
+                configureBindings();
+                configureNamedCommands();
+                configureAutoCommands();
+                configureTestCommands();
 
-        NamedCommands.registerCommand("Auto Trench Shoot Right",
-                Commands.sequence(
-                        scoringState(ShooterWantedState.TRENCH_SHOOT, TurretWantedState.TRENCH_PRESETR,
-                                FeederWantedState.SHOOT),
-                        Commands.waitSeconds(1.5),
-                        setIntake(IntakeWantedState.RETRACT))
-                        .alongWith(Commands.waitSeconds(4.5)));
+                if (Robot.isSimulation()) {
+                        drivetrain.resetPose(new Pose2d(2, 4, Rotation2d.fromDegrees(0)));
+                }
+        }
 
-        NamedCommands.registerCommand("SOTF",
-                Commands.sequence(
-                        scoringState(ShooterWantedState.HUB_SHOOT, TurretWantedState.AIM_HUB,
-                                FeederWantedState.IDLE),
-                        waitToShoot(),
-                        Commands.runOnce(() -> feeder.setWantedFeederState(FeederWantedState.SHOOT)),
-                        Commands.waitSeconds(1.5),
-                        setIntake(IntakeWantedState.RETRACT)));
+        // /**
+        // * Plays the startup jingle across every subsystem's motors. Requires
+        // * sirius.chrp in src/main/deploy (converted from a MIDI file via the
+        // * CHRP Converter tool in Phoenix Tuner X — there's no code-side way to
+        // * do that conversion). Call once, not periodically.
+        // */
+        // /** Applies the disabled-play audio config to one motor and adds it as the
+        // next Orchestra track. */
+        // private void addJingleInstrument(TalonFX motor) {
+        // if (!Robot.isSimulation()) {
+        // motor.getConfigurator().apply(new
+        // AudioConfigs().withAllowMusicDurDisable(true));
+        // }
+        // orchestra.addInstrument(motor);
+        // }
 
-        NamedCommands.registerCommand("Aim Shoot",
-                Commands.sequence(
-                        scoringState(ShooterWantedState.HUB_SHOOT, TurretWantedState.AIM_HUB,
-                                FeederWantedState.IDLE),
-                        waitToShoot(),
-                        Commands.runOnce(() -> feeder.setWantedFeederState(FeederWantedState.SHOOT)),
-                        Commands.waitSeconds(1.5),
-                        setIntake(IntakeWantedState.RETRACT))
-                        .alongWith(Commands.waitSeconds(3.0)));
+        // public void playStartupJingle() {
+        // // Every motor added individually and explicitly, in the order we
+        // // most want to hear them — instruments beyond however many tracks
+        // // the chrp actually has get no track assigned at all (silent, no
+        // // CAN data), so whoever's added last is most at risk of going quiet.
 
-        NamedCommands.registerCommand("Intake",
-                setIntake(IntakeWantedState.INTAKE));
+        // addJingleInstrument(intake.getExtensionMotor());
+        // addJingleInstrument(turret.getTurretMotor());
+        // addJingleInstrument(shooter.getShooterMotor1());
+        // addJingleInstrument(shooter.getShooterMotor2());
+        // addJingleInstrument(shooter.getHoodMotor());
+        // addJingleInstrument(feeder.getTowerMotor());
+        // addJingleInstrument(feeder.getRollerMotor());
+        // addJingleInstrument(feeder.getSpindexerMotor());
 
-        NamedCommands.registerCommand("Rswipe pathFind",
-                drivetrain.defer(
-                        () -> DriveToLocation.pathFindTo(new Pose2d(8.05, 2.75, Rotation2d.fromDegrees(90)),
-                                drivetrain)));
+        // var status = orchestra.loadMusic("sirius.chrp");
+        // if (status.isOK()) {
+        // orchestra.play();
+        // } else {
+        // System.out.println("Could not load startup jingle, error code: " +
+        // status.toString());
+        // }
+        // }
 
-        NamedCommands.registerCommand("Lswipe pathFind",
-                drivetrain.defer(
-                        () -> DriveToLocation.pathFindTo(new Pose2d(8.05, 5.25, Rotation2d.fromDegrees(90)),
-                                drivetrain)));
-    }
+        // /** Reports whether the jingle is still playing and how far into it we are.
+        // */
+        // public void logJingleStatus() {
+        // SmartDashboard.putBoolean("JINGLE/Playing", orchestra.isPlaying());
+        // SmartDashboard.putNumber("JINGLE/Current Time", orchestra.getCurrentTime());
+        // }
+
+        // /**
+        // * Releases the instrument motors back to normal control. Devices playing
+        // * in an Orchestra ignore every other control request until this (or
+        // * pause()) is called, so this must run before any subsystem needs real
+        // * control — call on first enable regardless of mode.
+        // */
+        // public void stopStartupJingle() {
+        // orchestra.stop();
+        // }
+
+        /* ---------------- Command helpers ---------------- */
+
+        /** Sets shooter + turret + feeder states together. */
+        private Command scoringState(ShooterWantedState s, TurretWantedState t, FeederWantedState f) {
+                return Commands.runOnce(() -> {
+                        shooter.setWantedShooterState(s);
+                        turret.setWantedTurretState(t);
+                        feeder.setWantedFeederState(f);
+                });
+        }
+
+        /** The standard "release shoot button" state: flywheel stays warm. */
+        private Command stopScoring() {
+                return scoringState(ShooterWantedState.IDLE, TurretWantedState.IDLE, FeederWantedState.IDLE);
+        }
+
+        private Command setIntake(IntakeWantedState state) {
+                return Commands.runOnce(() -> intake.setWantedIntakeState(state));
+        }
+
+        private Command setKicker(KickerConstants.WantedState state) {
+                return Commands.runOnce(() -> kicker.setWantedState(state));
+        }
+
+        private Command setEcoMode(boolean enabled) {
+                return Commands.runOnce(() -> {
+                        if (enabled) {
+                                intake.enableEcoModeIntake();
+                                turret.enableEcoModeTurret();
+                                feeder.enableEcoModeFeeder();
+                        } else {
+                                intake.disableEcoModeIntake();
+                                turret.disableEcoModeTurret();
+                                feeder.disableEcoModeFeeder();
+                        }
+                });
+        }
+
+        /**
+         * Drives one loop of debug mode: shooter takes manual hood/RPS setpoints
+         * nudged by the operator's sticks (left Y = hood, right Y = flywheel),
+         * deadbanded so a centered stick holds the setpoint still. Turret either
+         * auto-tracks the target (IDLE_AIM) or takes manual left-stick-X nudges,
+         * depending on the Y-button tracking toggle.
+         */
+        private void applyDebugControls() {
+                shooter.setWantedShooterState(ShooterWantedState.DEBUG);
+
+                double hoodStick = -MathUtil.applyDeadband(operator.getLeftY(), ShooterConstants.debugStickDeadband);
+                double rpsStick = -MathUtil.applyDeadband(operator.getRightY(), ShooterConstants.debugStickDeadband);
+                shooter.nudgeManualSetpoints(hoodStick, rpsStick);
+
+                if (turretTrackingEnabled) {
+                        turret.setWantedTurretState(TurretWantedState.IDLE_AIM);
+                } else {
+                        turret.setWantedTurretState(TurretWantedState.DEBUG);
+                        double turretStick = MathUtil.applyDeadband(operator.getLeftX(),
+                                        ShooterConstants.debugStickDeadband);
+                        turret.nudgeManualPosition(turretStick);
+                }
+
+                SmartDashboard.putBoolean("DEBUG/Turret Live Tracking", turretTrackingEnabled);
+        }
+
+        public Command waitToShoot() {
+                return Commands.waitUntil(() -> shooter.shooterIsReady() && turret.turretIsReady());
+        }
+
+        private void configureBindings() {
+                // Buttons set up in the 3161 Robot Setup app
+                ControllerBindings.configure(driver, operator, this);
+
+                drivetrain.registerTelemetry(logger::telemeterize);
+
+                /*********** DRIVER ************/
+                drivetrain.setDefaultCommand(
+                                drivetrain.applyRequest(() -> {
+                                        double leftY = driver.getLeftY();
+                                        double leftX = driver.getLeftX();
+                                        double rightX = driver.getRightX();
+                                        double slowFactor = operator.rightTrigger().getAsBoolean() ? .3 : 1.0;
+
+                                        // Simulation only - driver2 overrides if active
+                                        if (Robot.isSimulation() && driver2 != null) {
+                                                if (Math.abs(driver2.getLeftY()) > 0.1)
+                                                        leftY = driver2.getLeftY();
+                                                if (Math.abs(driver2.getLeftX()) > 0.1)
+                                                        leftX = driver2.getLeftX();
+                                                if (Math.abs(driver2.getRightX()) > 0.1)
+                                                        rightX = driver2.getRightX();
+                                                if (driver2.rightTrigger().getAsBoolean())
+                                                        slowFactor = 0.5;
+                                        }
+
+                                        double simTranslationFactor = Robot.isSimulation() ? 0.3 : 1.0;
+
+                                        return drive
+                                                        .withVelocityX(-leftY * MaxSpeed * slowFactor
+                                                                        * simTranslationFactor)
+                                                        .withVelocityY(-leftX * MaxSpeed * slowFactor
+                                                                        * simTranslationFactor)
+                                                        .withRotationalRate(-rightX * MaxAngularRate * slowFactor);
+                                }));
+
+                // gyro reset
+                driver.start().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
+
+                // Snap buttons
+                driver.y().whileTrue(snapTo(Rotation2d.kZero));
+                driver.x().whileTrue(snapTo(Rotation2d.kCCW_90deg));
+                driver.b().whileTrue(snapTo(Rotation2d.kCW_90deg));
+                driver.a().whileTrue(snapTo(Rotation2d.k180deg));
+
+                // intake toggle
+                driver.rightBumper().onTrue(
+                                Commands.either(
+                                                setIntake(IntakeWantedState.IDLE),
+                                                setIntake(IntakeWantedState.INTAKE),
+                                                () -> intake.getState() == SystemState.INTAKING));
+                driver.rightBumper().onTrue(setKicker(KickerConstants.WantedState.DEPLOY));
+
+                // retract
+                driver.leftBumper()
+                                .onTrue(setIntake(IntakeWantedState.RETRACT))
+                                .onFalse(setIntake(IntakeWantedState.IDLE));
+
+                // outtake
+                driver.leftTrigger()
+                                .onTrue(setIntake(IntakeWantedState.OUTTAKE))
+                                .onFalse(setIntake(IntakeWantedState.IDLE));
+
+                // eco mode (manual)
+                driver.povUp().onTrue(setEcoMode(true));
+                driver.povDown().onTrue(setEcoMode(false));
+
+                // eco mode (automatic on sustained low battery)
+                lowBattery.onTrue(setEcoMode(true));
+
+                // manual intake nudge
+                driver.povLeft()
+                                .onTrue(setIntake(IntakeWantedState.MANUAL_CONTROL_POS))
+                                .onFalse(setIntake(IntakeWantedState.MANUAL_IDLE));
+                driver.povRight()
+                                .onTrue(setIntake(IntakeWantedState.MANUAL_CONTROL_NEG))
+                                .onFalse(setIntake(IntakeWantedState.MANUAL_IDLE));
+
+                // manually force intake extension to the CANrange-homing "out" reference
+                driver.back().onTrue(Commands.runOnce(intake::setOut));
+
+                // brake
+                driver.rightTrigger().whileTrue(drivetrain.applyRequest(() -> brake));
+
+                /********* OPERATOR *********/
+
+                // manually zero intake extension (locked out while debugging)
+                operator.start().and(debugging.negate()).onTrue(Commands.runOnce(intake::setZero));
+
+                // hold Start 3s to toggle manual hood/flywheel/turret debug mode
+                debugModeHold.onTrue(Commands.runOnce(() -> debugMode = !debugMode));
+
+                debugging.onTrue(Commands.runOnce(() -> {
+                        shooter.resetManualDebugTimer();
+                        turret.resetManualDebugTimer();
+                        // Debug mode always starts in manual turret control -- seed it from
+                        // wherever the turret was already aimed so entry doesn't snap it.
+                        turret.seedManualPosition(turret.getCurrentSetpoint());
+                }));
+                debugging.whileTrue(Commands.run(this::applyDebugControls));
+                debugging.onFalse(stopScoring().andThen(Commands.runOnce(() -> turretTrackingEnabled = false)));
+
+                markShotTablePoint.onTrue(Commands.runOnce(shooter::markCurrentAsShotTablePoint));
+
+                // spindexer reverse (normal) / hold to shoot (while debugging)
+                operator.a().and(debugging.negate())
+                                .onTrue(Commands.runOnce(() -> feeder.setWantedFeederState(FeederWantedState.FEEDTEST)))
+                                .onFalse(Commands.runOnce(() -> feeder.setWantedFeederState(FeederWantedState.IDLE)));
+                operator.a().and(debugging)
+                                .onTrue(Commands.runOnce(() -> feeder.setWantedFeederState(FeederWantedState.SHOOT)))
+                                .onFalse(Commands.runOnce(() -> feeder.setWantedFeederState(FeederWantedState.IDLE)));
+
+                // high pass (normal) / toggle turret live tracking (while debugging)
+                operator.y().and(debugging.negate())
+                                .onTrue(scoringState(ShooterWantedState.TEST, TurretWantedState.AIM_PASS,
+                                                FeederWantedState.SHOOT))
+                                .onFalse(stopScoring());
+                operator.y().and(debugging)
+                                .onTrue(Commands.runOnce(() -> {
+                                        if (turretTrackingEnabled) {
+                                                // Leaving live tracking for manual control -- start the manual
+                                                // setpoint from wherever the turret was already aimed, not
+                                                // wherever it was last left, so this doesn't snap the turret
+                                                // across its range the instant manual control takes over.
+                                                turret.seedManualPosition(turret.getCurrentSetpoint());
+                                        }
+                                        turretTrackingEnabled = !turretTrackingEnabled;
+                                }));
+
+                // right trench shot (normal) / snap manual hood+RPS to ShotCalc's current pick
+                // (while debugging)
+                operator.b().and(debugging.negate())
+                                .onTrue(scoringState(ShooterWantedState.TRENCH_SHOOT, TurretWantedState.TRENCH_PRESETR,
+                                                FeederWantedState.SHOOT))
+                                .onFalse(stopScoring());
+                operator.b().and(debugging)
+                                .onTrue(Commands.runOnce(shooter::setManualToShotCalc));
+
+                // left trench shot (locked out while debugging)
+                operator.x().and(debugging.negate())
+                                .onTrue(scoringState(ShooterWantedState.TRENCH_SHOOT, TurretWantedState.TRENCH_PRESETL,
+                                                FeederWantedState.SHOOT))
+                                .onFalse(stopScoring());
+
+                // agitation manual -- jog the intake to try to shake a hopper jam loose (locked
+                // out while debugging)
+                operator.leftTrigger().and(debugging.negate())
+                                .onTrue(setIntake(IntakeWantedState.AGITATE))
+                                .onFalse(setIntake(IntakeWantedState.INTAKE));
+
+                // slow squeeze (locked out while debugging)
+                operator.leftBumper().and(debugging.negate())
+                                .onTrue(setIntake(IntakeWantedState.SCORE))
+                                .onFalse(setIntake(IntakeWantedState.INTAKE));
+
+                // hub shot (SOTF)
+                operator.rightTrigger().and(debugging.negate())
+                                .onTrue(scoringState(ShooterWantedState.HUB_SHOOT, TurretWantedState.AIM_HUB,
+                                                FeederWantedState.SHOOT))
+                                .onFalse(stopScoring());
+
+                // aiming offset trim
+                operator.povRight().and(debugging.negate()).onTrue(Commands.runOnce(turret::applyLeftOffset));
+                operator.povLeft().and(debugging.negate()).onTrue(Commands.runOnce(turret::applyRightOffset));
+
+                // mid-match shot-profile quick-fix: steps which pre-baked RPS/HOOD
+                // table ShotCalc reads (NORMAL <-> LONG_SHOT / SHORT_SHOT), to
+                // compensate for a suspected external calibration bias without
+                // touching the validated NORMAL tuning. Resets to NORMAL on every
+                // disable (see disabledActions()).
+                operator.povUp().and(debugging.negate())
+                                .onTrue(Commands.runOnce(ShooterConstants::stepShotProfileTowardLong));
+                operator.povDown().and(debugging.negate())
+                                .onTrue(Commands.runOnce(ShooterConstants::stepShotProfileTowardShort));
+
+                // passing
+                operator.rightBumper().and(debugging.negate())
+                                .onTrue(scoringState(ShooterWantedState.PASS_SHOOT, TurretWantedState.AIM_PASS,
+                                                FeederWantedState.PASS))
+                                .onFalse(stopScoring());
+
+                /******* SIGNAL LIGHTS ***********/
+
+                // Shooter-mounted signal LEDs: green when flywheel + turret are ready
+                // to shoot, red otherwise.
+                readyToShoot
+                                .onTrue(Commands.runOnce(
+                                                () -> normalLights.LED_SolidColor(LEDTarget.SIGNAL,
+                                                                LightsConstants.RBGColors.get("green")),
+                                                normalLights))
+                                .onFalse(Commands.runOnce(
+                                                () -> normalLights.LED_SolidColor(LEDTarget.SIGNAL,
+                                                                LightsConstants.RBGColors.get("red")),
+                                                normalLights));
+
+                /******* SIMULATION ***********/
+
+                // driver2 right trigger triggers shooting like operator
+                if (Robot.isSimulation() && driver2 != null) {
+                        driver2.rightTrigger()
+                                        .onTrue(scoringState(ShooterWantedState.HUB_SHOOT, TurretWantedState.AIM_HUB,
+                                                        FeederWantedState.SHOOT))
+                                        .onFalse(stopScoring());
+
+                        // driver2 right bumper: intake toggle like the driver's, with the
+                        // kicker following it -- deploys with the intake, stows when it stops.
+                        driver2.rightBumper().onTrue(
+                                        Commands.either(
+                                                        setIntake(IntakeWantedState.IDLE)
+                                                                        .andThen(kicker.setWantedStateCommand(
+                                                                                        KickerConstants.WantedState.STOW)),
+                                                        setIntake(IntakeWantedState.INTAKE)
+                                                                        .andThen(kicker.setWantedStateCommand(
+                                                                                        KickerConstants.WantedState.DEPLOY)),
+                                                        () -> intake.getState() == SystemState.INTAKING));
+                }
+        }
+
+        private Command snapTo(Rotation2d direction) {
+                return drivetrain.applyRequest(() -> facingAngle
+                                .withVelocityX(-driver.getLeftY() * MaxSpeed)
+                                .withVelocityY(-driver.getLeftX() * MaxSpeed)
+                                .withTargetDirection(direction));
+        }
+
+        public void disabledActions() {
+                feeder.setWantedFeederState(FeederWantedState.IDLE);
+                shooter.setWantedShooterState(ShooterWantedState.IDLE);
+                turret.setWantedTurretState(TurretWantedState.IDLE);
+                intake.setWantedIntakeState(IntakeWantedState.IDLE);
+                ShooterConstants.resetShotProfile();
+
+                normalLights.LED_Twinkle(
+                                LEDTarget.SIDES,
+                                LightsConstants.RBGColors.get("black"),
+                                LightsConstants.RBGColors.get("gold"),
+                                2.5);
+        }
+
+        public void teleopActions() {
+                // Match timer drives MatchInformation's hub-shift logic; restart (not
+                // just start) so re-enables don't inherit stale elapsed time.
+                matchTimer.restart();
+
+                feeder.setWantedFeederState(FeederWantedState.IDLE);
+                shooter.setWantedShooterState(ShooterWantedState.IDLE);
+                turret.setWantedTurretState(TurretWantedState.IDLE);
+                intake.setWantedIntakeState(IntakeWantedState.IDLE);
+
+                normalLights.LED_Reset(LEDTarget.SIDES);
+        }
+
+        public void configureTestCommands() {
+                SmartDashboard.putData("Intake RESET", Commands.runOnce(intake::setZero, intake));
+                SmartDashboard.putData("HOOD RESET", Commands.runOnce(shooter::hoodReset, shooter));
+        }
+
+        public Command getAutonomousCommand() {
+                return autoChooser.getSelected();
+        }
+
+        /**
+         * Pairs an Auto-Detect family with its already-built chooser Command, so
+         * telemetry can report which concrete auto that Command will resolve to without
+         * re-parsing anything.
+         */
+        private record AutoDetectEntry(AutoSelector.AutoFamily family, Command chooserCommand) {
+        }
+
+        /**
+         * Dashboard-selectable override for AutoSelector.Side -- lets the driver force
+         * a side if vision ever picks wrong.
+         */
+        private enum SideOverride {
+                AUTO_DETECT, FORCE_LEFT, FORCE_RIGHT
+        }
+
+        private final List<AutoDetectEntry> autoDetectEntries = new ArrayList<>();
+        private final SendableChooser<SideOverride> sideOverrideChooser = new SendableChooser<>();
+        private AutoSelector.Side detectedSide = AutoSelector.Side.RIGHT;
+        private int detectedSideStableCount = 0;
+        private static final int kSideDebounceCycles = 25; // ~0.5s at 50Hz
+
+        public void configureAutoCommands() {
+                sideOverrideChooser.setDefaultOption("Auto-Detect (Recommended)", SideOverride.AUTO_DETECT);
+                sideOverrideChooser.addOption("Force Left", SideOverride.FORCE_LEFT);
+                sideOverrideChooser.addOption("Force Right", SideOverride.FORCE_RIGHT);
+                SmartDashboard.putData("AUTO/Side Override", sideOverrideChooser);
+
+                // AUTO_DETECT_FAMILIES is the manually-curated list; discoverPrefixedFamilies()
+                // finds
+                // any "Left:<Name>" auto with no registration needed at all (see AutoSelector's
+                // class
+                // doc). Individual per-side .auto files covered by either are filtered out of
+                // the raw
+                // chooser options -- only the single combined family entry below is shown, so
+                // the
+                // dashboard doesn't list both "Theory Dance L" and "Theory Dance R" alongside
+                // the
+                // combined "Theory Dance" entry.
+                List<AutoSelector.AutoFamily> families = new ArrayList<>(AutoSelector.AUTO_DETECT_FAMILIES);
+                families.addAll(AutoSelector.discoverPrefixedFamilies());
+
+                Set<String> coveredAutoNames = AutoSelector.coveredAutoNames(families);
+                autoChooser = AutoBuilder.buildAutoChooserWithOptionsModifier(
+                                options -> options.filter(auto -> !coveredAutoNames.contains(auto.getName())));
+
+                for (AutoSelector.AutoFamily family : families) {
+                        // Both sides are built once, right here, rather than lazily at auto start --
+                        // avoids any JSON/trajectory parsing delay between enabling and the robot
+                        // moving. Only the pick between these two already-built Commands happens at
+                        // autonomousInit(), which is just a boolean check.
+                        Command left = family.leftBuilder().get();
+                        Command right = family.rightBuilder().get();
+                        Command autoDetect = Commands.either(left, right,
+                                        () -> resolveSide() == AutoSelector.Side.LEFT);
+                        autoDetectEntries.add(new AutoDetectEntry(family, autoDetect));
+                        autoChooser.addOption(family.label(), autoDetect);
+                }
+
+                SmartDashboard.putData("autos", autoChooser);
+        }
+
+        /**
+         * The side that will actually be used: the dashboard override if one is set,
+         * otherwise the vision-detected side.
+         */
+        private AutoSelector.Side resolveSide() {
+                SideOverride override = sideOverrideChooser.getSelected();
+                if (override == SideOverride.FORCE_LEFT) {
+                        return AutoSelector.Side.LEFT;
+                }
+                if (override == SideOverride.FORCE_RIGHT) {
+                        return AutoSelector.Side.RIGHT;
+                }
+                return detectedSide;
+        }
+
+        /**
+         * Called every disabledPeriodic tick: debounces the vision-derived starting
+         * side and
+         * surfaces it, plus the actually-resolved side/auto, on the dashboard so the
+         * driver sees
+         * it settle before enabling. detectedSide is finalized here too --
+         * autonomousInit() just
+         * hands the already-decided side (or the dashboard override) to
+         * Commands.either, so
+         * nothing is decided or built at auto start.
+         */
+        public void updateAutoSideDetection() {
+                Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Blue);
+                AutoSelector.Side rawSide = AutoSelector.sideFromPose(drivetrain.getPose(), alliance);
+                if (rawSide == detectedSide) {
+                        detectedSideStableCount = 0;
+                } else if (++detectedSideStableCount >= kSideDebounceCycles) {
+                        detectedSide = rawSide;
+                        detectedSideStableCount = 0;
+                }
+
+                SmartDashboard.putString("AUTO/Detected Side", detectedSide.toString());
+                SmartDashboard.putBoolean("AUTO/Vision Fix Fresh", drivetrain.isVisionPoseFresh());
+                SmartDashboard.putString("AUTO/Will Run", resolveWillRun());
+                updateSelectedAutoPreview();
+        }
+
+        /**
+         * What auto will actually run if enabled right now, given the current chooser
+         * selection and the resolved (possibly overridden) side.
+         */
+        private String resolveWillRun() {
+                Command selected = autoChooser.getSelected();
+                if (selected == null) {
+                        return "None";
+                }
+                AutoSelector.Side side = resolveSide();
+                for (AutoDetectEntry entry : autoDetectEntries) {
+                        if (entry.chooserCommand() == selected) {
+                                return side == AutoSelector.Side.LEFT ? entry.family().leftName()
+                                                : entry.family().rightName();
+                        }
+                }
+                return selected.getName();
+        }
+
+        private Command previewedCommand = null;
+        private AutoSelector.Side previewedSide = null;
+        private Alliance previewedAlliance = null;
+
+        /**
+         * Redraws the "Selected Auto" path on the drivetrain's Field2d widget whenever
+         * the chooser
+         * selection, the resolved side, or the alliance actually changes --
+         * getPathGroupFromAutoFile
+         * re-parses the .auto file from disk each call, so this is cached rather than
+         * re-run every
+         * disabledPeriodic tick regardless of whether anything changed.
+         */
+        private void updateSelectedAutoPreview() {
+                Command selected = autoChooser.getSelected();
+                AutoSelector.Side side = resolveSide();
+                Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Blue);
+                if (selected == previewedCommand && side == previewedSide && alliance == previewedAlliance) {
+                        return;
+                }
+                previewedCommand = selected;
+                previewedSide = side;
+                previewedAlliance = alliance;
+
+                if (selected == null) {
+                        drivetrain.setFieldTrajectory("Selected Auto", List.of());
+                        return;
+                }
+                try {
+                        for (AutoDetectEntry entry : autoDetectEntries) {
+                                if (entry.chooserCommand() == selected) {
+                                        drivetrain.setFieldTrajectory("Selected Auto",
+                                                        AutoSelector.previewFamilySide(entry.family(), side, alliance));
+                                        return;
+                                }
+                        }
+                        drivetrain.setFieldTrajectory("Selected Auto",
+                                        AutoSelector.previewPoses(selected.getName(), false, alliance));
+                } catch (IOException | ParseException e) {
+                        DriverStation.reportWarning("Failed to build auto preview path: " + e.getMessage(), false);
+                }
+        }
+
+        public void configureNamedCommands() {
+                NamedCommands.registerCommand("Shooter On",
+                                Commands.runOnce(() -> shooter.setWantedShooterState(ShooterWantedState.TURN_ON_AUTO)));
+
+                NamedCommands.registerCommand("Retract Hood",
+                                Commands.runOnce(() -> shooter.setWantedShooterState(ShooterWantedState.RETRACT_AUTO)));
+
+                NamedCommands.registerCommand("FeederIdle",
+                                Commands.runOnce(() -> feeder.setWantedFeederState(FeederWantedState.IDLE)));
+
+                NamedCommands.registerCommand("Auto Trench Shoot Left",
+                                Commands.sequence(
+                                                scoringState(ShooterWantedState.TRENCH_SHOOT,
+                                                                TurretWantedState.TRENCH_PRESETL,
+                                                                FeederWantedState.SHOOT),
+                                                Commands.waitSeconds(1.5),
+                                                setIntake(IntakeWantedState.RETRACT))
+                                                .alongWith(Commands.waitSeconds(4.5)));
+
+                NamedCommands.registerCommand("Auto Trench Shoot Right",
+                                Commands.sequence(
+                                                scoringState(ShooterWantedState.TRENCH_SHOOT,
+                                                                TurretWantedState.TRENCH_PRESETR,
+                                                                FeederWantedState.SHOOT),
+                                                Commands.waitSeconds(1.5),
+                                                setIntake(IntakeWantedState.RETRACT))
+                                                .alongWith(Commands.waitSeconds(4.5)));
+
+                NamedCommands.registerCommand("SOTF",
+                                Commands.sequence(
+                                                scoringState(ShooterWantedState.HUB_SHOOT, TurretWantedState.AIM_HUB,
+                                                                FeederWantedState.IDLE),
+                                                waitToShoot(),
+                                                Commands.runOnce(() -> feeder
+                                                                .setWantedFeederState(FeederWantedState.SHOOT)),
+                                                Commands.waitSeconds(1.5),
+                                                setIntake(IntakeWantedState.RETRACT)));
+
+                NamedCommands.registerCommand("Aim Shoot",
+                                Commands.sequence(
+                                                scoringState(ShooterWantedState.HUB_SHOOT, TurretWantedState.AIM_HUB,
+                                                                FeederWantedState.IDLE),
+                                                waitToShoot(),
+                                                Commands.runOnce(() -> feeder
+                                                                .setWantedFeederState(FeederWantedState.SHOOT)),
+                                                Commands.waitSeconds(1.5),
+                                                setIntake(IntakeWantedState.RETRACT))
+                                                .alongWith(Commands.waitSeconds(3.0)));
+
+                NamedCommands.registerCommand("Intake",
+                                Commands.sequence(
+                                                setIntake(IntakeWantedState.INTAKE),
+                                                setKicker(KickerConstants.WantedState.DEPLOY)));
+
+                NamedCommands.registerCommand("Rswipe pathFind",
+                                drivetrain.defer(
+                                                () -> DriveToLocation.pathFindTo(
+                                                                new Pose2d(8.05, 2.75, Rotation2d.fromDegrees(90)),
+                                                                drivetrain)));
+
+                NamedCommands.registerCommand("Lswipe pathFind",
+                                drivetrain.defer(
+                                                () -> DriveToLocation.pathFindTo(
+                                                                new Pose2d(8.05, 5.25, Rotation2d.fromDegrees(90)),
+                                                                drivetrain)));
+        }
 }
