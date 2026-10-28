@@ -121,7 +121,7 @@ public final class Constants {
         // Set to 0.5 because full compensation seemed to overcorrect shots
         // driving straight toward/away from the hub. Passing shots are not
         // affected. TODO: validate on the real robot.
-        public static final double SOTF_RANGE_VELOCITY_SCALE = 0.5;
+        public static final double SOTF_RANGE_VELOCITY_SCALE = 1;
 
         /*
          * Tuned shot tables (distance to hub in meters -> value), as of
@@ -131,15 +131,17 @@ public final class Constants {
          */
         public static final InterpolatingDoubleTreeMap RPS_MAP = new InterpolatingDoubleTreeMap();
         static {
-            RPS_MAP.put(2.0, 45.5d);
-            RPS_MAP.put(2.5, 47.5d);
-            RPS_MAP.put(3.0, 48d);
-            RPS_MAP.put(3.5, 50d);
-            RPS_MAP.put(4.0, 52d);
-            RPS_MAP.put(4.5, 54.5d);
-            RPS_MAP.put(5.0, 56d);
-            RPS_MAP.put(5.5, 60d);
-            RPS_MAP.put(6.0, 64d);
+            RPS_MAP.put(2.0, 50.5d);
+            RPS_MAP.put(2.5, 52.5d);
+            RPS_MAP.put(3.0, 53d);
+            RPS_MAP.put(3.5, 55d);
+            RPS_MAP.put(4.0, 57d);
+            RPS_MAP.put(4.5, 59.5d);
+            RPS_MAP.put(5.0, 61d);
+            RPS_MAP.put(5.5, 65d);
+            RPS_MAP.put(6.0, 69d);
+
+            
         }
 
         public static final InterpolatingDoubleTreeMap HOOD_MAP = new InterpolatingDoubleTreeMap();
@@ -153,6 +155,8 @@ public final class Constants {
             HOOD_MAP.put(5.0, 4.6d);
             HOOD_MAP.put(5.5, 5d);
             HOOD_MAP.put(6.0, 5.5d);
+
+           
         }
 
         // Time of flight (seconds) by distance. Feeds the SOTF virtual-target
@@ -252,28 +256,37 @@ public final class Constants {
 
         public static final InterpolatingDoubleTreeMap RPS_MAP_LONG_SHOT = new InterpolatingDoubleTreeMap();
         static {
-            RPS_MAP_LONG_SHOT.put(2.0, 45.5d);
-            RPS_MAP_LONG_SHOT.put(2.5, 47.5d);
-            RPS_MAP_LONG_SHOT.put(3.0, 48d);
-            RPS_MAP_LONG_SHOT.put(3.5, 50d);
-            RPS_MAP_LONG_SHOT.put(4.0, 52d);
-            RPS_MAP_LONG_SHOT.put(4.5, 54.5d);
-            RPS_MAP_LONG_SHOT.put(5.0, 56d);
-            RPS_MAP_LONG_SHOT.put(5.5, 60d);
-            RPS_MAP_LONG_SHOT.put(6.0, 64d);
+            RPS_MAP_LONG_SHOT.put(2.87, 56.7d);
+            RPS_MAP_LONG_SHOT.put(3.35, 56.7d);
+            RPS_MAP_LONG_SHOT.put(3.72, 56.7d);
+            RPS_MAP_LONG_SHOT.put(4.26, 60d);
+            RPS_MAP_LONG_SHOT.put(5.15, 65d);
+            RPS_MAP_LONG_SHOT.put(5.29, 65d);
+           
+            // RPS_MAP.put(2.87, 56.7d);
+            // RPS_MAP.put(3.35, 56.7d);
+            // RPS_MAP.put(3.72, 56.7d);
+            // RPS_MAP.put(4.26, 60d);
+            // RPS_MAP.put(5.15, 65d);
+            // RPS_MAP.put(5.29, 65d);
         }
 
         public static final InterpolatingDoubleTreeMap HOOD_MAP_LONG_SHOT = new InterpolatingDoubleTreeMap();
         static {
-            HOOD_MAP_LONG_SHOT.put(2.0, 0d);
-            HOOD_MAP_LONG_SHOT.put(2.5, 1d);
-            HOOD_MAP_LONG_SHOT.put(3.0, 2.2d);
-            HOOD_MAP_LONG_SHOT.put(3.5, 3d);
-            HOOD_MAP_LONG_SHOT.put(4.0, 3.8d);
-            HOOD_MAP_LONG_SHOT.put(4.5, 4.3d);
-            HOOD_MAP_LONG_SHOT.put(5.0, 4.6d);
-            HOOD_MAP_LONG_SHOT.put(5.5, 5d);
-            HOOD_MAP_LONG_SHOT.put(6.0, 5.5d);
+            HOOD_MAP_LONG_SHOT.put(2.87, 1.23d);
+            HOOD_MAP_LONG_SHOT.put(3.35, 2.37d);
+            HOOD_MAP_LONG_SHOT.put(3.72, 3.46d);
+            HOOD_MAP_LONG_SHOT.put(4.26, 4.64d);
+            HOOD_MAP_LONG_SHOT.put(5.15, 5.27d);
+            HOOD_MAP_LONG_SHOT.put(5.29, 5.39d);
+           
+
+             // HOOD_MAP.put(2.87, 1.23d);
+            // HOOD_MAP.put(3.35, 2.37d);
+            // HOOD_MAP.put(3.72, 3.46d);
+            // HOOD_MAP.put(4.26, 4.64d);
+            // HOOD_MAP.put(5.15, 5.27d);
+            // HOOD_MAP.put(5.29, 5.39d);
         }
 
         public static final InterpolatingDoubleTreeMap RPS_MAP_SHORT_SHOT = new InterpolatingDoubleTreeMap();
@@ -574,7 +587,7 @@ public final class Constants {
         public static final int rollerMotorID = 42;
 
         public static final double feederIntakeSpeed = 0;
-        public static final double feederShootSpeed = 0.45;
+        public static final double feederShootSpeed = 0.8;
         public static final double towerShootSpeed = 0.8;
         public static final double feederReverseSpeed = -0.7;
 
@@ -678,7 +691,7 @@ public final class Constants {
                         Units.inchesToMeters(17.467 + 2.7525)),
                 new Rotation3d(
                         0,
-                        Units.degreesToRadians(20),
+                        Units.degreesToRadians(-20),
                         0));
         // center back cam
         public static final Transform3d kRobotToCam2 = new Transform3d(
@@ -688,7 +701,7 @@ public final class Constants {
                         Units.inchesToMeters(12.195)),
                 new Rotation3d(
                         0,
-                        Units.degreesToRadians(20),
+                        Units.degreesToRadians(-20),
                         Units.degreesToRadians(135)));
         // corner camera
         public static final Transform3d kRobotToCam3 = new Transform3d(
@@ -698,7 +711,7 @@ public final class Constants {
                         Units.inchesToMeters(12.195)),
                 new Rotation3d(
                         0,
-                        Units.degreesToRadians(20),
+                        Units.degreesToRadians(-20),
                         Units.degreesToRadians(225)));
 
         public static final String cameraName = "camera1";

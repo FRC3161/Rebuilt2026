@@ -4,10 +4,9 @@
     {
       "controller": "operator",
       "button": "back",
-      "mode": "hold",
+      "mode": "press",
       "subsystem": "Kicker",
-      "state": "DEPLOY",
-      "releaseState": "STOW"
+      "state": "STOW"
     }
   ]
 }

@@ -18,7 +18,20 @@ public class Kicker extends StateMachineSubsystem<WantedState, SystemState> {
 
     @Override
     protected SystemState handleStateTransition(WantedState wanted, SystemState current) {
-        return kicker.isNear(targetFor(wanted)) ? arrivedState(wanted) : SystemState.MOVING;
+        if (wanted == WantedState.STOW) {
+            return kicker.isNear(KickerConstants.STOW_POSITION) ? SystemState.STOW : SystemState.STOWING;
+        }
+        // DEPLOY: once braked, stay braked -- only STOW gets out of BRAKE.
+        if (current == SystemState.BRAKE) {
+            return SystemState.BRAKE;
+        }
+        // Drive out until it arrives or runs out of time (it may not have the torque to get all the way).
+        if (current == SystemState.DEPLOYING
+                && (kicker.isNear(KickerConstants.DEPLOY_POSITION)
+                        || timeInState() >= KickerConstants.DEPLOY_TIMEOUT_SECONDS)) {
+            return SystemState.BRAKE;
+        }
+        return SystemState.DEPLOYING;
     }
 
     @Override
@@ -27,28 +40,16 @@ public class Kicker extends StateMachineSubsystem<WantedState, SystemState> {
             kicker.stop();
             return;
         }
-        // Always head for the wanted state's target; the system state just reports arrival.
-        kicker.setPosition(targetFor(getWantedState()));
+        switch (state) {
+            case STOWING, STOW -> kicker.setPosition(KickerConstants.STOW_POSITION);
+            case DEPLOYING -> kicker.setPosition(KickerConstants.DEPLOY_POSITION);
+            // Motor off in brake mode; if it droops it settles on the bumper.
+            case BRAKE -> kicker.stop();
+        }
     }
 
-    /** Where each wanted state sends the kicker. */
-    private static double targetFor(WantedState state) {
-        return switch (state) {
-            case STOW -> KickerConstants.STOW_POSITION;
-            case DEPLOY -> KickerConstants.DEPLOY_POSITION;
-        };
-    }
-
-    /** The system state for having arrived at a wanted state. */
-    private static SystemState arrivedState(WantedState state) {
-        return switch (state) {
-            case STOW -> SystemState.STOW;
-            case DEPLOY -> SystemState.DEPLOY;
-        };
-    }
-
-    /** True once the kicker has reached the wanted state's target. */
+    /** True once the kicker is done moving: stowed, or deployed and braked. */
     public boolean isAtTarget() {
-        return getSystemState() != SystemState.MOVING;
+        return getSystemState() == SystemState.STOW || getSystemState() == SystemState.BRAKE;
     }
 }

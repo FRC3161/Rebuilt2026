@@ -365,7 +365,7 @@ public class RobotContainer {
                 /********* OPERATOR *********/
 
                 // manually zero intake extension (locked out while debugging)
-                operator.start().and(debugging.negate()).onTrue(Commands.runOnce(intake::setZero));
+               // operator.start().and(debugging.negate()).onTrue(Commands.runOnce(intake::setZero));
 
                 // hold Start 3s to toggle manual hood/flywheel/turret debug mode
                 debugModeHold.onTrue(Commands.runOnce(() -> debugMode = !debugMode));
@@ -482,17 +482,13 @@ public class RobotContainer {
                                                         FeederWantedState.SHOOT))
                                         .onFalse(stopScoring());
 
-                        // driver2 right bumper: intake toggle like the driver's, with the
-                        // kicker following it -- deploys with the intake, stows when it stops.
+                        // driver2 right bumper
                         driver2.rightBumper().onTrue(
                                         Commands.either(
-                                                        setIntake(IntakeWantedState.IDLE)
-                                                                        .andThen(kicker.setWantedStateCommand(
-                                                                                        KickerConstants.WantedState.STOW)),
-                                                        setIntake(IntakeWantedState.INTAKE)
-                                                                        .andThen(kicker.setWantedStateCommand(
-                                                                                        KickerConstants.WantedState.DEPLOY)),
+                                                        setIntake(IntakeWantedState.IDLE),
+                                                        setIntake(IntakeWantedState.INTAKE),
                                                         () -> intake.getState() == SystemState.INTAKING));
+                        driver2.rightBumper().onTrue(setKicker(KickerConstants.WantedState.DEPLOY));
                 }
         }
 
@@ -755,7 +751,7 @@ public class RobotContainer {
                                                 .alongWith(Commands.waitSeconds(3.0)));
 
                 NamedCommands.registerCommand("Intake",
-                                Commands.sequence(
+                                Commands.parallel(
                                                 setIntake(IntakeWantedState.INTAKE),
                                                 setKicker(KickerConstants.WantedState.DEPLOY)));
 

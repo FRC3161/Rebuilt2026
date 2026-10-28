@@ -12,7 +12,7 @@ public final class KickerConstants {
     private KickerConstants() {
     }
 
-    //While false the motor gets no output at all (brakes), and operator Back does nothing.
+    //While false the motor gets no output at all (brakes), and no button moves the kicker.
     public static final boolean ENABLED = true;
 
     public enum WantedState {
@@ -20,12 +20,19 @@ public final class KickerConstants {
         DEPLOY
     }
 
-    /** What the subsystem is actually doing: the wanted states, plus MOVING while on the way to a target. */
+    /**
+     * What the subsystem is actually doing. The motor can't hold the kicker out, so DEPLOY ends in BRAKE
+     * (motor off, brake mode, kicker settles on the bumper). BRAKE ignores DEPLOY -- only STOW leaves it.
+     */
     public enum SystemState {
-        MOVING,
+        STOWING,
         STOW,
-        DEPLOY
+        DEPLOYING,
+        BRAKE
     }
+
+    /** Longest DEPLOYING drives the motor before giving up and going to BRAKE, even if not at DEPLOY_POSITION. */
+    public static final double DEPLOY_TIMEOUT_SECONDS = 2.0;
 
     /* ---------------- Kicker (pivot) ---------------- */
 
@@ -48,5 +55,5 @@ public final class KickerConstants {
     /* ---------------- State targets, in rotations, measured from the 0 set by withZeroAt ---------------- */
 
     public static final double STOW_POSITION = Units.degreesToRotations(0.0);
-    public static final double DEPLOY_POSITION = Units.degreesToRotations(100.0);
+    public static final double DEPLOY_POSITION = Units.degreesToRotations(130.0);
 }
