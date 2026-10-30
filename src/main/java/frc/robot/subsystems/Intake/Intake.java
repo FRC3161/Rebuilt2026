@@ -2,6 +2,7 @@ package frc.robot.subsystems.Intake;
 
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.StatusCode;
+import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.DutyCycleOut;
 import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
@@ -48,6 +49,10 @@ public class Intake extends SubsystemBase {
     private double motorspeed = 0.0; // intake roller duty cycle
 
     private final MotionMagicExpoVoltage extensionPositionRequest = new MotionMagicExpoVoltage(0);
+    // Extension current limits applied on their own (quicker than the whole config) when
+    // switching between full force for moves and a gentle hold once out.
+    private final CurrentLimitsConfigs extensionLimits = new CurrentLimitsConfigs();
+    private boolean extensionHoldingGently = false;
     private final DutyCycleOut rollerRequest = new DutyCycleOut(0.0);
 
     // sim state
@@ -166,6 +171,37 @@ public class Intake extends SubsystemBase {
     }
 
     /**
+     * Gentle hold once out: the extension's stator limit drops to
+     * ExtensionHoldStatorCurrentLimit (never above eco mode's), so a hit pushes it
+     * in rather than breaking something. Writes to the motor only on a change.
+     */
+    private void setExtensionHoldGently(boolean gentle) {
+        if (gentle == extensionHoldingGently) {
+            return;
+        }
+        extensionHoldingGently = gentle;
+        applyExtensionLimits();
+    }
+
+    /** Applies the extension's current limits: the config's (normal or eco), lowered while holding gently. */
+    private void applyExtensionLimits() {
+        double stator = intakeExtensionMotorConfig.CurrentLimits.StatorCurrentLimit;
+        if (extensionHoldingGently) {
+            stator = Math.min(stator, IntakeConstants.ExtensionHoldStatorCurrentLimit);
+        }
+        SmartDashboard.putNumber("INTAKE/Extension Stator Limit", stator);
+        if (Robot.isSimulation()) {
+            return;
+        }
+        extensionLimits
+                .withStatorCurrentLimit(stator)
+                .withStatorCurrentLimitEnable(true)
+                .withSupplyCurrentLimit(intakeExtensionMotorConfig.CurrentLimits.SupplyCurrentLimit)
+                .withSupplyCurrentLimitEnable(true);
+        intakeExtensionMotor.getConfigurator().apply(extensionLimits);
+    }
+
+    /**
      * SCORING slows the extension's Motion Magic profile (slow squeeze);
      * entering/leaving the state swaps the profile once. Both writes go to
      * the EXTENSION config and motor.
@@ -269,6 +305,9 @@ public class Intake extends SubsystemBase {
             intakeExtensionMotorConfig.CurrentLimits.StatorCurrentLimit = 30;
             intakeExtensionMotorConfig.CurrentLimits.SupplyCurrentLimit = 30;
             intakeExtensionMotor.getConfigurator().apply(intakeExtensionMotorConfig);
+            if (extensionHoldingGently) {
+                applyExtensionLimits(); // the whole config just reset the stator limit
+            }
             intakeMotor.getConfigurator().apply(intakeMotorConfig);
             intakeMotor2.getConfigurator().apply(intakeMotor2Config);
         }
@@ -283,6 +322,9 @@ public class Intake extends SubsystemBase {
             intakeExtensionMotorConfig.CurrentLimits.StatorCurrentLimit = IntakeConstants.ExtensionStatorCurrentLimit;
             intakeExtensionMotorConfig.CurrentLimits.SupplyCurrentLimit = IntakeConstants.ExtensionSupplyCurrentLimit;
             intakeExtensionMotor.getConfigurator().apply(intakeExtensionMotorConfig);
+            if (extensionHoldingGently) {
+                applyExtensionLimits(); // the whole config just reset the stator limit
+            }
             intakeMotor.getConfigurator().apply(intakeMotorConfig);
             intakeMotor2.getConfigurator().apply(intakeMotor2Config);
         }
@@ -343,9 +385,24 @@ public class Intake extends SubsystemBase {
             agitateTarget = IntakeConstants.intakingPosition;
             agitateExtended = true;
         }
+        // A fresh intake press may need to push back out after a knock, so full force.
+        boolean freshPress = nextState == SystemState.INTAKING && systemState != SystemState.INTAKING;
+        double previousTarget = position;
         systemState = nextState;
 
         applyState();
+
+        // Full stator limit for any real move (a fresh press, or a new target: retract, squeeze);
+        // releasing the button (IDLE keeps the same target) leaves the gentle hold alone.
+        if (freshPress || position != previousTarget) {
+            setExtensionHoldGently(false);
+        }
+        // Gentle once it's sitting out at intakingPosition.
+        if (extensionMode == ExtensionControlMode.POSITION
+                && position == IntakeConstants.intakingPosition
+                && Math.abs(getExtensionPosition() - position) < IntakeConstants.ExtensionOutTolerance) {
+            setExtensionHoldGently(true);
+        }
 
         if (Robot.isSimulation()) {
             // In simulation, the extension moves at about its real speed: toward

@@ -446,6 +446,13 @@ public final class Constants {
 
         public static final int ExtensionSupplyCurrentLimit = 80;
         public static final int ExtensionStatorCurrentLimit = 80;
+        // Once the intake is out at intakingPosition, the extension drops to this stator limit so it
+        // gives way if hit instead of fighting back at full force. Full limit returns on the next
+        // real move (a fresh intake press, retract, squeeze). Guess -- tune: enough to hold it out
+        // while driving, low enough to give when hit.
+        public static final double ExtensionHoldStatorCurrentLimit = 20;
+        // Within this many motor rotations of intakingPosition counts as "out".
+        public static final double ExtensionOutTolerance = 0.3;
 
         public static final int intakeMotorID = 32;
         public static final int intakeMotor2ID = 34;
