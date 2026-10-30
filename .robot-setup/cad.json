@@ -87,7 +87,8 @@
       "flip": false,
       "cadReading": 0,
       "scale": 0.0254,
-      "parent": -1
+      "parent": -1,
+      "showcaseMove": 10.2
     }
   ]
 }

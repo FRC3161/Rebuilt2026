@@ -40,7 +40,6 @@ import frc.robot.Constants.LightsConstants;
 import frc.robot.Constants.OperatorConstants;
 import frc.robot.Constants.FeederConstants.FeederWantedState;
 import frc.robot.Constants.IntakeConstants.IntakeWantedState;
-import frc.robot.Constants.IntakeConstants.SystemState;
 import frc.robot.Constants.ShooterConstants;
 import frc.robot.Constants.ShooterConstants.ShooterWantedState;
 import frc.robot.Constants.TurretConstants.TurretWantedState;
@@ -323,12 +322,10 @@ public class RobotContainer {
                 driver.b().whileTrue(snapTo(Rotation2d.kCW_90deg));
                 driver.a().whileTrue(snapTo(Rotation2d.k180deg));
 
-                // intake toggle
-                driver.rightBumper().onTrue(
-                                Commands.either(
-                                                setIntake(IntakeWantedState.IDLE),
-                                                setIntake(IntakeWantedState.INTAKE),
-                                                () -> intake.getState() == SystemState.INTAKING));
+                // intake: hold to run, release to stop (rollers off, stays out); every press also deploys the kicker
+                driver.rightBumper()
+                                .onTrue(setIntake(IntakeWantedState.INTAKE))
+                                .onFalse(setIntake(IntakeWantedState.IDLE));
                 driver.rightBumper().onTrue(setKicker(KickerConstants.WantedState.DEPLOY));
 
                 // retract
@@ -422,10 +419,10 @@ public class RobotContainer {
                                                 FeederWantedState.SHOOT))
                                 .onFalse(stopScoring());
 
-                // agitation manual -- jog the intake to try to shake a hopper jam loose (locked
+                // retract on hold, re-extend and intake on release, as on Programming-Points (locked
                 // out while debugging)
                 operator.leftTrigger().and(debugging.negate())
-                                .onTrue(setIntake(IntakeWantedState.AGITATE))
+                                .onTrue(setIntake(IntakeWantedState.RETRACT))
                                 .onFalse(setIntake(IntakeWantedState.INTAKE));
 
                 // slow squeeze (locked out while debugging)
@@ -482,12 +479,10 @@ public class RobotContainer {
                                                         FeederWantedState.SHOOT))
                                         .onFalse(stopScoring());
 
-                        // driver2 right bumper
-                        driver2.rightBumper().onTrue(
-                                        Commands.either(
-                                                        setIntake(IntakeWantedState.IDLE),
-                                                        setIntake(IntakeWantedState.INTAKE),
-                                                        () -> intake.getState() == SystemState.INTAKING));
+                        // driver2 right bumper: same as the driver's
+                        driver2.rightBumper()
+                                        .onTrue(setIntake(IntakeWantedState.INTAKE))
+                                        .onFalse(setIntake(IntakeWantedState.IDLE));
                         driver2.rightBumper().onTrue(setKicker(KickerConstants.WantedState.DEPLOY));
                 }
         }

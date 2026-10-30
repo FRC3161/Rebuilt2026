@@ -304,6 +304,17 @@ public class Turret extends SubsystemBase {
         SmartDashboard.putNumber("SOTF/Shot Command RPS", drivetrain.currentShotCommand.RPS());
         SmartDashboard.putNumber("SOTF/Shot Command Hood", drivetrain.currentShotCommand.hoodAngle());
         SmartDashboard.putString("SOTF/Active Shot Profile", ShooterConstants.activeShotProfile.toString());
+        // Shot profile at a glance for the drive team: a word and a colour (Elastic "Single Color View").
+        SmartDashboard.putString("SOTF/Shot Profile", switch (ShooterConstants.activeShotProfile) {
+            case LONG_SHOT -> "HIGH";
+            case NORMAL -> "NORMAL";
+            case SHORT_SHOT -> "SHORT";
+        });
+        SmartDashboard.putString("SOTF/Shot Profile Color", switch (ShooterConstants.activeShotProfile) {
+            case LONG_SHOT -> "#FF0000"; // red
+            case NORMAL -> "#00C000"; // green
+            case SHORT_SHOT -> "#0060FF"; // blue
+        });
         SmartDashboard.putNumber("SOTF/Robot Angle Deg", drivetrain.getPose().getRotation().getDegrees());
         SmartDashboard.putNumber("SOTF/Turret Field X", drivetrain.getCurrentTurretPose().getX());
         SmartDashboard.putNumber("SOTF/Turret Field Y", drivetrain.getCurrentTurretPose().getY());

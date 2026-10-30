@@ -7,6 +7,8 @@ package frc.robot;
 import com.pathplanner.lib.commands.PathfindingCommand;
 
 import edu.wpi.first.net.PortForwarder;
+import edu.wpi.first.wpilibj.DataLogManager;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -23,6 +25,13 @@ public class Robot extends TimedRobot {
     private final RobotContainer m_robotContainer;
 
     public Robot() {
+        // Match log (.wpilog) for replay in AdvantageScope: every NetworkTables value (field pose,
+        // 3D mechanism poses, dashboard values) plus the Driver Station's state and joysticks.
+        // Saved to a USB stick in the roboRIO if there is one, else /home/lvuser/logs; on a field
+        // the file is renamed with the event and match. Started first so startup is captured too.
+        DataLogManager.start();
+        DriverStation.startDataLog(DataLogManager.getLog());
+
         m_robotContainer = new RobotContainer();
     }
 

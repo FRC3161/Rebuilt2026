@@ -445,7 +445,7 @@ public final class Constants {
         public static final int StatorCurrentLimit = 100;
 
         public static final int ExtensionSupplyCurrentLimit = 80;
-        public static final int ExtensionStatorCurrentLimit = 50;
+        public static final int ExtensionStatorCurrentLimit = 80;
 
         public static final int intakeMotorID = 32;
         public static final int intakeMotor2ID = 34;
@@ -737,12 +737,12 @@ public final class Constants {
         }
 
         public static final Translation2d BLUE_HUB_POSE = new Translation2d(4.62, 4.03);
-        public static final Translation2d RED_HUB_POSE = new Translation2d(12, 4.03);
+        public static final Translation2d RED_HUB_POSE = new Translation2d(11.92, 4.03);
 
-        public static final Translation2d BLUE_PASS_SPOT_1 = new Translation2d(1, 3);
-        public static final Translation2d BLUE_PASS_SPOT_2 = new Translation2d(1, 5);
-        public static final Translation2d RED_PASS_SPOT_1 = new Translation2d(14.5, 3);
-        public static final Translation2d RED_PASS_SPOT_2 = new Translation2d(14.5, 5);
+        public static final Translation2d BLUE_PASS_SPOT_1 = new Translation2d(2, 1.5);
+        public static final Translation2d BLUE_PASS_SPOT_2 = new Translation2d(2, 6.5);
+        public static final Translation2d RED_PASS_SPOT_1 = new Translation2d(14.5, 1.5);
+        public static final Translation2d RED_PASS_SPOT_2 = new Translation2d(14.5, 6.5);
 
         public static final Map<ScoringZone, Pose2d> scoringZoneLUT = Map.ofEntries(
                 Map.entry(ScoringZone.RED_PASSING_1, new Pose2d(RED_PASS_SPOT_1, new Rotation2d())),
