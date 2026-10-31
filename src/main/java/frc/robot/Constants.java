@@ -480,6 +480,18 @@ public final class Constants {
         // TODO: field-tune — this is a guess at "clears the deadband,
         // still gentle," not a validated crawl speed.
         public static final double manualDutyCycle = 0.08;
+        // Driver D-pad left: one press drives the extension out at this duty cycle until it stalls
+        // against the hard stop (a current spike while barely moving) or the timeout; a stall
+        // re-zeroes the encoder there (extensionHardStopPosition). Stall thresholds from the friction-drive version;
+        // guesses -- watch INTAKE/Manual Push End ("stall" is the healthy case).
+        public static final double manualPushOutDutyCycle = 0.5;
+        public static final double manualPushOutTimeoutSeconds = 2.0;
+        public static final double extensionStallVelocity = 0.5; // motor rot/s
+        public static final double extensionStallCurrent = 35.0; // stator amps
+        // The first moments of a push draw a current spike while it's still ~stopped; not a stall.
+        public static final double extensionStallIgnoreSeconds = 0.15;
+        // Encoder reading at the out hard stop (what the back button / a D-pad push stall sets).
+        public static final double extensionHardStopPosition = 10.2;
 
         public static final double[] intakePID = { 0.3, 0, 0 };
         public static final double[] intakeSVA = { 0, 0.13, 0.01 };

@@ -61,6 +61,16 @@ public class Intake extends SubsystemBase {
     // intakingPosition in about a quarter second).
     private static final double SIM_MAX_SPEED = 40.0;
     private double simCanRangeDistance = 999.0; // default far away, won't trigger homing
+    private double simExtensionVelocity = 0.0;
+    // simExtensionPosition is where the sim extension physically is; the encoder reads it plus this
+    // offset (re-zeroing changes the offset), so an out-of-sync encoder can be simulated.
+    private double simEncoderOffset = 0.0;
+    // Sim hard stop at the out end, so the stall checks can be exercised.
+    private static final double SIM_OUT_STOP = IntakeConstants.extensionHardStopPosition;
+
+    // Driver D-pad left: a timed push out to the hard stop (see IN_MANUAL_CONTROL_POS).
+    private double manualPushStart = 0.0;
+    private boolean manualPushDone = false;
 
     private final LoggedTunableNumber k_S = new LoggedTunableNumber("intake_s", IntakeConstants.intakeSVA[0]);
     private final LoggedTunableNumber k_V = new LoggedTunableNumber("intake_v", IntakeConstants.intakeSVA[1]);
@@ -128,9 +138,41 @@ public class Intake extends SubsystemBase {
     // Sim safe helpers
     private double getExtensionPosition() {
         if (Robot.isSimulation()) {
-            return simExtensionPosition;
+            return simExtensionPosition + simEncoderOffset;
         }
         return intakeExtensionMotor.getPosition().getValueAsDouble();
+    }
+
+    /** Pushing against something: barely moving while drawing a lot of current (after the start-up spike). */
+    private boolean extensionStalled(double secondsSincePushStarted) {
+        return secondsSincePushStarted > IntakeConstants.extensionStallIgnoreSeconds
+                && Math.abs(getExtensionVelocity()) < IntakeConstants.extensionStallVelocity
+                && getExtensionStatorCurrent() > IntakeConstants.extensionStallCurrent;
+    }
+
+    /** Re-zeroes the extension encoder at the out hard stop, and says why on the dashboard. */
+    private void recalibrateAtHardStop(String why) {
+        SmartDashboard.putString("INTAKE/Last Recalibration", String.format("%s (read %.2f, now %.2f)",
+                why, getExtensionPosition(), IntakeConstants.extensionHardStopPosition));
+        setOut();
+    }
+
+    /** Extension speed, motor rot/s. */
+    private double getExtensionVelocity() {
+        if (Robot.isSimulation()) {
+            return simExtensionVelocity;
+        }
+        return intakeExtensionMotor.getVelocity().getValueAsDouble();
+    }
+
+    /** Extension stator current, amps (sim: high when pushing against the out stop). */
+    private double getExtensionStatorCurrent() {
+        if (Robot.isSimulation()) {
+            boolean pushingOut = extensionMode == ExtensionControlMode.DUTY_CYCLE ? extensionDuty > 0
+                    : position > getExtensionPosition();
+            return pushingOut && simExtensionPosition >= SIM_OUT_STOP ? 60.0 : 10.0;
+        }
+        return intakeExtensionMotor.getStatorCurrent().getValueAsDouble();
     }
 
     private double getCanRangeDistance() {
@@ -277,7 +319,20 @@ public class Intake extends SubsystemBase {
                 extensionMode = ExtensionControlMode.POSITION;
                 break;
             case IN_MANUAL_CONTROL_POS:
-                extensionDuty = IntakeConstants.manualDutyCycle;
+                // One press: drive out until it stalls at the hard stop or times out, then 0 output.
+                if (!manualPushDone) {
+                    double elapsed = Timer.getFPGATimestamp() - manualPushStart;
+                    boolean stalled = extensionStalled(elapsed);
+                    if (stalled || elapsed > IntakeConstants.manualPushOutTimeoutSeconds) {
+                        manualPushDone = true;
+                        SmartDashboard.putString("INTAKE/Manual Push End", stalled ? "stall" : "timeout");
+                        // Stalled at the hard stop: that's the out position, whatever the encoder said.
+                        if (stalled) {
+                            recalibrateAtHardStop("D-pad push");
+                        }
+                    }
+                }
+                extensionDuty = manualPushDone ? 0.0 : IntakeConstants.manualPushOutDutyCycle;
                 extensionMode = ExtensionControlMode.DUTY_CYCLE;
                 break;
             case IN_MANUAL_CONTROL_NEG:
@@ -338,7 +393,7 @@ public class Intake extends SubsystemBase {
 
     public void setZero() {
         if (Robot.isSimulation()) {
-            simExtensionPosition = 0.0;
+            simEncoderOffset = -simExtensionPosition;
         } else {
             intakeExtensionMotor.setPosition(0);
         }
@@ -347,9 +402,9 @@ public class Intake extends SubsystemBase {
     /** Manual escape hatch matching the CANrange auto-recalibration target. */
     public void setOut() {
         if (Robot.isSimulation()) {
-            simExtensionPosition = 10.2;
+            simEncoderOffset = IntakeConstants.extensionHardStopPosition - simExtensionPosition;
         } else {
-            intakeExtensionMotor.setPosition(10.2);
+            intakeExtensionMotor.setPosition(IntakeConstants.extensionHardStopPosition);
         }
     }
 
@@ -385,6 +440,12 @@ public class Intake extends SubsystemBase {
             agitateTarget = IntakeConstants.intakingPosition;
             agitateExtended = true;
         }
+        // A new manual push out starts its timer, at full force (a gentle-hold limit would hide the stall spike).
+        if (nextState == SystemState.IN_MANUAL_CONTROL_POS && systemState != SystemState.IN_MANUAL_CONTROL_POS) {
+            manualPushStart = Timer.getFPGATimestamp();
+            manualPushDone = false;
+            setExtensionHoldGently(false);
+        }
         // A fresh intake press may need to push back out after a knock, so full force.
         boolean freshPress = nextState == SystemState.INTAKING && systemState != SystemState.INTAKING;
         double previousTarget = position;
@@ -408,11 +469,14 @@ public class Intake extends SubsystemBase {
             // In simulation, the extension moves at about its real speed: toward
             // the setpoint in POSITION mode, or at the manual duty cycle.
             double step = SIM_MAX_SPEED * 0.02;
+            double before = simExtensionPosition;
             if (extensionMode == ExtensionControlMode.POSITION) {
-                simExtensionPosition += MathUtil.clamp(position - simExtensionPosition, -step, step);
+                simExtensionPosition += MathUtil.clamp(position - getExtensionPosition(), -step, step);
             } else {
                 simExtensionPosition += extensionDuty * step;
             }
+            simExtensionPosition = Math.min(SIM_OUT_STOP, simExtensionPosition);
+            simExtensionVelocity = (simExtensionPosition - before) / 0.02;
         } else {
             if (extensionMode == ExtensionControlMode.POSITION) {
                 intakeExtensionMotor.setControl(extensionPositionRequest.withPosition(position));

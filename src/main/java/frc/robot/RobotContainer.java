@@ -345,10 +345,11 @@ public class RobotContainer {
                 // eco mode (automatic on sustained low battery)
                 lowBattery.onTrue(setEcoMode(true));
 
-                // manual intake nudge
+                // manual intake: D-pad left = one press drives it out to its hard stop (stops on stall or
+                // after 2 s; letting go doesn't cut it short) and re-zeroes the encoder there on a stall.
+                // D-pad right = hold to nudge in.
                 driver.povLeft()
-                                .onTrue(setIntake(IntakeWantedState.MANUAL_CONTROL_POS))
-                                .onFalse(setIntake(IntakeWantedState.MANUAL_IDLE));
+                                .onTrue(setIntake(IntakeWantedState.MANUAL_CONTROL_POS));
                 driver.povRight()
                                 .onTrue(setIntake(IntakeWantedState.MANUAL_CONTROL_NEG))
                                 .onFalse(setIntake(IntakeWantedState.MANUAL_IDLE));
